@@ -34,7 +34,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/pikuboy/skybridge-for-blueSky:latest
-            ghcr.io/pikuboy/skybridge-for-blueSky:${{ github.sha }}
+            ghcr.io/pikuboy/skybridge-for-bluesky:latest
+            ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.sha }}
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max
