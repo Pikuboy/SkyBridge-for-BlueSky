@@ -25,9 +25,14 @@ Future<Response> onRequest(RequestContext context) async {
   final limit = limitRaw.clamp(1, 100);
   
   // Support both max_id and cursor for pagination
-  // max_id is used for fetching older items (standard Mastodon API)
-  // cursor is used internally by Bluesky
-  final cursor = params['max_id'] ?? params['cursor'];
+  // max_id is used by Mastodon clients for fetching older items (standard Mastodon API)
+  // We need to use it as cursor for Bluesky API
+  String? cursor;
+  if (params['max_id'] != null && params['max_id']!.isNotEmpty) {
+    cursor = params['max_id'];
+  } else if (params['cursor'] != null && params['cursor']!.isNotEmpty) {
+    cursor = params['cursor'];
+  }
 
   try {
     print('Favourites: Fetching likes for ${session.did} (bluesky session: ${bluesky.session.did}) with cursor=$cursor, limit=$limit');

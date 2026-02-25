@@ -27,7 +27,14 @@ Future<Response> onRequest<T>(RequestContext context) async {
   final limit = encodedParams.limit.clamp(1, 100);
 
   // Support both cursor and max_id for pagination
-  final cursor = encodedParams.cursor ?? params['max_id'];
+  // max_id is used by Mastodon clients to fetch older items
+  // We need to use it as cursor for Bluesky API
+  String? cursor;
+  if (params['max_id'] != null && params['max_id']!.isNotEmpty) {
+    cursor = params['max_id'];
+  } else if (encodedParams.cursor != null && encodedParams.cursor!.isNotEmpty) {
+    cursor = encodedParams.cursor;
+  }
 
   print('Notifications: Fetching with cursor=$cursor, limit=$limit');
 
