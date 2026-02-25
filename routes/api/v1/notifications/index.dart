@@ -29,10 +29,15 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Support both cursor and max_id for pagination
   final cursor = encodedParams.cursor ?? params['max_id'];
 
+  print('Notifications: Fetching with cursor=$cursor, limit=$limit');
+
   final response = await bluesky.notification.listNotifications(
     limit: limit,
     cursor: cursor,
   );
+  
+  print('Notifications: Received ${response.data.notifications.length} notifications, nextCursor=${response.data.cursor}');
+  
   final nextCursor = response.data.cursor;
 
   // Mark all notifications as seen on Bluesky so the unread badge clears.

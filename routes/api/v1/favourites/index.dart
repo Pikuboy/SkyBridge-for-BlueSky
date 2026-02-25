@@ -17,9 +17,12 @@ Future<Response> onRequest(RequestContext context) async {
   final bluesky = await blueskyFromContext(context);
   if (bluesky == null) return authError();
 
+  final session = await sessionFromContext(context);
+  if (session == null) return authError();
+
   final params = context.request.uri.queryParameters;
-  final limitRaw = int.tryParse(params['limit'] ?? '20') ?? 20;
-  final limit = limitRaw.clamp(1, 40);
+  final limitRaw = int.tryParse(params['limit'] ?? '50') ?? 50;
+  final limit = limitRaw.clamp(1, 100);
   
   // Support both max_id and cursor for pagination
   // max_id is used for fetching older items (standard Mastodon API)
@@ -27,12 +30,17 @@ Future<Response> onRequest(RequestContext context) async {
   final cursor = params['max_id'] ?? params['cursor'];
 
   try {
+    print('Favourites: Fetching likes for ${session.did} (bluesky session: ${bluesky.session.did}) with cursor=$cursor, limit=$limit');
+    
+    // Note: Bluesky API only allows fetching your own likes
+    // We must use bluesky.session.did which is guaranteed to be the authenticated user
     final response = await bluesky.feed.getActorLikes(
       actor: bluesky.session.did,
       limit: limit,
       cursor: cursor,
     );
 
+    print('Favourites: Received ${response.data.feed.length} items, nextCursor=${response.data.cursor}');
     final nextCursor = response.data.cursor;
 
     // Convert individually so one bad post doesn't kill the whole list.
@@ -48,6 +56,8 @@ Future<Response> onRequest(RequestContext context) async {
       }
     }
 
+    print('Favourites: Successfully converted ${posts.length} posts');
+
     var headers = <String, String>{};
     if (posts.isNotEmpty && nextCursor != null) {
       headers = generatePaginationHeaders(
@@ -59,8 +69,9 @@ Future<Response> onRequest(RequestContext context) async {
     }
 
     return threadedJsonResponse(body: posts, headers: headers);
-  } catch (e) {
+  } catch (e, stackTrace) {
     print('Favourites endpoint error: $e');
+    print('Stack trace: $stackTrace');
     return threadedJsonResponse(body: <MastodonPost>[]);
   }
 }
