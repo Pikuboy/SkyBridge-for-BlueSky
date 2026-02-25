@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:atproto/core.dart' as at;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -33,7 +35,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
 
   // Get the post from bluesky, we assume we already know the post exists
   // and don't bother adding to the database or anything.
-  final uri = bsky.AtUri.parse(postRecord!.uri);
+  final uri = at.AtUri.parse(postRecord!.uri);
   final response = await bluesky.feed.getPosts(uris: [uri]);
   final post = response.data.posts.first;
 
@@ -45,12 +47,18 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final processedPost = await processParentPosts(bluesky, [mastodonPost]);
 
   if (context.request.method == HttpMethod.get) {
+    // DEBUG: log the full JSON response for video debugging.
+    final jsonBody = jsonEncode(processedPost.first.toJson());
+    print('[DEBUG statuses/] response: $jsonBody');
     return threadedJsonResponse(
       body: processedPost.first,
     );
   } else if (context.request.method == HttpMethod.delete) {
     // Delete the post from bluesky.
-    await bluesky.repo.deleteRecord(uri: uri);
+    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    await bluesky.atproto.repo.deleteRecord(
+      uri: uri,
+    );
 
     return threadedJsonResponse(
       body: processedPost.first,

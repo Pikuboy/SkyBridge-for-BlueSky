@@ -58,9 +58,11 @@ Map<String, dynamic> _$MediaAttachmentMetadataToJson(
 Metadata _$MetadataFromJson(Map<String, dynamic> json) => Metadata(
       width: json['width'] as int,
       height: json['height'] as int,
+      duration: (json['duration'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$MetadataToJson(Metadata instance) => <String, dynamic>{
       'width': instance.width,
       'height': instance.height,
+      if (instance.duration != null) 'duration': instance.duration,
     };

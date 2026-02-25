@@ -45,6 +45,8 @@ import '../routes/api/v1/accounts/[id]/followers.dart' as api_v1_accounts_$id_fo
 import '../routes/api/v1/accounts/[id]/follow.dart' as api_v1_accounts_$id_follow;
 import '../routes/[userId]/[postId].dart' as $user_id_$post_id;
 import '../routes/.well-known/nodeinfo.dart' as well_known_nodeinfo;
+import '../routes/api/v1/video_proxy/index.dart' as api_v1_video_proxy_index;
+import '../routes/api/v1/video_proxy/[...path].dart' as api_v1_video_proxy_path;
 
 import '../routes/_middleware.dart' as middleware;
 
@@ -76,6 +78,7 @@ Handler buildRootHandler() {
     ..mount('/api/v1/timelines/list', (context) => buildApiV1TimelinesListHandler()(context))
     ..mount('/api/v1/timelines', (context) => buildApiV1TimelinesHandler()(context))
     ..mount('/api/v1/trends', (context) => buildApiV1TrendsHandler()(context))
+    ..mount('/api/v1/video_proxy', (context) => buildApiV1VideoProxyHandler()(context))
     ..mount('/api/v1', (context) => buildApiV1Handler()(context))
     ..mount('/api/v2', (context) => buildApiV2Handler()(context))
     ..mount('/nodeinfo', (context) => buildNodeinfoHandler()(context))
@@ -172,6 +175,16 @@ Handler buildApiV1TrendsHandler() {
   final pipeline = const Pipeline();
   final router = Router()
     ..all('/statuses', (context) => api_v1_trends_statuses.onRequest(context,));
+  return pipeline.addHandler(router);
+}
+
+Handler buildApiV1VideoProxyHandler() {
+  final pipeline = const Pipeline();
+  final router = Router()
+    // Wildcard catch-all : capture tout le chemin après /video_proxy/
+    // ex: /video_proxy/video.bsky.app/watch/did:plc:.../playlist.m3u8
+    ..all('/<path|[^]*>', (context, String path) => api_v1_video_proxy_path.onRequest(context, path))
+    ..all('/', (context) => api_v1_video_proxy_index.onRequest(context));
   return pipeline.addHandler(router);
 }
 

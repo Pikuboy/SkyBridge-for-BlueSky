@@ -1,5 +1,5 @@
-import 'package:atproto/atproto.dart' as at;
-import 'package:atproto/atproto.dart';
+import 'package:atproto/core.dart' as atp;
+import 'package:atproto/core.dart';
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:collection/collection.dart';
@@ -94,6 +94,11 @@ class MastodonPost {
     final mediaAttachments = <MastodonMediaAttachment>[];
     String? language = post.record.langs?.firstOrNull ?? 'en';
 
+    final baseUrl = env.getOrElse(
+      'SKYBRIDGE_BASEURL',
+      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
+    );
+
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
@@ -118,6 +123,24 @@ class MastodonPost {
             }
           },
         );
+      } else {
+        // Handle video embeds (app.bsky.embed.video#view) and any other
+        // embed types via the .map() union accessor.
+        // mapOrNull does not support async callbacks, so we extract the
+        // video data first and await outside the callback.
+        dynamic videoEmbedData;
+        embed.mapOrNull(
+          video: (videoEmbed) {
+            videoEmbedData = videoEmbed.data;
+          },
+        );
+        if (videoEmbedData != null) {
+          final attachment = await MastodonMediaAttachment.fromVideoEmbed(
+            videoEmbedData,
+            baseUrl: baseUrl,
+          );
+          if (attachment != null) mediaAttachments.add(attachment);
+        }
       }
     }
 
@@ -165,11 +188,6 @@ class MastodonPost {
     if (mediaAttachments.isNotEmpty) {
       card = null;
     }
-
-    final baseUrl = env.getOrElse(
-      'SKYBRIDGE_BASEURL',
-      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
-    );
 
     // Map hashtags included in the text to Mastodon tags.
     final tags = BlueskyText(content)
@@ -235,6 +253,11 @@ class MastodonPost {
     final mediaAttachments = <MastodonMediaAttachment>[];
     final account = await MastodonAccount.fromActor(post.author.toActor());
 
+    final baseUrl = env.getOrElse(
+      'SKYBRIDGE_BASEURL',
+      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
+    );
+
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
@@ -259,6 +282,24 @@ class MastodonPost {
             }
           },
         );
+      } else {
+        // Handle video embeds (app.bsky.embed.video#view) and any other
+        // embed types via the .map() union accessor.
+        // mapOrNull does not support async callbacks, so we extract the
+        // video data first and await outside the callback.
+        dynamic videoEmbedData;
+        embed.mapOrNull(
+          video: (videoEmbed) {
+            videoEmbedData = videoEmbed.data;
+          },
+        );
+        if (videoEmbedData != null) {
+          final attachment = await MastodonMediaAttachment.fromVideoEmbed(
+            videoEmbedData,
+            baseUrl: baseUrl,
+          );
+          if (attachment != null) mediaAttachments.add(attachment);
+        }
       }
     }
 
@@ -296,11 +337,6 @@ class MastodonPost {
     if (mediaAttachments.isNotEmpty) {
       card = null;
     }
-
-    final baseUrl = env.getOrElse(
-      'SKYBRIDGE_BASEURL',
-      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
-    );
 
     // Map hashtags included in the text to Mastodon tags.
     final tags = BlueskyText(content)
@@ -372,16 +408,11 @@ class MastodonPost {
       late RepostRecord repostRecord;
       final createdAt = DateTime.now().toUtc();
 
-      // Create the appropriate bluesky record.
-      await bluesky.repo.createRecord(
-        collection: at.NSID.create('feed.bsky.app', 'repost'),
-        record: {
-          'subject': {
-            'cid': postRecord.cid,
-            'uri': postRecord.uri,
-          },
-          'createdAt': createdAt.toIso8601String(),
-        },
+      // Create the repost record via Bluesky feed service.
+      // bluesky.feed.repost() is the high-level API in bluesky 0.16.x
+      await bluesky.feed.repost(
+        cid: postRecord.cid,
+        uri: atp.AtUri.parse(postRecord.uri),
       );
 
       // Write the repost to the database.
@@ -524,13 +555,13 @@ class MastodonPost {
   /// Is not included in the JSON representation of a post, only used
   /// internally.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  final bsky.AtUri? bskyUri;
+  final atp.AtUri? bskyUri;
 
   /// The bluesky URI of the post this post is a reply to.
   /// Is not included in the JSON representation of a post, only used
   /// internally for [processParentPosts].
   @JsonKey(includeFromJson: false, includeToJson: false)
-  final bsky.AtUri? replyPostUri;
+  final atp.AtUri? replyPostUri;
 }
 
 /// The visibility of a post.
@@ -561,7 +592,7 @@ Future<List<MastodonPost>> processParentPosts(
   List<MastodonPost> posts,
 ) async {
   // Collect all the CIDs of the posts we need to fetch.
-  final uris = <bsky.AtUri>[];
+  final uris = <atp.AtUri>[];
   for (final post in posts) {
     final uri = post.replyPostUri;
     if (uri != null) {
@@ -571,7 +602,7 @@ Future<List<MastodonPost>> processParentPosts(
 
   // Pull the posts from the server in chunks to avoid hitting the
   // maximum post limit.
-  final results = await chunkResults<bsky.Post, bsky.AtUri>(
+  final results = await chunkResults<bsky.Post, atp.AtUri>(
     items: uris,
     callback: (chunk) async {
       final response = await bluesky.feed.getPosts(uris: chunk);

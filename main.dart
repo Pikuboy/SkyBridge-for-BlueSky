@@ -191,6 +191,10 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
         (RequestContext context) => buildApiV1TrendsHandler()(context),
       )
       ..mount(
+        '/api/v1/video_proxy',
+        (RequestContext context) => buildApiV1VideoProxyHandler()(context),
+      )
+      ..mount(
         '/api/v1',
         (RequestContext context) => buildApiV1Handler()(context),
       )

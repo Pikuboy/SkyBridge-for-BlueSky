@@ -1,5 +1,6 @@
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:json_annotation/json_annotation.dart';
+import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
 
 part 'mastodon_relationship.g.dart';
@@ -34,6 +35,8 @@ class MastodonRelationship {
   Map<String, dynamic> toJson() => _$MastodonRelationshipToJson(this);
 
   /// Gets the [MastodonRelationship] values for a given [account].
+  /// The [account] is a [UserRecord] from the database, so its numeric ID
+  /// is used — not the DID string — for full Mastodon API compatibility.
   static Future<MastodonRelationship> getActorRelationship(
     bsky.Bluesky bluesky,
     UserRecord account,
@@ -48,9 +51,10 @@ class MastodonRelationship {
     final followedBy = profile.data.viewer.followedBy != null;
 
     return MastodonRelationship(
-      id: account.did,
+      // Use the numeric database ID, not the DID, for Mastodon compatibility.
+      id: account.id.toString(),
       following: following,
-      showingReblogs: false,
+      showingReblogs: following, // Match Mastodon default behaviour.
       notifying: false,
       languages: [],
       followedBy: followedBy,
@@ -65,14 +69,14 @@ class MastodonRelationship {
     );
   }
 
-  /// The account ID.
+  /// The numeric account ID (from the SkyBridge database).
   final String id;
 
   /// Whether the current user is following the account.
   final bool following;
 
-  /// Whether the current user is receiving this account's boosts on their home
-  /// timeline.
+  /// Whether the current user is receiving this account's boosts on their
+  /// home timeline.
   @JsonKey(name: 'showing_reblogs')
   final bool showingReblogs;
 
@@ -112,6 +116,6 @@ class MastodonRelationship {
   @JsonKey(name: 'endorsed')
   final bool endorsed;
 
-  /// The account's bio.
+  /// Personal note about this account.
   final String note;
 }

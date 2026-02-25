@@ -3,8 +3,11 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "skybridge"
-primary_region = "lhr"
+app = 'skybridge'  #you need to rename it
+primary_region = 'lhr'
+
+[build]
+image = "videah/skybridge:latest"
 
 [http_service]
   internal_port = 8080
@@ -14,13 +17,17 @@ primary_region = "lhr"
   min_machines_running = 0
 
 [env]
-  SKYBRIDGE_BASEURL = "skybridge.fly.dev"
-  SKYBRIDGE_SHOW_INDEX = true
-  FLY_SWAP = true
+  SKYBRIDGE_BASEURL = 'skybride.fly.dev' #you need to rename it using your app name .fly.dev
+  SKYBRIDGE_SHOW_INDEX = 'true'
+  FLY_SWAP = 'true'
+  SKYBRIDGE_SECRET=' ' #you need to fill it, I taped random numbers and it worked
+  SKYBRIDGE_REQUIRE_AUTH_PASSWORD = true
+  SKYBRIDGE_AUTH_PASSWORD = '' #if above is true, it will be asked when you'll try to log in to you bsky account in the app
+  SKYBRIDGE_ALLOW_BACKFILL = true
 
-[mounts]
-  source="skybridge_data"
-  destination="/app/database"
+[[mounts]]
+  source = 'skybridge_data'
+  destination = '/app/database'
 
 [[http_service.checks]]
   grace_period = "30s"
@@ -33,3 +40,8 @@ primary_region = "lhr"
   type = "requests"
   hard_limit = 999999
   soft_limit = 9999
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:atproto/core.dart' as atp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:crypto/crypto.dart';
 import 'package:orm/orm.dart';
@@ -416,11 +417,11 @@ extension RepostExtension on PostRecord {
 }
 
 /// Extension methods for [MediaRecord] that convert back and forth between
-/// [MediaRecord] and [bsky.Blob].
+/// [MediaRecord] and [atp.Blob].
 extension BlobExtension on MediaRecord {
-  /// Turn a [bsky.Blob] into a [MediaRecord] along with a [description].
+  /// Turn a [atp.Blob] into a [MediaRecord] along with a [description].
   static Future<MediaRecord> fromBlob(
-    bsky.Blob blob,
+    atp.Blob blob,
     String description,
   ) async {
     final id = await generateUniqueSnowflake(
@@ -446,13 +447,13 @@ extension BlobExtension on MediaRecord {
     return mediaRecord;
   }
 
-  /// Converts this [MediaRecord] back into a [bsky.Blob].
-  bsky.Blob toBlob() {
-    return bsky.Blob(
+  /// Converts this [MediaRecord] back into a [atp.Blob].
+  atp.Blob toBlob() {
+    return atp.Blob(
       type: type,
       mimeType: mimeType,
       size: size,
-      ref: bsky.BlobRef(link: link),
+      ref: atp.BlobRef(link: link),
     );
   }
 }

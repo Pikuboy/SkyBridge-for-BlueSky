@@ -3,6 +3,8 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/util.dart';
+import 'package:atproto/core.dart' as at;
+import 'package:bluesky/bluesky.dart' as bsky;
 
 /// Posts that have been interacted with more than others.
 /// GET /api/v1/trends/statuses HTTP/1.1
@@ -13,19 +15,28 @@ Future<Response> onRequest(RequestContext context) async {
   final bluesky = await blueskyFromContext(context);
   if (bluesky == null) return authError();
 
-  // Get the popular feed, this could break in the future since it's
-  // not part of the spec and the bluesky devs intend to switch to a
-  // way of picking your own algorithm.
-  final feed = await bluesky.unspecced.getPopular(limit: 40);
+  List<MastodonPost> posts;
 
-  // Take all the posts and convert them to Mastodon ones
-  // Await all the futures, getting any necessary data from the database.
-  final posts = await databaseTransaction(() async {
-    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
-    return Future.wait(futures);
-  });
+  try {
+    // Use the Bluesky "What's Hot" feed generator as a trending posts source.
+    // The old unspecced.getPopular endpoint is deprecated.
+    const whatsHotUri =
+        'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
 
-  return threadedJsonResponse(
-    body: posts,
-  );
+    final feed = await bluesky.feed.getFeed(
+      generatorUri: at.AtUri.parse(whatsHotUri),
+      limit: 40,
+    );
+
+    posts = await databaseTransaction(() async {
+      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+      return Future.wait(futures);
+    });
+  } catch (e) {
+    // Feed generator not available, return empty list.
+    print('Trending feed error: $e');
+    return threadedJsonResponse(body: <MastodonPost>[]);
+  }
+
+  return threadedJsonResponse(body: posts);
 }

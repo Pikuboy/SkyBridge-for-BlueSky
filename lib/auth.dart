@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:atproto/core.dart' as atp;
+import 'package:bluesky/atproto.dart' as batp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -115,7 +117,7 @@ Future<void> resetIpRateLimit(RequestContext context) async {
 
 /// Check a request context for a valid bearer token to determine if the
 /// request is authenticated.
-Future<bsky.Session?> sessionFromContext(RequestContext context) async {
+Future<atp.Session?> sessionFromContext(RequestContext context) async {
   final header = context.request.headers['Authorization'];
   final token = validateBearerToken(header);
 
@@ -130,7 +132,7 @@ Future<bsky.Session?> sessionFromContext(RequestContext context) async {
   // If we already have a session then great! Otherwise, try to create one.
   if (record != null) {
     final json = jsonDecode(record.session) as Map<String, dynamic>;
-    final session = bsky.Session.fromJson(json);
+    final session = atp.Session.fromJson(json);
 
     final accessJwt =
         JWT.decode(session.accessJwt).payload as Map<String, dynamic>;
@@ -172,9 +174,8 @@ Future<bsky.Session?> sessionFromContext(RequestContext context) async {
       } else {
         // The access token is expired but we have a valid refresh token,
         // try to refresh the session.
-        final refreshedSession = await bsky.refreshSession(
+        final refreshedSession = await batp.refreshSession(
           refreshJwt: session.refreshJwt,
-          mockedPostClient: httpClient.post,
         );
 
         // Update the session in the database.
@@ -258,20 +259,19 @@ OAuthAccessToken? validateBearerToken(String? tokenString) {
 }
 
 /// Global list of active sessions.
-Map<String, bsky.Session> sessions = {};
+Map<String, atp.Session> sessions = {};
 
 /// Create a Bluesky session with the given credentials and store
 /// it in [sessions].
-Future<bsky.Session?> createBlueskySession({
+Future<atp.Session?> createBlueskySession({
   required String identifier,
   required String appPassword,
 }) async {
   try {
     // Try to authenticate with Bluesky with the given credentials.
-    final session = await bsky.createSession(
+    final session = await batp.createSession(
       identifier: identifier,
       password: appPassword,
-      mockedPostClient: httpClient.post,
     );
 
     // If we've gotten this far, the credentials are valid.

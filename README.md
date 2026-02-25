@@ -1,6 +1,24 @@
+This is a fork from https://github.com/videah/skybridge, the origial dev. I completed a portion of the functionnality using Claude.ai because I don't speak Dart.
+
+Video is now supported in Ivory, but only embedded in the post, full screen is not working. It seems Ivory full screen player is not supporting HLS video, it needs mp4 files which is not provided by Bluesky so it will never work.
+
+You can now use the search tab too. 
+
+Support is still incomplete and I don't intend to do more. This repo will become private once Phoenix is released.
+
+I managed to make it run on my Synology NAS but it seems to work only with Ivory (tested with Mastodon official app and Icecube but doesn't work; maybe an issue with the way I installed it).
+The docker_compose template reflect the one I used to configure it on my NAS.
+
+I think Fly.dev instruction are still working but didn't try. Docker image is available in this repo:
+
+https://ghcr.io/pikuboy/skybridge:70490c064dbcca5a8d4fc2a149dd959baf5a2f24
+
+# ORIGINAL README FROM VIDEAH BELOW
+
 # SkyBridge
 
 ![SkyBridge](public/banner.png)
+test
 
 [![style: very good analysis][very_good_analysis_badge]][very_good_analysis_link]
 [![License: MIT][license_badge]][license_link]

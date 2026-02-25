@@ -58,6 +58,7 @@ class MastodonCard {
       },
       images: (_) => null,
       recordWithMedia: (record) => embedViewRecordToCard(record.data.record),
+      video: (_) => null,
       unknown: (_) => null,
     );
   }
@@ -107,6 +108,7 @@ class MastodonCard {
               },
               external: (_) {},
               recordWithMedia: (_) {},
+              video: (_) {},
               unknown: (_) {},
             );
           }

@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:atproto/core.dart' as at;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
+import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
+import 'package:sky_bridge/models/mastodon/mastodon_tag.dart';
 import 'package:sky_bridge/models/params/search_params.dart';
 import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
 import 'package:sky_bridge/util.dart';
@@ -24,49 +27,45 @@ Future<Response> onRequest<T>(RequestContext context) async {
   final bluesky = await blueskyFromContext(context);
   if (bluesky == null) return authError();
 
-  // HACK: Ivory uses this endpoint to find unknown posts (like say, in a fake
-  // quote post embed) so we detect if the query is a link that contains
-  // te base URL and handle it appropriately.
+  // Empty query → return empty results immediately.
+  if (params.query.trim().isEmpty) {
+    return threadedJsonResponse(
+      body: {'hashtags': [], 'accounts': [], 'statuses': []},
+    );
+  }
+
+  // Special-case: Ivory quote-post lookup via SkyBridge URL.
   if (params.limit == 1 &&
       params.resolve == true &&
       params.type == SearchType.statuses) {
-    // If the query is attempting to find a quote post, Ivory will send
-    // a query with the SkyBridge instance URI in the query in a format
-    // that Mastodon uses.
     final quoteMatch = RegExp(r'^(.+)\/@([^/]+)\/(\d+)$')
         .firstMatch(params.query)
         ?.groups([1, 2, 3]);
     final postId = quoteMatch?[2];
 
-    // If the query is attempting to repost to a different account, Ivory will
-    // send a query with the original bsky URI in the query (as opposed to the
-    // SkyBridge instance's URI).
     final repostMatch = RegExp(
-      'https://.*?/profile/(.*?)/post/([a-zA-Z0-9]+)',
+      r'https://.*?/profile/(.*?)/post/([a-zA-Z0-9]+)',
     ).firstMatch(params.query)?.groups([1, 2]);
     final repostHandle = repostMatch?[0];
     final repostPostId = repostMatch?[1];
 
-    // Check if the query is a quote post.
     if (postId != null) {
-      // Get the post from the database.
-      // If the post is not in the database we return 404.
       final postRecord = await db.postRecord.findUnique(
         where: PostRecordWhereUniqueInput(id: BigInt.parse(postId)),
       );
-      if (postRecord == null) Response(statusCode: HttpStatus.notFound);
+      if (postRecord == null) {
+        return threadedJsonResponse(
+          body: {'hashtags': [], 'accounts': [], 'statuses': []},
+        );
+      }
 
-      // Get the post from bluesky, we assume we already know the post exists
-      // and don't bother adding to the database or anything.
-      final uri = bsky.AtUri.parse(postRecord!.uri);
+      final uri = at.AtUri.parse(postRecord.uri);
       final response = await bluesky.feed.getPosts(uris: [uri]);
       final post = response.data.posts.first;
 
       final mastodonPost = await databaseTransaction(
         () => MastodonPost.fromBlueSkyPost(post),
       );
-
-      // Process replies.
       final processedPost = await processParentPosts(bluesky, [mastodonPost]);
 
       return threadedJsonResponse(
@@ -78,33 +77,126 @@ Future<Response> onRequest<T>(RequestContext context) async {
       );
     }
 
-    // Check if the query is an attempted repost to a different account.
     if (repostHandle != null && repostPostId != null) {
-      // We resolve the DID and try and find the post directly from bluesky.
-      final did = await bluesky.identity.resolveHandle(handle: repostHandle);
-      final uri = bsky.AtUri.parse(
-        'at://${did.data.did}/app.bsky.feed.post/$repostPostId',
+      try {
+        final did =
+            await bluesky.atproto.identity.resolveHandle(handle: repostHandle);
+        final uri = at.AtUri.parse(
+          'at://${did.data.did}/app.bsky.feed.post/$repostPostId',
+        );
+
+        final response = await bluesky.feed.getPosts(uris: [uri]);
+        final post = response.data.posts.first;
+
+        final mastodonPost = await databaseTransaction(
+          () => MastodonPost.fromBlueSkyPost(post),
+        );
+        final processedPost =
+            await processParentPosts(bluesky, [mastodonPost]);
+
+        return threadedJsonResponse(
+          body: {
+            'hashtags': [],
+            'accounts': [],
+            'statuses': [processedPost.first],
+          },
+        );
+      } catch (_) {
+        return threadedJsonResponse(
+          body: {'hashtags': [], 'accounts': [], 'statuses': []},
+        );
+      }
+    }
+  }
+
+  // General full-text search.
+  final query = params.query.trim();
+  final limit = (params.limit > 0 ? params.limit : 20).clamp(1, 40);
+  final searchType = params.type;
+
+  var accountResults = <MastodonAccount>[];
+  var statusResults = <MastodonPost>[];
+  var hashtagResults = <MastodonTag>[];
+
+  // Search accounts.
+  if (searchType == null || searchType == SearchType.accounts) {
+    try {
+      final results = await bluesky.actor.searchActors(
+        term: query,
+        limit: limit,
       );
 
-      final response = await bluesky.feed.getPosts(uris: [uri]);
-      final post = response.data.posts.first;
+      final handles =
+          results.data.actors.map((actor) => actor.handle).toList();
 
-      final mastodonPost = await databaseTransaction(
-        () => MastodonPost.fromBlueSkyPost(post),
+      if (handles.isNotEmpty) {
+        final profiles = await chunkResults<bsky.ActorProfile, String>(
+          items: handles,
+          callback: (chunk) async {
+            final r = await bluesky.actor.getProfiles(actors: chunk);
+            return r.data.profiles;
+          },
+        );
+
+        accountResults = await databaseTransaction(() {
+          return Future.wait(
+            profiles.map(MastodonAccount.fromActorProfile),
+          );
+        });
+      }
+    } catch (e) {
+      print('Account search error: $e');
+    }
+  }
+
+  // Search statuses (posts).
+  if (searchType == null || searchType == SearchType.statuses) {
+    try {
+      final results = await bluesky.feed.searchPosts(query, limit: limit);
+
+      statusResults = await databaseTransaction(() async {
+        final futures = results.data.posts.map(MastodonPost.fromBlueSkyPost);
+        return Future.wait(futures);
+      });
+
+      statusResults = await processParentPosts(bluesky, statusResults);
+    } catch (e) {
+      print('Status search error: $e');
+    }
+  }
+
+  // Extract hashtags from the query (Bluesky has no dedicated hashtag search).
+  if (searchType == null || searchType == SearchType.hashtags) {
+    final base = env.getOrElse(
+      'SKYBRIDGE_BASEURL',
+      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
+    );
+
+    final tagPattern = RegExp(r'#(\w+)');
+    final tagMatches = tagPattern.allMatches(query);
+    for (final m in tagMatches) {
+      final name = m.group(1)!;
+      hashtagResults.add(
+        MastodonTag(name: name, url: 'https://$base/tags/$name'),
       );
+    }
 
-      // Process replies.
-      final processedPost = await processParentPosts(bluesky, [mastodonPost]);
-
-      return threadedJsonResponse(
-        body: {
-          'hashtags': [],
-          'accounts': [],
-          'statuses': [processedPost.first],
-        },
+    // If the whole query looks like a bare word (no spaces, not an @-mention),
+    // also surface it as a hashtag so the client can navigate to the tag page.
+    if (hashtagResults.isEmpty &&
+        !query.contains(' ') &&
+        !query.startsWith('@')) {
+      hashtagResults.add(
+        MastodonTag(name: query, url: 'https://$base/tags/$query'),
       );
     }
   }
 
-  return Response(statusCode: HttpStatus.notFound);
+  return threadedJsonResponse(
+    body: {
+      'hashtags': hashtagResults,
+      'accounts': accountResults,
+      'statuses': statusResults,
+    },
+  );
 }

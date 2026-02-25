@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:atproto/core.dart' as at;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
@@ -43,7 +44,11 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   // the relationship.
   final followUri = profile.data.viewer.following;
   if (followUri != null) {
-    await bluesky.repo.deleteRecord(uri: followUri);
+    final parsedFollowUri = at.AtUri.parse(followUri.toString());
+    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    await bluesky.atproto.repo.deleteRecord(
+      uri: parsedFollowUri,
+    );
   }
 
   final rel = await MastodonRelationship.getActorRelationship(bluesky, record!);
