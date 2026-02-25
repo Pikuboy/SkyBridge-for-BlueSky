@@ -55,6 +55,9 @@ Future<Response> onRequest(RequestContext context) async {
         final post = await databaseTransaction(
           () => MastodonPost.fromFeedView(feedView),
         );
+        // Since this is the favourites endpoint, these posts are BY DEFINITION favourited
+        // Force favourited to true regardless of what the viewer data says
+        post.favourited = true;
         posts.add(post);
       } catch (e) {
         print('Favourites: skipping post ${feedView.post.uri} — $e');
@@ -63,20 +66,29 @@ Future<Response> onRequest(RequestContext context) async {
 
     print('Favourites: Successfully converted ${posts.length} posts');
 
+    // Sort posts newest-first to match Mastodon API expectations
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     var headers = <String, String>{};
-    if (posts.isNotEmpty && nextCursor != null) {
+    if (posts.isNotEmpty) {
       headers = generatePaginationHeaders(
         items: posts,
         requestUri: context.request.uri,
-        nextCursor: nextCursor,
+        nextCursor: nextCursor ?? '',
         getId: (post) => BigInt.parse(post.id),
       );
     }
 
+    print('Favourites: Returning ${posts.length} posts with headers: $headers');
     return threadedJsonResponse(body: posts, headers: headers);
   } catch (e, stackTrace) {
     print('Favourites endpoint error: $e');
     print('Stack trace: $stackTrace');
-    return threadedJsonResponse(body: <MastodonPost>[]);
+    // Return 500 error instead of empty array to signal the problem to the client
+    return Response(
+      statusCode: HttpStatus.internalServerError,
+      body: '{"error": "Failed to fetch favourites: $e"}',
+      headers: {HttpHeaders.contentTypeHeader: ContentType.json.value},
+    );
   }
 }

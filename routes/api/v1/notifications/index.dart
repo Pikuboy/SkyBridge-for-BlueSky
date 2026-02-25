@@ -97,5 +97,6 @@ Future<Response> onRequest<T>(RequestContext context) async {
     );
   }
 
+  print('Notifications: Returning ${notifs.length} notifications with headers: $headers');
   return threadedJsonResponse(body: notifs, headers: headers);
 }
