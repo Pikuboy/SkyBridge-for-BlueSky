@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
+import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_notification.dart';
 import 'package:sky_bridge/models/params/notification_params.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Receive notifications for activity on your account or posts.
@@ -17,6 +19,8 @@ Future<Response> onRequest<T>(RequestContext context) async {
   final params = context.request.uri.queryParameters;
   final encodedParams = NotificationParams.fromJson(params);
 
+  final session = await sessionFromContext(context);
+  if (session == null) return authError();
   final bluesky = await blueskyFromContext(context);
   if (bluesky == null) return authError();
 
@@ -57,6 +61,16 @@ Future<Response> onRequest<T>(RequestContext context) async {
     notifs =
         notifs.where((n) => !excludeFilter.contains(n.type.name)).toList();
   }
+
+  // Filter out dismissed notifications (stored as MediaRecord type=dismissed_notif).
+  final dismissedRecords = await db.mediaRecord.findMany(
+    where: MediaRecordWhereInput(
+      type: StringFilter(equals: 'dismissed_notif'),
+      mimeType: StringFilter(equals: session.did),
+    ),
+  );
+  final dismissedIds = dismissedRecords.map((r) => r.link).toSet();
+  notifs = notifs.where((n) => !dismissedIds.contains(n.id)).toList();
 
   var headers = <String, String>{};
   if (notifs.isNotEmpty) {
