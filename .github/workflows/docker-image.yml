@@ -3,8 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - master
-      - main
+      - v1.1_update
 
 jobs:
   docker:
@@ -34,7 +33,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/pikuboy/skybridge-for-bluesky:latest
+            ghcr.io/pikuboy/skybridge-for-bluesky:test
             ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.sha }}
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max
