@@ -28,6 +28,12 @@ Future<Response> onRequest<T>(RequestContext context) async {
   );
   final nextCursor = response.data.cursor;
 
+  // Mark all notifications as seen on Bluesky so the unread badge clears.
+  // Fire-and-forget — don't block the response if this fails.
+  bluesky.notification
+      .updateSeen(seenAt: DateTime.now().toUtc())
+      .catchError((_) => null);
+
   var notifs = await MastodonNotification.fromNotificationList(
     response.data.notifications,
     bluesky,
