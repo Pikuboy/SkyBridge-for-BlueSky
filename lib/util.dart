@@ -270,9 +270,38 @@ Map<String, String> generatePaginationHeaders<T>({
   required String nextCursor,
   required BigInt Function(T) getId,
 }) {
-  final highestID = items.map(getId).reduce((a, b) => a > b ? a : b);
-  final prevURI = requestUri.replace(queryParameters: {'min_id': highestID.toString()});
-  final nextURI = requestUri.replace(queryParameters: {'cursor': nextCursor});
+  if (items.isEmpty) {
+    return {};
+  }
+
+  final ids = items.map(getId).toList();
+  final highestID = ids.reduce((a, b) => a > b ? a : b);
+  final lowestID = ids.reduce((a, b) => a < b ? a : b);
+
+  // Build pagination links
+  // prev: for newer items (use min_id to get items after the highest ID)
+  // next: for older items (use max_id with the nextCursor from Bluesky)
+  final prevParams = Map<String, String>.from(requestUri.queryParameters)
+    ..['min_id'] = highestID.toString()
+    ..remove('max_id')
+    ..remove('cursor');
+  
+  // Use the nextCursor from Bluesky as max_id for the next page
+  // This ensures proper pagination with Bluesky's cursor-based system
+  final nextParams = Map<String, String>.from(requestUri.queryParameters)
+    ..remove('min_id')
+    ..remove('cursor');
+  
+  // Only add max_id if we have a valid nextCursor
+  if (nextCursor.isNotEmpty) {
+    nextParams['max_id'] = nextCursor;
+  } else {
+    // Fallback to using the lowest ID if no cursor available
+    nextParams['max_id'] = lowestID.toString();
+  }
+
+  final prevURI = requestUri.replace(queryParameters: prevParams);
+  final nextURI = requestUri.replace(queryParameters: nextParams);
 
   return {'Link': '<$nextURI>; rel="next", <$prevURI>; rel="prev"'};
 }

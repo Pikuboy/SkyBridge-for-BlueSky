@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
@@ -31,7 +30,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final postRecord = await db.postRecord.findUnique(
     where: PostRecordWhereUniqueInput(id: idNumber),
   );
-  if (postRecord == null) Response(statusCode: HttpStatus.notFound);
+  if (postRecord == null) return Response(statusCode: HttpStatus.notFound);
 
   // Get the post from bluesky, we assume we already know the post exists
   // and don't bother adding to the database or anything.
@@ -47,9 +46,6 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final processedPost = await processParentPosts(bluesky, [mastodonPost]);
 
   if (context.request.method == HttpMethod.get) {
-    // DEBUG: log the full JSON response for video debugging.
-    final jsonBody = jsonEncode(processedPost.first.toJson());
-    print('[DEBUG statuses/] response: $jsonBody');
     return threadedJsonResponse(
       body: processedPost.first,
     );

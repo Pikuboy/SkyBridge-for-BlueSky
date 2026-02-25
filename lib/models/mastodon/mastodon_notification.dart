@@ -41,128 +41,122 @@ class MastodonNotification {
 
     // Find the appropriate record for each notification.
     for (final notification in notifs) {
-      final unknownRecord = notification.record ?? {};
+      try {
+        final unknownRecord = notification.record ?? {};
 
-      switch (notification.reason.name) {
-        case 'repost':
-        case 'like':
-          // The subject of the like/repost is our post URI.
-          final subject = unknownRecord['subject'] as Map<String, dynamic>?;
-          if (subject != null) {
-            final uriString = subject['uri'] as String?;
-            if (uriString != null) {
-              final uri = atp.AtUri.parse(uriString);
-              pairs[notification] = uri;
-              if (!postUris.contains(uri)) postUris.add(uri);
+        switch (notification.reason.name) {
+          case 'repost':
+          case 'like':
+            final subject = unknownRecord['subject'] as Map<String, dynamic>?;
+            if (subject != null) {
+              final uriString = subject['uri'] as String?;
+              if (uriString != null) {
+                final uri = atp.AtUri.parse(uriString);
+                pairs[notification] = uri;
+                if (!postUris.contains(uri)) postUris.add(uri);
+              } else {
+                pairs[notification] = null;
+              }
             } else {
               pairs[notification] = null;
             }
-          } else {
-            pairs[notification] = null;
-          }
-          break;
 
-        case 'reply':
-          // The notification URI is the reply post itself.
-          final uri = notification.uri;
-          pairs[notification] = uri;
-          if (!postUris.contains(uri)) postUris.add(uri);
-
-          // Also fetch the parent post to set inReplyToId.
-          try {
-            final record = bsky.PostRecord.fromJson(unknownRecord);
-            final reply = record.reply;
-            if (reply != null) {
-              if (!postUris.contains(reply.parent.uri)) {
-                postUris.add(reply.parent.uri);
+          case 'reply':
+            final uri = notification.uri;
+            pairs[notification] = uri;
+            if (!postUris.contains(uri)) postUris.add(uri);
+            try {
+              final record = bsky.PostRecord.fromJson(unknownRecord);
+              final reply = record.reply;
+              if (reply != null) {
+                if (!postUris.contains(reply.parent.uri)) {
+                  postUris.add(reply.parent.uri);
+                }
               }
-            }
-          } catch (_) {}
-          break;
+            } catch (_) {}
 
-        case 'quote':
-          // A quote post is a mention-type notification. The notification URI
-          // is the quote post itself.
-          final uri = notification.uri;
-          pairs[notification] = uri;
-          if (!postUris.contains(uri)) postUris.add(uri);
-          break;
+          case 'quote':
+            final uri = notification.uri;
+            pairs[notification] = uri;
+            if (!postUris.contains(uri)) postUris.add(uri);
 
-        case 'mention':
-          // Direct @-mention notification.
-          final uri = notification.uri;
-          pairs[notification] = uri;
-          if (!postUris.contains(uri)) postUris.add(uri);
-          break;
+          case 'mention':
+            final uri = notification.uri;
+            pairs[notification] = uri;
+            if (!postUris.contains(uri)) postUris.add(uri);
 
-        case 'follow':
-          // Follows don't have an attached post.
-          pairs[notification] = null;
-          break;
+          case 'follow':
+            pairs[notification] = null;
 
-        default:
-          // Unknown notification type – store null URI to avoid crashing.
-          pairs[notification] = null;
-          break;
+          default:
+            pairs[notification] = null;
+        }
+      } catch (e) {
+        // If we can't parse a notification's record, skip its post but keep it.
+        print('Notifications: skipping URI parse for ${notification.cid} — $e');
+        pairs[notification] = null;
       }
     }
 
-    // Fetch all required posts in efficient chunks (Bluesky limits 25/req).
+    // Fetch all required posts in efficient chunks.
     final posts = await chunkResults<bsky.Post, atp.AtUri>(
       items: postUris,
       callback: (chunk) async {
         try {
           final response = await bluesky.feed.getPosts(uris: chunk);
           return response.data.posts;
-        } catch (_) {
+        } catch (e) {
+          print('Notifications: getPosts chunk failed — $e');
           return [];
         }
       },
     );
 
-    // Convert the fetched posts to Mastodon posts.
-    final mastodonPosts = await Future.wait(
-      posts.map(MastodonPost.fromBlueSkyPost),
-    );
+    // Convert posts to Mastodon format, one by one with isolation.
+    final mastodonPosts = <MastodonPost>[];
+    for (final post in posts) {
+      try {
+        mastodonPosts.add(await MastodonPost.fromBlueSkyPost(post));
+      } catch (e) {
+        print('Notifications: skipping post conversion ${post.uri} — $e');
+      }
+    }
 
     // Resolve parent posts for replies.
     final processedPosts = await processParentPosts(bluesky, mastodonPosts);
 
-    // Build each individual notification.
+    // Build each notification individually, skipping failures.
     final notifications = <MastodonNotification>[];
 
-    Future<void> constructNotification(
-      bsky.Notification notification,
-      atp.AtUri? uri,
-    ) async {
-      final record = await notificationToDatabase(notification);
+    for (final entry in pairs.entries) {
+      final notification = entry.key;
+      final uri = entry.value;
+      try {
+        final record = await databaseTransaction(
+          () => notificationToDatabase(notification),
+        );
 
-      final post = uri != null
-          ? processedPosts.firstWhereOrNull(
-              (p) => p.bskyUri.toString() == uri.toString(),
-            )
-          : null;
+        final post = uri != null
+            ? processedPosts.firstWhereOrNull(
+                (p) => p.bskyUri.toString() == uri.toString(),
+              )
+            : null;
 
-      final type = NotificationType.fromBluesky(notification.reason.name);
+        final type = NotificationType.fromBluesky(notification.reason.name);
 
-      notifications.add(
-        MastodonNotification(
-          id: record.id.toString(),
-          type: type,
-          createdAt: notification.indexedAt.toUtc(),
-          account: await MastodonAccount.fromActor(notification.author),
-          status: post,
-        ),
-      );
+        notifications.add(
+          MastodonNotification(
+            id: record.id.toString(),
+            type: type,
+            createdAt: notification.indexedAt.toUtc(),
+            account: await MastodonAccount.fromActor(notification.author),
+            status: post,
+          ),
+        );
+      } catch (e) {
+        print('Notifications: skipping notification ${notification.cid} — $e');
+      }
     }
-
-    await databaseTransaction(() async {
-      final futures = <Future<void>>[];
-      pairs.forEach((notification, uri) {
-        futures.add(constructNotification(notification, uri));
-      });
-      await Future.wait(futures);
-    });
 
     // Sort newest-first.
     notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -239,8 +233,9 @@ enum NotificationType {
     'repost': NotificationType.reblog,
     'follow': NotificationType.follow,
     'reply': NotificationType.mention,
-    'quote': NotificationType.mention, // quote posts → mention
+    'quote': NotificationType.mention,
     'mention': NotificationType.mention,
+    'starterpack-joined': NotificationType.follow,
   };
 
   /// Types of notifications that have posts attached.

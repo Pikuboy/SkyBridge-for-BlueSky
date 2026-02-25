@@ -35,7 +35,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     where: UserRecordWhereUniqueInput(id: idNumber),
   );
   final did = record?.did;
-  if (did == null) Response(statusCode: HttpStatus.notFound);
+  if (did == null) return Response(statusCode: HttpStatus.notFound);
 
   final profile = await bluesky.actor.getProfile(actor: did!);
 

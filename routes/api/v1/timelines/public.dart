@@ -31,10 +31,13 @@ Future<Response> onRequest(RequestContext context) async {
     const whatsHotUri =
         'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
 
+    // Support both max_id and cursor for pagination
+    final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
+
     final feed = await bluesky.feed.getFeed(
       generatorUri: at.AtUri.parse(whatsHotUri),
       limit: encodedParams.limit.clamp(1, 40),
-      cursor: encodedParams.cursor,
+      cursor: paginationCursor,
     );
 
     nextCursor = feed.data.cursor;
@@ -47,9 +50,12 @@ Future<Response> onRequest(RequestContext context) async {
     // Fallback: if the popular feed is unavailable, try the home timeline.
     print('Public timeline fallback to home: $e');
     try {
+      // Support both max_id and cursor for pagination
+      final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
+      
       final feed = await bluesky.feed.getTimeline(
         limit: encodedParams.limit.clamp(1, 40),
-        cursor: encodedParams.cursor,
+        cursor: paginationCursor,
       );
       nextCursor = feed.data.cursor;
       posts = await databaseTransaction(() async {

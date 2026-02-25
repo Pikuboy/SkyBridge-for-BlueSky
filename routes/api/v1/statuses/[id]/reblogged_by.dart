@@ -34,7 +34,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final postRecord = await db.postRecord.findUnique(
     where: PostRecordWhereUniqueInput(id: idNumber),
   );
-  if (postRecord == null) Response(statusCode: HttpStatus.notFound);
+  if (postRecord == null) return Response(statusCode: HttpStatus.notFound);
 
   final response = await bluesky.feed.getRepostedBy(
     uri: at.AtUri.parse(postRecord!.uri),
