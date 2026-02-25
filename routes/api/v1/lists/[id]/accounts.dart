@@ -32,7 +32,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final record = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(id: idNumber),
   );
-  if (record == null) Response(statusCode: HttpStatus.notFound);
+  if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   // Get up to date profile information and convert it to a [MastodonAccount].
   final response = await bluesky.actor.getProfile(actor: record!.did);
