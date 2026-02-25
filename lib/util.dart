@@ -270,9 +270,29 @@ Map<String, String> generatePaginationHeaders<T>({
   required String nextCursor,
   required BigInt Function(T) getId,
 }) {
-  final highestID = items.map(getId).reduce((a, b) => a > b ? a : b);
-  final prevURI = requestUri.replace(queryParameters: {'min_id': highestID.toString()});
-  final nextURI = requestUri.replace(queryParameters: {'cursor': nextCursor});
+  if (items.isEmpty) {
+    return {};
+  }
+
+  final ids = items.map(getId).toList();
+  final highestID = ids.reduce((a, b) => a > b ? a : b);
+  final lowestID = ids.reduce((a, b) => a < b ? a : b);
+
+  // Build pagination links
+  // prev: for newer items (use min_id to get items after the highest ID)
+  // next: for older items (use max_id to get items before the lowest ID)
+  final prevParams = Map<String, String>.from(requestUri.queryParameters)
+    ..['min_id'] = highestID.toString()
+    ..remove('max_id')
+    ..remove('cursor');
+  
+  final nextParams = Map<String, String>.from(requestUri.queryParameters)
+    ..['max_id'] = nextCursor.isNotEmpty ? nextCursor : lowestID.toString()
+    ..remove('min_id')
+    ..remove('cursor');
+
+  final prevURI = requestUri.replace(queryParameters: prevParams);
+  final nextURI = requestUri.replace(queryParameters: nextParams);
 
   return {'Link': '<$nextURI>; rel="next", <$prevURI>; rel="prev"'};
 }

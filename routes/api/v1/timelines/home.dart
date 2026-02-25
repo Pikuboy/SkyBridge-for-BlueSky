@@ -75,9 +75,12 @@ Future<Response> onRequest(RequestContext context) async {
     nextCursor = prevCursor;
   } else {
     // Make a single, standard request
+    // Support both max_id and cursor for pagination
+    final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
+    
     final feed = await bluesky.feed.getTimeline(
       limit: encodedParams.limit,
-      cursor: encodedParams.cursor,
+      cursor: paginationCursor,
     );
 
     allPosts = await databaseTransaction(() async {

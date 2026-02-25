@@ -20,7 +20,11 @@ Future<Response> onRequest(RequestContext context) async {
   final params = context.request.uri.queryParameters;
   final limitRaw = int.tryParse(params['limit'] ?? '20') ?? 20;
   final limit = limitRaw.clamp(1, 40);
-  final cursor = params['max_id'];
+  
+  // Support both max_id and cursor for pagination
+  // max_id is used for fetching older items (standard Mastodon API)
+  // cursor is used internally by Bluesky
+  final cursor = params['max_id'] ?? params['cursor'];
 
   try {
     final response = await bluesky.feed.getActorLikes(

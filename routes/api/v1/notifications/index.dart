@@ -26,9 +26,12 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
   final limit = encodedParams.limit.clamp(1, 100);
 
+  // Support both cursor and max_id for pagination
+  final cursor = encodedParams.cursor ?? params['max_id'];
+
   final response = await bluesky.notification.listNotifications(
     limit: limit,
-    cursor: encodedParams.cursor,
+    cursor: cursor,
   );
   final nextCursor = response.data.cursor;
 
