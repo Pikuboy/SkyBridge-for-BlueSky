@@ -128,18 +128,17 @@ Future<List<MastodonPost>> traverseReplies(
 ) async {
   final result = <MastodonPost>[];
   
-  // Utiliser .when() pour accéder au variant
-  await view.when(
+  await view.map(
     threadViewPost: (threadViewPost) async {
-      final currentPost = await MastodonPost.fromBlueSkyPost(threadViewPost.post);
+      final currentPost = await MastodonPost.fromBlueSkyPost(threadViewPost.data.post);
       
       // Skip the first post.
       if (depth > 0) result.add(currentPost);
       
       // We don't want to traverse too deep, 6 is just a number I pulled out
       // of thin air. Need to look into how deep Bluesky goes.
-      if (depth < 6 && threadViewPost.replies != null) {
-        for (final reply in threadViewPost.replies!) {
+      if (depth < 6 && threadViewPost.data.replies != null) {
+        for (final reply in threadViewPost.data.replies!) {
           // Recursively traverse each reply
           final list = await traverseReplies(reply, depth + 1);
           for (final childPost in list) {
@@ -174,10 +173,10 @@ Future<List<MastodonPost>> traverseParents(
 ) async {
   final result = <MastodonPost>[];
   
-  await view.when(
+  await view.map(
     threadViewPost: (threadViewPost) async {
-      if (threadViewPost.parent != null) {
-        final parent = threadViewPost.parent!;
+      if (threadViewPost.data.parent != null) {
+        final parent = threadViewPost.data.parent!;
         
         // We don't want to traverse too deep, 6 is just a number I pulled out
         // of thin air. Need to look into how deep Bluesky goes.
@@ -189,9 +188,9 @@ Future<List<MastodonPost>> traverseParents(
         }
         
         // Get the current parent post
-        await parent.when(
+        await parent.map(
           threadViewPost: (parentThreadView) async {
-            final currentPost = await MastodonPost.fromBlueSkyPost(parentThreadView.post);
+            final currentPost = await MastodonPost.fromBlueSkyPost(parentThreadView.data.post);
             result.add(currentPost);
           },
           notFoundPost: (_) {},
