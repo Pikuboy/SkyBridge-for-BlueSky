@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:atproto/core.dart' as atp;
+import 'package:bluesky/atproto.dart' as batp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -17,69 +18,63 @@ final httpClient = http.Client();
 /// Resolves the PDS URL for a given handle by querying the AT Protocol
 /// identity resolution endpoint.
 ///
-/// Returns the PDS service URL (e.g. "https://eurosky.social") or falls back
-/// to "https://bsky.social" if resolution fails.
-Future<String> resolvePdsUrl(String identifier) async {
+/// Returns the PDS host (e.g. "eurosky.social") without scheme, suitable for
+/// passing to batp.createSession/refreshSession. Falls back to "bsky.social".
+Future<String> resolvePdsHost(String identifier) async {
   try {
-    // Strip leading @ if present
+    // Strip leading @ if present.
     final handle = identifier.startsWith('@')
         ? identifier.substring(1)
         : identifier;
 
-    // Only handles (not emails) support PDS resolution via DNS/well-known.
-    // For email identifiers we fall back to bsky.social.
+    // Email identifiers can't be resolved to a PDS — fall back.
     if (handle.contains('@') && !handle.startsWith('did:')) {
-      return 'https://bsky.social';
+      return 'bsky.social';
     }
 
     String did = handle;
 
     // If we have a handle (not a DID), resolve it to a DID first via
-    // the public Bluesky API (this works regardless of PDS).
+    // the public Bluesky AppView (works regardless of PDS).
     if (!handle.startsWith('did:')) {
       final resolveUrl = Uri.parse(
         'https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle'
         '?handle=$handle',
       );
       final resolveResponse = await httpClient.get(resolveUrl);
-      if (resolveResponse.statusCode != 200) {
-        return 'https://bsky.social';
-      }
-      final resolveBody =
-          jsonDecode(resolveResponse.body) as Map<String, dynamic>;
-      did = resolveBody['did'] as String;
+      if (resolveResponse.statusCode != 200) return 'bsky.social';
+      final body = jsonDecode(resolveResponse.body) as Map<String, dynamic>;
+      did = body['did'] as String;
     }
 
-    // For did:plc DIDs, fetch the DID document from the PLC directory.
+    // For did:plc, fetch the DID document from the PLC directory to find the PDS.
     if (did.startsWith('did:plc:')) {
       final didDocUrl = Uri.parse('https://plc.directory/$did');
       final didDocResponse = await httpClient.get(didDocUrl);
-      if (didDocResponse.statusCode != 200) {
-        return 'https://bsky.social';
-      }
-      final didDoc =
-          jsonDecode(didDocResponse.body) as Map<String, dynamic>;
+      if (didDocResponse.statusCode != 200) return 'bsky.social';
+      final didDoc = jsonDecode(didDocResponse.body) as Map<String, dynamic>;
       final services = didDoc['service'] as List<dynamic>?;
       if (services != null) {
         for (final service in services) {
           final svc = service as Map<String, dynamic>;
           if (svc['id'] == '#atproto_pds' ||
               svc['type'] == 'AtprotoPersonalDataServer') {
-            return svc['serviceEndpoint'] as String;
+            // Strip the https:// scheme — batp expects just the host.
+            final endpoint = svc['serviceEndpoint'] as String;
+            return endpoint.replaceFirst('https://', '').replaceFirst('http://', '');
           }
         }
       }
     }
 
-    // For did:web DIDs, the PDS is derivable from the DID itself.
+    // For did:web, the host is encoded in the DID itself.
     if (did.startsWith('did:web:')) {
-      final host = did.substring('did:web:'.length);
-      return 'https://$host';
+      return did.substring('did:web:'.length);
     }
   } catch (e) {
     print('PDS resolution failed for $identifier: $e');
   }
-  return 'https://bsky.social';
+  return 'bsky.social';
 }
 
 /// Takes an IP address and ensures that authentication attempts are not
@@ -201,8 +196,8 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
     final json = jsonDecode(record.session) as Map<String, dynamic>;
     final session = atp.Session.fromJson(json);
 
-    // Retrieve the stored PDS URL for this session.
-    final pdsUrl = record.pdsUrl;
+    // Retrieve the stored PDS host for this session.
+    final pdsHost = record.pdsUrl;
 
     final accessJwt =
         JWT.decode(session.accessJwt).payload as Map<String, dynamic>;
@@ -229,7 +224,7 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
         final newSession = await createBlueskySession(
           identifier: token.identifier,
           appPassword: token.appPassword,
-          pdsUrl: token.pdsUrl,
+          pdsHost: token.pdsUrl,
         );
 
         // Credentials are just straight up invalid. Bail.
@@ -245,33 +240,24 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
       } else {
         // The access token is expired but we have a valid refresh token,
         // try to refresh the session using the correct PDS.
-        final refreshedSession = await refreshBlueskySession(
+        final refreshedSession = await batp.refreshSession(
           refreshJwt: session.refreshJwt,
-          pdsUrl: pdsUrl,
+          service: pdsHost,
         );
-
-        if (refreshedSession == null) {
-          // Refresh failed, fall back to full re-auth.
-          return await createBlueskySession(
-            identifier: token.identifier,
-            appPassword: token.appPassword,
-            pdsUrl: pdsUrl,
-          );
-        }
 
         // Update the session in the database.
         await db.sessionRecord.update(
           where: SessionRecordWhereUniqueInput(
-            did: refreshedSession.did,
+            did: refreshedSession.data.did,
           ),
           data: SessionRecordUpdateInput(
             session: StringFieldUpdateOperationsInput(
-              set: jsonEncode(refreshedSession.toJson()),
+              set: jsonEncode(refreshedSession.data.toJson()),
             ),
           ),
         );
 
-        return refreshedSession;
+        return refreshedSession.data;
       }
     }
 
@@ -284,7 +270,7 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
     final newSession = await createBlueskySession(
       identifier: token.identifier,
       appPassword: token.appPassword,
-      pdsUrl: token.pdsUrl,
+      pdsHost: token.pdsUrl,
     );
 
     // Credentials are just straight up invalid. Bail.
@@ -344,81 +330,47 @@ OAuthAccessToken? validateBearerToken(String? tokenString) {
 Map<String, atp.Session> sessions = {};
 
 /// Create a Bluesky session with the given credentials and store
-/// it in [sessions].
+/// it in the database.
 Future<atp.Session?> createBlueskySession({
   required String identifier,
   required String appPassword,
-  String? pdsUrl,
+  String? pdsHost,
 }) async {
   try {
-    // If no PDS URL is provided, resolve it from the handle.
-    final resolvedPdsUrl = pdsUrl ?? await resolvePdsUrl(identifier);
-    print('Creating session for $identifier using PDS: $resolvedPdsUrl');
+    // If no PDS host is provided, resolve it from the handle.
+    final resolvedHost = pdsHost ?? await resolvePdsHost(identifier);
+    print('Creating session for $identifier using PDS: $resolvedHost');
 
-    // Call com.atproto.server.createSession directly on the correct PDS.
-    final url = Uri.parse('$resolvedPdsUrl/xrpc/com.atproto.server.createSession');
-    final response = await httpClient.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'identifier': identifier, 'password': appPassword}),
+    // Try to authenticate using the resolved PDS host.
+    final session = await batp.createSession(
+      identifier: identifier,
+      password: appPassword,
+      service: resolvedHost,
     );
 
-    if (response.statusCode != 200) {
-      print('createSession failed: ${response.statusCode} ${response.body}');
-      return null;
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final session = atp.Session.fromJson(json);
-
-    // Store the session and PDS URL in the database for later.
+    // Store the session and PDS host in the database for later.
     await db.sessionRecord.upsert(
       where: SessionRecordWhereUniqueInput(
-        did: session.did,
+        did: session.data.did,
       ),
       create: SessionRecordCreateInput(
-        did: session.did,
-        session: jsonEncode(json),
-        pdsUrl: resolvedPdsUrl,
+        did: session.data.did,
+        session: jsonEncode(session.data.toJson()),
+        pdsUrl: resolvedHost,
       ),
       update: SessionRecordUpdateInput(
         session: StringFieldUpdateOperationsInput(
-          set: jsonEncode(json),
+          set: jsonEncode(session.data.toJson()),
         ),
         pdsUrl: StringFieldUpdateOperationsInput(
-          set: resolvedPdsUrl,
+          set: resolvedHost,
         ),
       ),
     );
-    print('New session created for ${session.did}');
-    return session;
+    print('New session created for ${session.data.did}');
+    return session.data;
   } catch (e) {
     print('createBlueskySession error: $e');
-    return null;
-  }
-}
-
-/// Refresh a Bluesky session using the refresh JWT and the stored PDS URL.
-Future<atp.Session?> refreshBlueskySession({
-  required String refreshJwt,
-  required String pdsUrl,
-}) async {
-  try {
-    final url = Uri.parse('$pdsUrl/xrpc/com.atproto.server.refreshSession');
-    final response = await httpClient.post(
-      url,
-      headers: {'Authorization': 'Bearer $refreshJwt'},
-    );
-
-    if (response.statusCode != 200) {
-      print('refreshSession failed: ${response.statusCode} ${response.body}');
-      return null;
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return atp.Session.fromJson(json);
-  } catch (e) {
-    print('refreshBlueskySession error: $e');
     return null;
   }
 }
