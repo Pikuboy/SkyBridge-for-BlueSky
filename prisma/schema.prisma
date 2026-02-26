@@ -3,6 +3,7 @@
 
 generator client {
   provider      = "dart run orm"
+  output        = "../lib/src/generated/prisma"
   engineType    = "binary"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }

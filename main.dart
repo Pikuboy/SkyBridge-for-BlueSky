@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:orm/logger.dart';
 import 'package:shelf_rate_limiter/shelf_rate_limiter.dart';
 import 'package:sky_bridge/crypto.dart';
 import 'package:sky_bridge/database.dart';
@@ -72,7 +71,6 @@ Future<void> init(InternetAddress ip, int port) async {
 
   // Open our database connections.
   db = PrismaClient(
-    event: [Event.query],
     datasources: Datasources(
       db: '$databaseUrl?connection_limit=1',
     ),

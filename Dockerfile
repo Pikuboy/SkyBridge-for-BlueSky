@@ -20,14 +20,9 @@ RUN set -uex; \
     apt-get install -y nodejs
 
 RUN npm i prisma@5
-# Remove old generated files that may be incompatible
-RUN rm -f lib/src/generated/prisma/prisma_client.dart lib/src/generated/prisma/prisma_client.g.dart
+# Remove ALL generated files before regenerating to avoid conflicts
+RUN rm -rf lib/src/generated/prisma
 RUN npx prisma generate
-
-# Remove the stale json_serializable-generated part file (orm 4.x generates
-# a self-contained client with no `part` directive; keeping the old .g.dart
-# causes a "part-of" orphan error at compile time).
-RUN rm -f lib/src/generated/prisma/prisma_client.g.dart
 
 # Generate a production build.
 RUN dart pub global activate dart_frog_cli
