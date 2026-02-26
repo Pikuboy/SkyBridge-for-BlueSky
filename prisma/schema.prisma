@@ -68,6 +68,7 @@ model SessionRecord {
   id Int @id @default(autoincrement())
   did String @unique
   session String
+  pds_url String @default("https://bsky.social")
 }
 
 model AuthRateLimit {

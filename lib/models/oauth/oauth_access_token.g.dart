@@ -11,6 +11,7 @@ OAuthAccessToken _$OAuthAccessTokenFromJson(Map<String, dynamic> json) =>
       identifier: json['identifier'] as String,
       did: json['did'] as String,
       appPassword: json['app_password'] as String,
+      pdsUrl: json['pds_url'] as String? ?? 'https://bsky.social',
       preferences: json['preferences'] == null
           ? const SkybridgePreferences()
           : SkybridgePreferences.fromJson(
@@ -22,5 +23,6 @@ Map<String, dynamic> _$OAuthAccessTokenToJson(OAuthAccessToken instance) =>
       'identifier': instance.identifier,
       'did': instance.did,
       'app_password': instance.appPassword,
+      'pds_url': instance.pdsUrl,
       'preferences': instance.preferences,
     };

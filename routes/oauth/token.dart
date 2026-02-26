@@ -63,9 +63,11 @@ Future<Response> onRequest(RequestContext context) async {
 
           // Attempt to sign in with the provided credentials.
           // If successful a session is stored globally in [sessions].
+          final pdsUrl = await resolvePdsUrl(code.identifier);
           final session = await createBlueskySession(
             identifier: code.identifier,
             appPassword: code.appPassword,
+            pdsUrl: pdsUrl,
           );
 
           // Credentials don't match a bluesky account, time to bail.
@@ -78,6 +80,7 @@ Future<Response> onRequest(RequestContext context) async {
             identifier: code.identifier,
             did: session.did,
             appPassword: code.appPassword,
+            pdsUrl: pdsUrl,
             preferences: SkybridgePreferences(
               showRepliesInHome: code.showRepliesInHome,
             ),
