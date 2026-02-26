@@ -128,26 +128,20 @@ Future<List<MastodonPost>> traverseReplies(
 ) async {
   final result = <MastodonPost>[];
   
-  // Utiliser l'extension au lieu de .map()
-  if (view.isThreadViewPost) {
-    final threadView = view.threadViewPost!;
-    final currentPost = await MastodonPost.fromBlueSkyPost(threadView.post);
-    
-    // Skip the first post.
-    if (depth > 0) result.add(currentPost);
-    
-    // We don't want to traverse too deep, 6 is just a number I pulled out
-    // of thin air. Need to look into how deep Bluesky goes.
-    if (depth < 6 && threadView.replies != null) {
-      for (final reply in threadView.replies!) {
-        if (reply.isThreadViewPost) {
-          // Create a UFeedGetPostThreadThread from the reply
-          final replyThread = UFeedGetPostThreadThread.threadViewPost(
-            data: reply.threadViewPost!
-          );
-          // Step down and recursively traverse the replies.
-          // TODO(videah): Handle this better asynchronously.
-          final list = await traverseReplies(replyThread, depth + 1);
+  // Utiliser .when() pour accéder au variant
+  await view.when(
+    threadViewPost: (threadViewPost) async {
+      final currentPost = await MastodonPost.fromBlueSkyPost(threadViewPost.post);
+      
+      // Skip the first post.
+      if (depth > 0) result.add(currentPost);
+      
+      // We don't want to traverse too deep, 6 is just a number I pulled out
+      // of thin air. Need to look into how deep Bluesky goes.
+      if (depth < 6 && threadViewPost.replies != null) {
+        for (final reply in threadViewPost.replies!) {
+          // Recursively traverse each reply
+          final list = await traverseReplies(reply, depth + 1);
           for (final childPost in list) {
             if (childPost.inReplyToId == null) {
               // We have a dangling reply which means they are replying to
@@ -160,8 +154,11 @@ Future<List<MastodonPost>> traverseReplies(
           }
         }
       }
-    }
-  }
+    },
+    notFoundPost: (_) {},
+    blockedPost: (_) {},
+    unknown: (_) {},
+  );
 
   return result;
 }
@@ -177,33 +174,36 @@ Future<List<MastodonPost>> traverseParents(
 ) async {
   final result = <MastodonPost>[];
   
-  if (view.isThreadViewPost) {
-    final threadView = view.threadViewPost!;
-    
-    if (threadView.parent != null) {
-      final parent = threadView.parent!;
-      
-      if (parent.isThreadViewPost) {
-        // Create a UFeedGetPostThreadThread from the parent
-        final parentThread = UFeedGetPostThreadThread.threadViewPost(
-          data: parent.threadViewPost!
-        );
+  await view.when(
+    threadViewPost: (threadViewPost) async {
+      if (threadViewPost.parent != null) {
+        final parent = threadViewPost.parent!;
         
         // We don't want to traverse too deep, 6 is just a number I pulled out
         // of thin air. Need to look into how deep Bluesky goes.
         if (depth < 6) {
-          final list = await traverseParents(parentThread, depth + 1);
+          final list = await traverseParents(parent, depth + 1);
           for (final childPost in list) {
             result.add(childPost);
           }
         }
         
-        // Get the current depth post and add it to the list.
-        final currentPost = await MastodonPost.fromBlueSkyPost(parent.threadViewPost!.post);
-        result.add(currentPost);
+        // Get the current parent post
+        await parent.when(
+          threadViewPost: (parentThreadView) async {
+            final currentPost = await MastodonPost.fromBlueSkyPost(parentThreadView.post);
+            result.add(currentPost);
+          },
+          notFoundPost: (_) {},
+          blockedPost: (_) {},
+          unknown: (_) {},
+        );
       }
-    }
-  }
+    },
+    notFoundPost: (_) {},
+    blockedPost: (_) {},
+    unknown: (_) {},
+  );
 
   return result;
 }
