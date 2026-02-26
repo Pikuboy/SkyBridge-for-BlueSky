@@ -1,8 +1,14 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
+import 'package:bluesky/app_bsky_embed_images.dart'
+    show EmbedImages, EmbedImagesImage;
+import 'package:bluesky/app_bsky_feed_defs.dart' show Post;
+import 'package:bluesky/app_bsky_feed_post.dart'
+    show ReplyRef, UFeedPostEmbed;
 import 'package:bluesky/app_bsky_richtext_facet.dart' show RichtextFacet;
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/com_atproto_repo_strongref.dart' show RepoStrongRef;
 import 'package:collection/collection.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -36,7 +42,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   var facets = <Map<String, dynamic>>[];
 
   // Handle reply threading.
-  bsky.ReplyRef? postReplyRef;
+  ReplyRef? postReplyRef;
   final replyId = form.inReplyToId;
   if (replyId != null) {
     final record = await db.postRecord.findUnique(
@@ -45,7 +51,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
     if (record == null) return Response(statusCode: HttpStatus.notFound);
 
     final uri = at.AtUri.parse(record.uri);
-    bsky.Post? parentPost;
+    Post? parentPost;
 
     for (var i = 0; i < 3; i++) {
       try {
@@ -59,9 +65,10 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
     if (parentPost == null) return Response(statusCode: HttpStatus.notFound);
 
-    final parentRef = at.StrongRef(cid: parentPost.cid, uri: parentPost.uri);
+    final parentRef =
+        RepoStrongRef(cid: parentPost.cid, uri: parentPost.uri);
     final reply = parentPost.record.reply;
-    postReplyRef = bsky.ReplyRef(
+    postReplyRef = ReplyRef(
       root: reply != null ? reply.root : parentRef,
       parent: parentRef,
     );
@@ -75,7 +82,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
   // Build image embed (video not supported in this version).
   final mediaIds = form.mediaIds;
-  final images = <bsky.Image>[];
+  final images = <EmbedImagesImage>[];
   if (mediaIds != null) {
     for (final idString in mediaIds) {
       final id = BigInt.parse(idString);
@@ -83,15 +90,19 @@ Future<Response> onRequest<T>(RequestContext context) async {
         where: MediaRecordWhereUniqueInput(id: id),
       );
       if (record == null) continue;
-      // Skip video blobs — video embedding not supported in bluesky 0.15.x.
+      // Skip video blobs — video embedding not supported.
       if (record.mimeType.toLowerCase().startsWith('video/')) continue;
-      images.add(bsky.Image(alt: record.description, image: record.toBlob()));
+      images.add(
+        EmbedImagesImage(alt: record.description, image: record.toBlob()),
+      );
     }
   }
 
   final embed = images.isEmpty
       ? null
-      : bsky.Embed.images(data: bsky.EmbedImages(images: images));
+      : UFeedPostEmbed.embedImages(
+          data: EmbedImages(images: images),
+        );
 
   // Post to Bluesky.
   final newPost = await bluesky.feed.post.create(
@@ -103,7 +114,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   );
 
   // Fetch the newly created post, retrying up to 3 times.
-  bsky.Post? postData;
+  Post? postData;
   for (var i = 0; i < 3; i++) {
     try {
       final response = await bluesky.feed.getPosts(uris: [newPost.data.uri]);
