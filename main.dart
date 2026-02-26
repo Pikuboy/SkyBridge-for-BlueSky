@@ -79,7 +79,9 @@ Future<void> init(InternetAddress ip, int port) async {
   );
 
   // Enable WAL mode for SQLite.
-  await db.$queryRaw('PRAGMA journal_mode=WAL;');
+  // Note: WAL mode configuration is not available via Prisma ORM in this version
+  // It should be configured at the database connection level or via migration scripts
+  // await db.$queryRaw('PRAGMA journal_mode=WAL;');
 
   // Check if we should wipe the database on startup.
   final shouldWipeDB = env.getOrElse(

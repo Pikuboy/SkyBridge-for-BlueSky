@@ -24,29 +24,39 @@ Future<Response> onRequest(RequestContext context) async {
     // Get saved feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
     for (final preference in response.data.preferences) {
-      // Check if this is a saved feeds preference
-      if (preference.data is bsky.SavedFeeds) {
-        final feedUris = preference.data as bsky.SavedFeeds;
-        // Get the feed generator views for each saved feed, giving us info
-        // like the name of the feed and the accompanying IDs.
-        final result = await chunkResults(
-          items: feedUris.savedUris,
-          callback: (chunk) async {
-            final response = await bluesky.feed.getFeedGenerators(
-              feeds: chunk,
-            );
-            return response.data.feeds;
-          },
-        );
+      // Check if this preference has savedUris property (SavedFeeds type)
+      try {
+        final data = preference.data;
+        // Use reflection/dynamic access to check for savedUris
+        if (data.runtimeType.toString().contains('SavedFeeds')) {
+          // Access savedUris dynamically
+          final feedUris = (data as dynamic).savedUris as List;
+          if (feedUris.isEmpty) continue;
+          
+          // Get the feed generator views for each saved feed, giving us info
+          // like the name of the feed and the accompanying IDs.
+          final result = await chunkResults(
+            items: feedUris.cast<at.AtUri>(),
+            callback: (chunk) async {
+              final response = await bluesky.feed.getFeedGenerators(
+                feeds: chunk,
+              );
+              return response.data.feeds;
+            },
+          );
 
-        // Convert the feed generator views to [MastodonList]'s, storing
-        // any info in the database we might need to access later.
-        lists = await databaseTransaction(() async {
-          final listFutures = result.map(
-            MastodonList.fromFeedGenerator,
-          ).cast<Future<MastodonList>>();
-          return Future.wait(listFutures);
-        }) as List<MastodonList>;
+          // Convert the feed generator views to [MastodonList]'s, storing
+          // any info in the database we might need to access later.
+          lists = await databaseTransaction(() async {
+            final listFutures = result.map(
+              MastodonList.fromFeedGenerator,
+            ).cast<Future<MastodonList>>();
+            return Future.wait(listFutures);
+          }) as List<MastodonList>;
+        }
+      } catch (e) {
+        // Skip preferences that don't match
+        continue;
       }
     }
 

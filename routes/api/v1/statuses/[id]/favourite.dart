@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/com_atproto_repo_strongref.dart' show RepoStrongRef;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
@@ -57,7 +58,9 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   );
 
   // Like the post now that we have everything in order.
-  await bluesky.feed.like.create(subject: post.cid, uri: post.uri);
+  // Create a strong ref with both cid and uri
+  final subject = RepoStrongRef(cid: post.cid, uri: post.uri);
+  await bluesky.feed.like.create(subject: subject);
   mastodonPost
     ..favourited = true
     ..favouritesCount += 1;
