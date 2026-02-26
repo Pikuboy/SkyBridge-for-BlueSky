@@ -8,6 +8,7 @@ COPY pubspec.* ./
 RUN dart pub get
 
 # Copy app source code and AOT compile it.
+# This includes lib/src/generated/prisma/ which is committed to git.
 COPY . .
 
 # Install Node.js LTS.
@@ -20,17 +21,14 @@ RUN set -uex; \
 
 RUN npm i prisma@5
 
-# Remove ALL generated files before regenerating to avoid conflicts
-RUN rm -rf lib/src/generated/prisma
+# Generate a production build.
+RUN dart pub global activate dart_frog_cli
+RUN dart pub global run dart_frog_cli:dart_frog build
 
-# Generate, build, and restore Prisma files all in ONE RUN to stay in same layer
-RUN npx prisma generate && \
-    cp -r lib/src/generated/prisma /tmp/prisma_generated && \
-    dart pub global activate dart_frog_cli && \
-    dart pub global run dart_frog_cli:dart_frog build && \
-    mkdir -p build/lib/src/generated/prisma && \
-    cp /tmp/prisma_generated/prisma_client.dart build/lib/src/generated/prisma/ && \
-    cp /tmp/prisma_generated/prisma_client.g.dart build/lib/src/generated/prisma/
+# Restore generated Prisma files into build/ after dart_frog bundling
+RUN mkdir -p build/lib/src/generated/prisma && \
+    cp lib/src/generated/prisma/prisma_client.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/prisma_client.g.dart build/lib/src/generated/prisma/
 
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
