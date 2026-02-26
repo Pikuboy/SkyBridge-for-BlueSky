@@ -3,7 +3,7 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_relationship.dart';
 import 'package:sky_bridge/models/params/relationship_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Find out whether a given account is followed, blocked, muted, etc.

@@ -77,7 +77,7 @@ Future<Response> onRequest(RequestContext context) async {
 
           final accessToken = OAuthAccessToken(
             identifier: code.identifier,
-            did: session.did,
+            did: session.did!,
             appPassword: code.appPassword,
             pdsUrl: pdsHost,
             preferences: SkybridgePreferences(

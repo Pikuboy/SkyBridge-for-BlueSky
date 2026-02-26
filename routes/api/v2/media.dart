@@ -30,7 +30,7 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   var fileBytes = Uint8List.fromList(await imageFile.readAsBytes());
-  final mimeType = imageFile.contentType.mimeType.toLowerCase();
+  final mimeType = imageFile.contentType.mimeType!.toLowerCase();
 
   // Detect the actual type from magic bytes.
   final extension = _detectExtension(fileBytes, mimeType);

@@ -3,7 +3,7 @@ import 'package:atproto/core.dart';
 import 'package:bluesky/app_bsky_embed_images.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
-import 'package:bluesky/app_bsky_feed_post.dart' show AppBskyFeedPost;
+import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:bluesky/com_atproto_repo_strongref.dart' show RepoStrongRef;
 import 'package:bluesky_text/bluesky_text.dart';
@@ -18,7 +18,10 @@ import 'package:sky_bridge/models/mastodon/mastodon_card.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_media_attachment.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_mention.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_tag.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:sky_bridge/src/generated/prisma/model.dart';
+import 'package:orm/orm.dart';
 import 'package:sky_bridge/util.dart';
 
 part 'mastodon_post.g.dart';
@@ -76,15 +79,16 @@ class MastodonPost {
     final post = view.post;
 
     // Determine if this is a repost.
-    final repost = view.reason?.map(
+    final repost = view.reason?.when(
       reasonRepost: (repost) => repost,
+      reasonPin: (_) => null,
       unknown: (_) => null,
     );
     final isRepost = repost != null;
 
     // Process facets such as mentions and links.
     // In bluesky 1.x, post.record is Map<String,dynamic> and must be decoded.
-    final postRecord = AppBskyFeedPost.fromJson(
+    final postRecord = FeedPostRecord.fromJson(
       post.record as Map<String, dynamic>,
     );
     final processed = await processFacets(
@@ -124,9 +128,9 @@ class MastodonPost {
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
-        embedded.media.mapOrNull(
-          imagesView: (media) {
-            for (final image in media.data.images) {
+        embedded.media.whenOrNull(
+          embedImagesView: (media) {
+            for (final image in media.images) {
               final attachment = MastodonMediaAttachment.fromEmbed(image);
               mediaAttachments.add(attachment);
             }
@@ -134,13 +138,13 @@ class MastodonPost {
         );
       } else {
         // Handle video embeds (app.bsky.embed.video#view) and any other
-        // embed types via the .map() union accessor.
-        // mapOrNull does not support async callbacks, so we extract the
+        // embed types via the .when() union accessor.
+        // whenOrNull does not support async callbacks, so we extract the
         // video data first and await outside the callback.
         dynamic videoEmbedData;
-        embed.mapOrNull(
-          videoView: (videoEmbed) {
-            videoEmbedData = videoEmbed.data;
+        embed.whenOrNull(
+          embedVideoView: (videoEmbed) {
+            videoEmbedData = videoEmbed;
           },
         );
         if (videoEmbedData != null) {
@@ -167,9 +171,9 @@ class MastodonPost {
       // the account that reposted it.
       id = (await repostToDatabase(view)).id;
 
-      account = await MastodonAccount.fromActor(repost.data.by.toActor());
+      account = await MastodonAccount.fromActorBasic(repost.by);
     } else {
-      account = await MastodonAccount.fromActor(post.author.toActor());
+      account = await MastodonAccount.fromActorBasic(post.author);
     }
 
     // Construct URL/URI
@@ -210,7 +214,7 @@ class MastodonPost {
         .toList();
 
     // First, take the labels and remove duplicate values.
-    final labelValues = post.labels?.map((label) => label.value).toSet();
+    final labelValues = post.labels?.map((label) => label.val).toSet();
 
     // Then all the labels, capitalize the first letter, and join them
     // with a comma.
@@ -258,9 +262,9 @@ class MastodonPost {
   }
 
   /// Converts a BlueSky post to a [MastodonPost].
-  static Future<MastodonPost> fromBlueSkyPost(post) async {
+  static Future<MastodonPost> fromBlueSkyPost(PostView post) async {
     final mediaAttachments = <MastodonMediaAttachment>[];
-    final account = await MastodonAccount.fromActor(post.author.toActor());
+    final account = await MastodonAccount.fromActorBasic(post.author);
 
     final baseUrl = env.getOrElse(
       'SKYBRIDGE_BASEURL',
@@ -283,9 +287,9 @@ class MastodonPost {
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
-        embedded.media.mapOrNull(
-          imagesView: (media) {
-            for (final image in media.data.images) {
+        embedded.media.whenOrNull(
+          embedImagesView: (media) {
+            for (final image in media.images) {
               final attachment = MastodonMediaAttachment.fromEmbed(image);
               mediaAttachments.add(attachment);
             }
@@ -293,13 +297,13 @@ class MastodonPost {
         );
       } else {
         // Handle video embeds (app.bsky.embed.video#view) and any other
-        // embed types via the .map() union accessor.
-        // mapOrNull does not support async callbacks, so we extract the
+        // embed types via the .when() union accessor.
+        // whenOrNull does not support async callbacks, so we extract the
         // video data first and await outside the callback.
         dynamic videoEmbedData;
-        embed.mapOrNull(
-          videoView: (videoEmbed) {
-            videoEmbedData = videoEmbed.data;
+        embed.whenOrNull(
+          embedVideoView: (videoEmbed) {
+            videoEmbedData = videoEmbed;
           },
         );
         if (videoEmbedData != null) {
@@ -314,7 +318,7 @@ class MastodonPost {
 
     // Process facets such as mentions and links.
     // In bluesky 1.x, post.record is Map<String,dynamic> and must be decoded.
-    final postRecord = AppBskyFeedPost.fromJson(
+    final postRecord = FeedPostRecord.fromJson(
       post.record as Map<String, dynamic>,
     );
     final processed = await processFacets(
@@ -363,7 +367,7 @@ class MastodonPost {
         .toList();
 
     // First, take the labels and remove duplicate values.
-    final labelValues = post.labels?.map((label) => label.value).toSet();
+    final labelValues = post.labels?.map((label) => label.val).toSet();
 
     // Then all the labels, capitalize the first letter, and join them
     // with a comma.
@@ -425,14 +429,14 @@ class MastodonPost {
       // In bluesky 1.x, the API is bluesky.feed.repost.create(subject: ...)
       await bluesky.feed.repost.create(
         subject: RepoStrongRef(
-          cid: postRecord.cid,
-          uri: atp.AtUri.parse(postRecord.uri),
+          cid: postRecord.cid!,
+          uri: atp.AtUri.parse(postRecord.uri!),
         ),
       );
 
       // Write the repost to the database.
       await databaseTransaction(() async {
-        repostRecord = await postRecord.repost(createdAt, postRecord.authorDid);
+        repostRecord = await postRecord.repost(createdAt, postRecord.authorDid!);
       });
 
       final repost = copyWith(

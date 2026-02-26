@@ -6,13 +6,13 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 
 import 'package:sky_bridge/models/mastodon/mastodon_relationship.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Unfollow the given account.
 /// POST /api/v1/accounts/:id/unfollow HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/accounts/#unfollow
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow POST requests.
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);

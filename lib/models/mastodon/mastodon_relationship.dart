@@ -1,7 +1,8 @@
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
+import 'package:sky_bridge/src/generated/prisma/model.dart';
 
 part 'mastodon_relationship.g.dart';
 
@@ -43,10 +44,10 @@ class MastodonRelationship {
   ) async {
     // Get the profile for the account and check the relationship with the
     // current user.
-    final profile = await bluesky.actor.getProfile(actor: account.did);
+    final profile = await bluesky.actor.getProfile(actor: account.did!);
     final blocking = profile.data.viewer?.blocking != null;
-    final blockedBy = profile.data.viewer?.isBlockedBy ?? false;
-    final muting = profile.data.viewer?.isMuted ?? false;
+    final blockedBy = profile.data.viewer?.blockedBy ?? false;
+    final muting = profile.data.viewer?.muted ?? false;
     final following = profile.data.viewer?.following != null;
     final followedBy = profile.data.viewer?.followedBy != null;
 

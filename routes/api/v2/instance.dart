@@ -1,7 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_instance.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 import 'package:sky_bridge/videah_account.dart';
 
@@ -14,7 +14,7 @@ Future<Response> onRequest(RequestContext context) async {
     () => throw Exception('SKYBRIDGE_BASEURL not set!'),
   );
 
-  final userCount = await db.sessionRecord.aggregate().$count().id();
+  final userCount = await db.sessionRecord.findMany().then((l) => l.length);
 
   return threadedJsonResponse(
     body: MastodonInstance(

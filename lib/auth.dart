@@ -9,7 +9,8 @@ import 'package:sky_bridge/crypto.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/oauth/oauth_access_token.dart';
 import 'package:sky_bridge/models/preferences.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:orm/orm.dart';
 
 /// Global client
 final httpClient = http.Client();
@@ -86,15 +87,15 @@ Future<void> incrementFailedAuthAttempt(RequestContext context) async {
     where: AuthRateLimitWhereUniqueInput(
       ipAddress: ip,
     ),
-    create: AuthRateLimitCreateInput(
+    create: PrismaUnion.$1(AuthRateLimitCreateInput(
       ipAddress: ip,
       attempts: 1,
-    ),
-    update: const AuthRateLimitUpdateInput(
-      attempts: IntFieldUpdateOperationsInput(
+    )),
+    update: PrismaUnion.$1(AuthRateLimitUpdateInput(
+      attempts: PrismaUnion.$2(IntFieldUpdateOperationsInput(
         increment: 1,
-      ),
-    ),
+      )),
+    )),
   );
 }
 
@@ -111,7 +112,7 @@ Future<bool> isIpRateLimited(RequestContext context) async {
   if (limit == null) return false;
 
   // We've hit the rate limit.
-  if (limit.attempts >= 5) {
+  if ((limit.attempts ?? 0) >= 5) {
     final now = DateTime.now().toUtc();
 
     // If the last time the limit was hit is null, set it to now.
@@ -120,11 +121,11 @@ Future<bool> isIpRateLimited(RequestContext context) async {
         where: AuthRateLimitWhereUniqueInput(
           ipAddress: ip,
         ),
-        data: AuthRateLimitUpdateInput(
-          lastAttempt: NullableDateTimeFieldUpdateOperationsInput(
-            set: now,
-          ),
-        ),
+        data: PrismaUnion.$1(AuthRateLimitUpdateInput(
+          lastAttempt: PrismaUnion.$2(PrismaUnion.$1(NullableDateTimeFieldUpdateOperationsInput(
+            set: PrismaUnion.$1(now),
+          ))),
+        )),
       );
     }
 
@@ -135,14 +136,14 @@ Future<bool> isIpRateLimited(RequestContext context) async {
         where: AuthRateLimitWhereUniqueInput(
           ipAddress: ip,
         ),
-        data: AuthRateLimitUpdateInput(
-          attempts: const IntFieldUpdateOperationsInput(
+        data: PrismaUnion.$1(AuthRateLimitUpdateInput(
+          attempts: PrismaUnion.$2(IntFieldUpdateOperationsInput(
             set: 1,
-          ),
-          lastAttempt: NullableDateTimeFieldUpdateOperationsInput(
-            set: now,
-          ),
-        ),
+          )),
+          lastAttempt: PrismaUnion.$2(PrismaUnion.$1(NullableDateTimeFieldUpdateOperationsInput(
+            set: PrismaUnion.$1(now),
+          ))),
+        )),
       );
     }
   }
@@ -188,7 +189,7 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
 
   // If we already have a session then great! Otherwise, try to create one.
   if (record != null) {
-    final json = jsonDecode(record.session) as Map<String, dynamic>;
+    final json = jsonDecode(record.session!) as Map<String, dynamic>;
     final session = atp.Session.fromJson(json);
 
     // Use the stored PDS host for any re-auth against this account.
@@ -262,11 +263,11 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
             where: SessionRecordWhereUniqueInput(
               did: refreshedSession.did,
             ),
-            data: SessionRecordUpdateInput(
-              session: StringFieldUpdateOperationsInput(
+            data: PrismaUnion.$1(SessionRecordUpdateInput(
+              session: PrismaUnion.$2(StringFieldUpdateOperationsInput(
                 set: jsonEncode(refreshJson),
-              ),
-            ),
+              )),
+            )),
           );
 
           return refreshedSession;
@@ -371,15 +372,15 @@ Future<atp.Session?> createBlueskySession({
 
     await db.sessionRecord.upsert(
       where: SessionRecordWhereUniqueInput(did: session.did),
-      create: SessionRecordCreateInput(
+      create: PrismaUnion.$1(SessionRecordCreateInput(
         did: session.did,
         session: jsonEncode(json),
         pdsUrl: resolvedHost,
-      ),
-      update: SessionRecordUpdateInput(
-        session: StringFieldUpdateOperationsInput(set: jsonEncode(json)),
-        pdsUrl: StringFieldUpdateOperationsInput(set: resolvedHost),
-      ),
+      )),
+      update: PrismaUnion.$1(SessionRecordUpdateInput(
+        session: PrismaUnion.$2(StringFieldUpdateOperationsInput(set: jsonEncode(json))),
+        pdsUrl: PrismaUnion.$2(StringFieldUpdateOperationsInput(set: resolvedHost)),
+      )),
     );
     print('New session created for ${session.did}');
     return session;

@@ -31,7 +31,7 @@ Future<Response> onRequest(RequestContext context, String hashtag) async {
 
   try {
     // Use Bluesky's post search to find posts tagged with this hashtag.
-    final results = await bluesky.feed.searchPosts('#$tag', limit: limit);
+    final results = await bluesky.feed.searchPosts(q: '#$tag', limit: limit);
 
     posts = await databaseTransaction(() async {
       final futures =

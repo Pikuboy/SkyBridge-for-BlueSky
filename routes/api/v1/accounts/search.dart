@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_actor_defs.dart' show ProfileViewDetailed;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
@@ -22,7 +23,7 @@ Future<Response> onRequest(RequestContext context) async {
 
   if (encodedParams.resolve) {
     // Query is a single handle, just need to return a single account.
-    late final profile;
+    late final ProfileViewDetailed profile;
     try {
       // Strip the base url from the query handle.
       final base = env.getOrElse(

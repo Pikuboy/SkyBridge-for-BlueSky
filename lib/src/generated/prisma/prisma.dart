@@ -1,58 +1,10 @@
+// ignore_for_file: argument_type_not_assignable, not_enough_positional_arguments
 // ignore_for_file: non_constant_identifier_names
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:orm/orm.dart' as _i1;
 
 import 'prisma.dart' as _i2;
-
-class UserRecordWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const UserRecordWhereUniqueInput({this.id, this.did});
-
-  final BigInt? id;
-
-  final String? did;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'did': did};
-}
-
-class UserRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const UserRecordSelect({
-    this.id,
-    this.did,
-    this.banner,
-    this.followersCount,
-    this.followsCount,
-    this.postsCount,
-    this.description,
-  });
-
-  final bool? id;
-
-  final bool? did;
-
-  final bool? banner;
-
-  final bool? followersCount;
-
-  final bool? followsCount;
-
-  final bool? postsCount;
-
-  final bool? description;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'did': did,
-    'banner': banner,
-    'followers_count': followersCount,
-    'follows_count': followsCount,
-    'posts_count': postsCount,
-    'description': description,
-  };
-}
 
 class NestedBigIntFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
   const NestedBigIntFilter({
@@ -66,19 +18,19 @@ class NestedBigIntFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final BigInt? equals;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? equals;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? $in;
+  final Iterable<BigInt>? $in;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? notIn;
+  final Iterable<BigInt>? notIn;
 
-  final BigInt? lt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lt;
 
-  final BigInt? lte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lte;
 
-  final BigInt? gt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gt;
 
-  final BigInt? gte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gte;
 
   final _i1.PrismaUnion<BigInt, _i2.NestedBigIntFilter>? not;
 
@@ -107,19 +59,19 @@ class BigIntFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final BigInt? equals;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? equals;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? $in;
+  final Iterable<BigInt>? $in;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? notIn;
+  final Iterable<BigInt>? notIn;
 
-  final BigInt? lt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lt;
 
-  final BigInt? lte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lte;
 
-  final BigInt? gt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gt;
 
-  final BigInt? gte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gte;
 
   final _i1.PrismaUnion<BigInt, _i2.NestedBigIntFilter>? not;
 
@@ -151,25 +103,25 @@ class NestedStringFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final String? equals;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? equals;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? $in;
+  final Iterable<String>? $in;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? notIn;
+  final Iterable<String>? notIn;
 
-  final String? lt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<String, _i2.NestedStringFilter>? not;
 
@@ -204,25 +156,25 @@ class StringFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final String? equals;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? equals;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? $in;
+  final Iterable<String>? $in;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? notIn;
+  final Iterable<String>? notIn;
 
-  final String? lt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<String, _i2.NestedStringFilter>? not;
 
@@ -254,19 +206,19 @@ class NestedIntFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final int? equals;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? equals;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? $in;
+  final Iterable<int>? $in;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? notIn;
+  final Iterable<int>? notIn;
 
-  final int? lt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lt;
 
-  final int? lte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lte;
 
-  final int? gt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gt;
 
-  final int? gte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gte;
 
   final _i1.PrismaUnion<int, _i2.NestedIntFilter>? not;
 
@@ -295,19 +247,19 @@ class IntFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final int? equals;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? equals;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? $in;
+  final Iterable<int>? $in;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? notIn;
+  final Iterable<int>? notIn;
 
-  final int? lt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lt;
 
-  final int? lte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lte;
 
-  final int? gt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gt;
 
-  final int? gte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gte;
 
   final _i1.PrismaUnion<int, _i2.NestedIntFilter>? not;
 
@@ -372,6 +324,101 @@ class UserRecordWhereInput
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    'id': id,
+    'did': did,
+    'banner': banner,
+    'followers_count': followersCount,
+    'follows_count': followsCount,
+    'posts_count': postsCount,
+    'description': description,
+  };
+}
+
+class UserRecordWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const UserRecordWhereUniqueInput({
+    this.id,
+    this.did,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.banner,
+    this.followersCount,
+    this.followsCount,
+    this.postsCount,
+    this.description,
+  });
+
+  final BigInt? id;
+
+  final String? did;
+
+  final _i1.PrismaUnion<
+    _i2.UserRecordWhereInput,
+    Iterable<_i2.UserRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.UserRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.UserRecordWhereInput,
+    Iterable<_i2.UserRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? banner;
+
+  final _i1.PrismaUnion<_i2.IntFilter, int>? followersCount;
+
+  final _i1.PrismaUnion<_i2.IntFilter, int>? followsCount;
+
+  final _i1.PrismaUnion<_i2.IntFilter, int>? postsCount;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? description;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'did': did,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'banner': banner,
+    'followers_count': followersCount,
+    'follows_count': followsCount,
+    'posts_count': postsCount,
+    'description': description,
+  };
+}
+
+class UserRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const UserRecordSelect({
+    this.id,
+    this.did,
+    this.banner,
+    this.followersCount,
+    this.followsCount,
+    this.postsCount,
+    this.description,
+  });
+
+  final bool? id;
+
+  final bool? did;
+
+  final bool? banner;
+
+  final bool? followersCount;
+
+  final bool? followsCount;
+
+  final bool? postsCount;
+
+  final bool? description;
+
+  @override
+  Map<String, dynamic> toJson() => {
     'id': id,
     'did': did,
     'banner': banner,
@@ -1289,19 +1336,19 @@ class NestedFloatFilter implements _i1.JsonConvertible<Map<String, dynamic>> {
     this.not,
   });
 
-  final double? equals;
+  final _i1.PrismaUnion<double, _i1.Reference<double>>? equals;
 
-  final _i1.PrismaUnion<Iterable<double>, double>? $in;
+  final Iterable<double>? $in;
 
-  final _i1.PrismaUnion<Iterable<double>, double>? notIn;
+  final Iterable<double>? notIn;
 
-  final double? lt;
+  final _i1.PrismaUnion<double, _i1.Reference<double>>? lt;
 
-  final double? lte;
+  final _i1.PrismaUnion<double, _i1.Reference<double>>? lte;
 
-  final double? gt;
+  final _i1.PrismaUnion<double, _i1.Reference<double>>? gt;
 
-  final double? gte;
+  final _i1.PrismaUnion<double, _i1.Reference<double>>? gte;
 
   final _i1.PrismaUnion<double, _i2.NestedFloatFilter>? not;
 
@@ -1336,19 +1383,19 @@ class NestedBigIntWithAggregatesFilter
     this.$max,
   });
 
-  final BigInt? equals;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? equals;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? $in;
+  final Iterable<BigInt>? $in;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? notIn;
+  final Iterable<BigInt>? notIn;
 
-  final BigInt? lt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lt;
 
-  final BigInt? lte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lte;
 
-  final BigInt? gt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gt;
 
-  final BigInt? gte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gte;
 
   final _i1.PrismaUnion<BigInt, _i2.NestedBigIntWithAggregatesFilter>? not;
 
@@ -1398,19 +1445,19 @@ class BigIntWithAggregatesFilter
     this.$max,
   });
 
-  final BigInt? equals;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? equals;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? $in;
+  final Iterable<BigInt>? $in;
 
-  final _i1.PrismaUnion<Iterable<BigInt>, BigInt>? notIn;
+  final Iterable<BigInt>? notIn;
 
-  final BigInt? lt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lt;
 
-  final BigInt? lte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? lte;
 
-  final BigInt? gt;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gt;
 
-  final BigInt? gte;
+  final _i1.PrismaUnion<BigInt, _i1.Reference<BigInt>>? gte;
 
   final _i1.PrismaUnion<BigInt, _i2.NestedBigIntWithAggregatesFilter>? not;
 
@@ -1461,25 +1508,25 @@ class NestedStringWithAggregatesFilter
     this.$max,
   });
 
-  final String? equals;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? equals;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? $in;
+  final Iterable<String>? $in;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? notIn;
+  final Iterable<String>? notIn;
 
-  final String? lt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<String, _i2.NestedStringWithAggregatesFilter>? not;
 
@@ -1527,25 +1574,25 @@ class StringWithAggregatesFilter
     this.$max,
   });
 
-  final String? equals;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? equals;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? $in;
+  final Iterable<String>? $in;
 
-  final _i1.PrismaUnion<Iterable<String>, String>? notIn;
+  final Iterable<String>? notIn;
 
-  final String? lt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<String, _i2.NestedStringWithAggregatesFilter>? not;
 
@@ -1592,19 +1639,19 @@ class NestedIntWithAggregatesFilter
     this.$max,
   });
 
-  final int? equals;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? equals;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? $in;
+  final Iterable<int>? $in;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? notIn;
+  final Iterable<int>? notIn;
 
-  final int? lt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lt;
 
-  final int? lte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lte;
 
-  final int? gt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gt;
 
-  final int? gte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gte;
 
   final _i1.PrismaUnion<int, _i2.NestedIntWithAggregatesFilter>? not;
 
@@ -1654,19 +1701,19 @@ class IntWithAggregatesFilter
     this.$max,
   });
 
-  final int? equals;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? equals;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? $in;
+  final Iterable<int>? $in;
 
-  final _i1.PrismaUnion<Iterable<int>, int>? notIn;
+  final Iterable<int>? notIn;
 
-  final int? lt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lt;
 
-  final int? lte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lte;
 
-  final int? gt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gt;
 
-  final int? gte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gte;
 
   final _i1.PrismaUnion<int, _i2.NestedIntWithAggregatesFilter>? not;
 
@@ -2171,37 +2218,63 @@ class PostRecordCountOutputType {
   Map<String, dynamic> toJson() => {'reposts': reposts};
 }
 
-class PostRecordWhereUniqueInput
+class PostRecordRelationFilter
     implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const PostRecordWhereUniqueInput({this.id, this.cid});
+  const PostRecordRelationFilter({this.$is, this.isNot});
 
-  final BigInt? id;
+  final _i2.PostRecordWhereInput? $is;
 
-  final String? cid;
+  final _i2.PostRecordWhereInput? isNot;
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'cid': cid};
+  Map<String, dynamic> toJson() => {'is': $is, 'isNot': isNot};
 }
 
-class RepostRecordOriginalPostArgs
+class RepostRecordWhereInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const RepostRecordOriginalPostArgs({this.select, this.include});
+  const RepostRecordWhereInput({
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.id,
+    this.hashId,
+    this.originalPostId,
+    this.originalPost,
+  });
 
-  final _i2.PostRecordSelect? select;
+  final _i1.PrismaUnion<
+    _i2.RepostRecordWhereInput,
+    Iterable<_i2.RepostRecordWhereInput>
+  >?
+  AND;
 
-  final _i2.PostRecordInclude? include;
+  final Iterable<_i2.RepostRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.RepostRecordWhereInput,
+    Iterable<_i2.RepostRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.BigIntFilter, BigInt>? id;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? hashId;
+
+  final _i1.PrismaUnion<_i2.BigIntFilter, BigInt>? originalPostId;
+
+  final _i1.PrismaUnion<_i2.PostRecordRelationFilter, _i2.PostRecordWhereInput>?
+  originalPost;
 
   @override
-  Map<String, dynamic> toJson() => {'select': select, 'include': include};
-}
-
-class RepostRecordInclude implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const RepostRecordInclude({this.originalPost});
-
-  final _i1.PrismaUnion<bool, _i2.RepostRecordOriginalPostArgs>? originalPost;
-
-  @override
-  Map<String, dynamic> toJson() => {'original_post': originalPost};
+  Map<String, dynamic> toJson() => {
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'id': id,
+    'hash_id': hashId,
+    'original_post_id': originalPostId,
+    'original_post': originalPost,
+  };
 }
 
 class RepostRecordListRelationFilter
@@ -2268,63 +2341,75 @@ class PostRecordWhereInput
   };
 }
 
-class PostRecordRelationFilter
+class PostRecordWhereUniqueInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const PostRecordRelationFilter({this.$is, this.isNot});
-
-  final _i1.PrismaUnion<_i2.PostRecordWhereInput, _i1.PrismaNull>? $is;
-
-  final _i1.PrismaUnion<_i2.PostRecordWhereInput, _i1.PrismaNull>? isNot;
-
-  @override
-  Map<String, dynamic> toJson() => {'is': $is, 'isNot': isNot};
-}
-
-class RepostRecordWhereInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const RepostRecordWhereInput({
+  const PostRecordWhereUniqueInput({
+    this.id,
+    this.cid,
     this.AND,
     this.OR,
     this.NOT,
-    this.id,
-    this.hashId,
-    this.originalPostId,
-    this.originalPost,
+    this.uri,
+    this.authorDid,
+    this.reposts,
   });
 
+  final BigInt? id;
+
+  final String? cid;
+
   final _i1.PrismaUnion<
-    _i2.RepostRecordWhereInput,
-    Iterable<_i2.RepostRecordWhereInput>
+    _i2.PostRecordWhereInput,
+    Iterable<_i2.PostRecordWhereInput>
   >?
   AND;
 
-  final Iterable<_i2.RepostRecordWhereInput>? OR;
+  final Iterable<_i2.PostRecordWhereInput>? OR;
 
   final _i1.PrismaUnion<
-    _i2.RepostRecordWhereInput,
-    Iterable<_i2.RepostRecordWhereInput>
+    _i2.PostRecordWhereInput,
+    Iterable<_i2.PostRecordWhereInput>
   >?
   NOT;
 
-  final _i1.PrismaUnion<_i2.BigIntFilter, BigInt>? id;
+  final _i1.PrismaUnion<_i2.StringFilter, String>? uri;
 
-  final _i1.PrismaUnion<_i2.StringFilter, String>? hashId;
+  final _i1.PrismaUnion<_i2.StringFilter, String>? authorDid;
 
-  final _i1.PrismaUnion<_i2.BigIntFilter, BigInt>? originalPostId;
-
-  final _i1.PrismaUnion<_i2.PostRecordRelationFilter, _i2.PostRecordWhereInput>?
-  originalPost;
+  final _i2.RepostRecordListRelationFilter? reposts;
 
   @override
   Map<String, dynamic> toJson() => {
+    'id': id,
+    'cid': cid,
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
-    'id': id,
-    'hash_id': hashId,
-    'original_post_id': originalPostId,
-    'original_post': originalPost,
+    'uri': uri,
+    'author_did': authorDid,
+    'reposts': reposts,
   };
+}
+
+class RepostRecordOriginalPostArgs
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const RepostRecordOriginalPostArgs({this.select, this.include});
+
+  final _i2.PostRecordSelect? select;
+
+  final _i2.PostRecordInclude? include;
+
+  @override
+  Map<String, dynamic> toJson() => {'select': select, 'include': include};
+}
+
+class RepostRecordInclude implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const RepostRecordInclude({this.originalPost});
+
+  final _i1.PrismaUnion<bool, _i2.RepostRecordOriginalPostArgs>? originalPost;
+
+  @override
+  Map<String, dynamic> toJson() => {'original_post': originalPost};
 }
 
 class RepostRecordOrderByRelationAggregateInput
@@ -2395,14 +2480,49 @@ class RepostRecordOrderByWithRelationInput
 
 class RepostRecordWhereUniqueInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const RepostRecordWhereUniqueInput({this.id, this.hashId});
+  const RepostRecordWhereUniqueInput({
+    this.id,
+    this.hashId,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.originalPostId,
+    this.originalPost,
+  });
 
   final BigInt? id;
 
   final String? hashId;
 
+  final _i1.PrismaUnion<
+    _i2.RepostRecordWhereInput,
+    Iterable<_i2.RepostRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.RepostRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.RepostRecordWhereInput,
+    Iterable<_i2.RepostRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.BigIntFilter, BigInt>? originalPostId;
+
+  final _i1.PrismaUnion<_i2.PostRecordRelationFilter, _i2.PostRecordWhereInput>?
+  originalPost;
+
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'hash_id': hashId};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'hash_id': hashId,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'original_post_id': originalPostId,
+    'original_post': originalPost,
+  };
 }
 
 enum RepostRecordScalar<T> implements _i1.PrismaEnum, _i1.Reference<T> {
@@ -2892,9 +3012,9 @@ class RepostRecordUpdateManyMutationInput
   Map<String, dynamic> toJson() => {'id': id, 'hash_id': hashId};
 }
 
-class RepostRecordUncheckedUpdateManyWithoutRepostsInput
+class RepostRecordUncheckedUpdateManyWithoutOriginalPostInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const RepostRecordUncheckedUpdateManyWithoutRepostsInput({
+  const RepostRecordUncheckedUpdateManyWithoutOriginalPostInput({
     this.id,
     this.hashId,
   });
@@ -2918,7 +3038,7 @@ class RepostRecordUpdateManyWithWhereWithoutOriginalPostInput
 
   final _i1.PrismaUnion<
     _i2.RepostRecordUpdateManyMutationInput,
-    _i2.RepostRecordUncheckedUpdateManyWithoutRepostsInput
+    _i2.RepostRecordUncheckedUpdateManyWithoutOriginalPostInput
   >
   data;
 
@@ -4139,6 +4259,7 @@ class PostRecordUpsertWithoutRepostsInput
   const PostRecordUpsertWithoutRepostsInput({
     required this.update,
     required this.create,
+    this.where,
   });
 
   final _i1.PrismaUnion<
@@ -4153,8 +4274,33 @@ class PostRecordUpsertWithoutRepostsInput
   >
   create;
 
+  final _i2.PostRecordWhereInput? where;
+
   @override
-  Map<String, dynamic> toJson() => {'update': update, 'create': create};
+  Map<String, dynamic> toJson() => {
+    'update': update,
+    'create': create,
+    'where': where,
+  };
+}
+
+class PostRecordUpdateToOneWithWhereWithoutRepostsInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const PostRecordUpdateToOneWithWhereWithoutRepostsInput({
+    this.where,
+    required this.data,
+  });
+
+  final _i2.PostRecordWhereInput? where;
+
+  final _i1.PrismaUnion<
+    _i2.PostRecordUpdateWithoutRepostsInput,
+    _i2.PostRecordUncheckedUpdateWithoutRepostsInput
+  >
+  data;
+
+  @override
+  Map<String, dynamic> toJson() => {'where': where, 'data': data};
 }
 
 class PostRecordUpdateOneRequiredWithoutRepostsNestedInput
@@ -4180,8 +4326,11 @@ class PostRecordUpdateOneRequiredWithoutRepostsNestedInput
   final _i2.PostRecordWhereUniqueInput? connect;
 
   final _i1.PrismaUnion<
-    _i2.PostRecordUpdateWithoutRepostsInput,
-    _i2.PostRecordUncheckedUpdateWithoutRepostsInput
+    _i2.PostRecordUpdateToOneWithWhereWithoutRepostsInput,
+    _i1.PrismaUnion<
+      _i2.PostRecordUpdateWithoutRepostsInput,
+      _i2.PostRecordUncheckedUpdateWithoutRepostsInput
+    >
   >?
   update;
 
@@ -4950,30 +5099,6 @@ class AggregateRepostRecordSelect
   };
 }
 
-class NotificationRecordWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const NotificationRecordWhereUniqueInput({this.id});
-
-  final BigInt? id;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id};
-}
-
-class NotificationRecordSelect
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const NotificationRecordSelect({this.id, this.cid, this.uri});
-
-  final bool? id;
-
-  final bool? cid;
-
-  final bool? uri;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'cid': cid, 'uri': uri};
-}
-
 class NotificationRecordWhereInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
   const NotificationRecordWhereInput({
@@ -5014,6 +5139,62 @@ class NotificationRecordWhereInput
     'cid': cid,
     'uri': uri,
   };
+}
+
+class NotificationRecordWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const NotificationRecordWhereUniqueInput({
+    this.id,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.cid,
+    this.uri,
+  });
+
+  final BigInt? id;
+
+  final _i1.PrismaUnion<
+    _i2.NotificationRecordWhereInput,
+    Iterable<_i2.NotificationRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.NotificationRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.NotificationRecordWhereInput,
+    Iterable<_i2.NotificationRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? cid;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? uri;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'cid': cid,
+    'uri': uri,
+  };
+}
+
+class NotificationRecordSelect
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const NotificationRecordSelect({this.id, this.cid, this.uri});
+
+  final bool? id;
+
+  final bool? cid;
+
+  final bool? uri;
+
+  @override
+  Map<String, dynamic> toJson() => {'id': id, 'cid': cid, 'uri': uri};
 }
 
 class NotificationRecordOrderByWithRelationInput
@@ -5772,49 +5953,6 @@ class AggregateNotificationRecordSelect
   };
 }
 
-class MediaRecordWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const MediaRecordWhereUniqueInput({this.id});
-
-  final BigInt? id;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id};
-}
-
-class MediaRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const MediaRecordSelect({
-    this.id,
-    this.type,
-    this.mimeType,
-    this.size,
-    this.link,
-    this.description,
-  });
-
-  final bool? id;
-
-  final bool? type;
-
-  final bool? mimeType;
-
-  final bool? size;
-
-  final bool? link;
-
-  final bool? description;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type,
-    'mime_type': mimeType,
-    'size': size,
-    'link': link,
-    'description': description,
-  };
-}
-
 class MediaRecordWhereInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
   const MediaRecordWhereInput({
@@ -5860,6 +5998,93 @@ class MediaRecordWhereInput
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    'id': id,
+    'type': type,
+    'mime_type': mimeType,
+    'size': size,
+    'link': link,
+    'description': description,
+  };
+}
+
+class MediaRecordWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const MediaRecordWhereUniqueInput({
+    this.id,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.type,
+    this.mimeType,
+    this.size,
+    this.link,
+    this.description,
+  });
+
+  final BigInt? id;
+
+  final _i1.PrismaUnion<
+    _i2.MediaRecordWhereInput,
+    Iterable<_i2.MediaRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.MediaRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.MediaRecordWhereInput,
+    Iterable<_i2.MediaRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? type;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? mimeType;
+
+  final _i1.PrismaUnion<_i2.IntFilter, int>? size;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? link;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? description;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'type': type,
+    'mime_type': mimeType,
+    'size': size,
+    'link': link,
+    'description': description,
+  };
+}
+
+class MediaRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const MediaRecordSelect({
+    this.id,
+    this.type,
+    this.mimeType,
+    this.size,
+    this.link,
+    this.description,
+  });
+
+  final bool? id;
+
+  final bool? type;
+
+  final bool? mimeType;
+
+  final bool? size;
+
+  final bool? link;
+
+  final bool? description;
+
+  @override
+  Map<String, dynamic> toJson() => {
     'id': id,
     'type': type,
     'mime_type': mimeType,
@@ -6957,36 +7182,6 @@ class AggregateMediaRecordSelect
   };
 }
 
-class FeedRecordWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const FeedRecordWhereUniqueInput({this.id});
-
-  final BigInt? id;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id};
-}
-
-class FeedRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const FeedRecordSelect({this.id, this.cid, this.uri, this.authorDid});
-
-  final bool? id;
-
-  final bool? cid;
-
-  final bool? uri;
-
-  final bool? authorDid;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'cid': cid,
-    'uri': uri,
-    'author_did': authorDid,
-  };
-}
-
 class NestedStringNullableFilter
     implements _i1.JsonConvertible<Map<String, dynamic>> {
   const NestedStringNullableFilter({
@@ -7003,33 +7198,29 @@ class NestedStringNullableFilter
     this.not,
   });
 
-  final _i1.PrismaUnion<String, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
+    String,
+    _i1.PrismaUnion<_i1.Reference<String>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? $in;
 
-  final String? lt;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? notIn;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
+
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<
     String,
@@ -7069,33 +7260,29 @@ class StringNullableFilter
     this.not,
   });
 
-  final _i1.PrismaUnion<String, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
+    String,
+    _i1.PrismaUnion<_i1.Reference<String>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? $in;
 
-  final String? lt;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? notIn;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
+
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<
     String,
@@ -7162,6 +7349,76 @@ class FeedRecordWhereInput
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    'id': id,
+    'cid': cid,
+    'uri': uri,
+    'author_did': authorDid,
+  };
+}
+
+class FeedRecordWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const FeedRecordWhereUniqueInput({
+    this.id,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.cid,
+    this.uri,
+    this.authorDid,
+  });
+
+  final BigInt? id;
+
+  final _i1.PrismaUnion<
+    _i2.FeedRecordWhereInput,
+    Iterable<_i2.FeedRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.FeedRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.FeedRecordWhereInput,
+    Iterable<_i2.FeedRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? cid;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? uri;
+
+  final _i1.PrismaUnion<
+    _i2.StringNullableFilter,
+    _i1.PrismaUnion<String, _i1.PrismaNull>
+  >?
+  authorDid;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'cid': cid,
+    'uri': uri,
+    'author_did': authorDid,
+  };
+}
+
+class FeedRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const FeedRecordSelect({this.id, this.cid, this.uri, this.authorDid});
+
+  final bool? id;
+
+  final bool? cid;
+
+  final bool? uri;
+
+  final bool? authorDid;
+
+  @override
+  Map<String, dynamic> toJson() => {
     'id': id,
     'cid': cid,
     'uri': uri,
@@ -7767,21 +8024,23 @@ class NestedIntNullableFilter
     this.not,
   });
 
-  final _i1.PrismaUnion<int, _i1.PrismaNull>? equals;
+  final _i1.PrismaUnion<
+    int,
+    _i1.PrismaUnion<_i1.Reference<int>, _i1.PrismaNull>
+  >?
+  equals;
 
-  final _i1.PrismaUnion<Iterable<int>, _i1.PrismaUnion<int, _i1.PrismaNull>>?
-  $in;
+  final _i1.PrismaUnion<Iterable<int>, _i1.PrismaNull>? $in;
 
-  final _i1.PrismaUnion<Iterable<int>, _i1.PrismaUnion<int, _i1.PrismaNull>>?
-  notIn;
+  final _i1.PrismaUnion<Iterable<int>, _i1.PrismaNull>? notIn;
 
-  final int? lt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lt;
 
-  final int? lte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? lte;
 
-  final int? gt;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gt;
 
-  final int? gte;
+  final _i1.PrismaUnion<int, _i1.Reference<int>>? gte;
 
   final _i1.PrismaUnion<
     int,
@@ -7821,33 +8080,29 @@ class NestedStringNullableWithAggregatesFilter
     this.$max,
   });
 
-  final _i1.PrismaUnion<String, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
+    String,
+    _i1.PrismaUnion<_i1.Reference<String>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? $in;
 
-  final String? lt;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? notIn;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
+
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<
     String,
@@ -7902,33 +8157,29 @@ class StringNullableWithAggregatesFilter
     this.$max,
   });
 
-  final _i1.PrismaUnion<String, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
+    String,
+    _i1.PrismaUnion<_i1.Reference<String>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<String>,
-    _i1.PrismaUnion<String, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? $in;
 
-  final String? lt;
+  final _i1.PrismaUnion<Iterable<String>, _i1.PrismaNull>? notIn;
 
-  final String? lte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lt;
 
-  final String? gt;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? lte;
 
-  final String? gte;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gt;
 
-  final String? contains;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? gte;
 
-  final String? startsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? contains;
 
-  final String? endsWith;
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? startsWith;
+
+  final _i1.PrismaUnion<String, _i1.Reference<String>>? endsWith;
 
   final _i1.PrismaUnion<
     String,
@@ -8338,38 +8589,6 @@ class AggregateFeedRecordSelect
   };
 }
 
-class SessionRecordWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const SessionRecordWhereUniqueInput({this.id, this.did});
-
-  final int? id;
-
-  final String? did;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'did': did};
-}
-
-class SessionRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const SessionRecordSelect({this.id, this.did, this.session, this.pdsUrl});
-
-  final bool? id;
-
-  final bool? did;
-
-  final bool? session;
-
-  final bool? pdsUrl;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'did': did,
-    'session': session,
-    'pds_url': pdsUrl,
-  };
-}
-
 class SessionRecordWhereInput
     implements _i1.JsonConvertible<Map<String, dynamic>> {
   const SessionRecordWhereInput({
@@ -8409,6 +8628,72 @@ class SessionRecordWhereInput
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    'id': id,
+    'did': did,
+    'session': session,
+    'pds_url': pdsUrl,
+  };
+}
+
+class SessionRecordWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const SessionRecordWhereUniqueInput({
+    this.id,
+    this.did,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.session,
+    this.pdsUrl,
+  });
+
+  final int? id;
+
+  final String? did;
+
+  final _i1.PrismaUnion<
+    _i2.SessionRecordWhereInput,
+    Iterable<_i2.SessionRecordWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.SessionRecordWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.SessionRecordWhereInput,
+    Iterable<_i2.SessionRecordWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? session;
+
+  final _i1.PrismaUnion<_i2.StringFilter, String>? pdsUrl;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'did': did,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'session': session,
+    'pds_url': pdsUrl,
+  };
+}
+
+class SessionRecordSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const SessionRecordSelect({this.id, this.did, this.session, this.pdsUrl});
+
+  final bool? id;
+
+  final bool? did;
+
+  final bool? session;
+
+  final bool? pdsUrl;
+
+  @override
+  Map<String, dynamic> toJson() => {
     'id': id,
     'did': did,
     'session': session,
@@ -9302,43 +9587,6 @@ class AggregateSessionRecordSelect
   };
 }
 
-class AuthRateLimitWhereUniqueInput
-    implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const AuthRateLimitWhereUniqueInput({this.id, this.ipAddress});
-
-  final int? id;
-
-  final String? ipAddress;
-
-  @override
-  Map<String, dynamic> toJson() => {'id': id, 'ip_address': ipAddress};
-}
-
-class AuthRateLimitSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
-  const AuthRateLimitSelect({
-    this.id,
-    this.ipAddress,
-    this.attempts,
-    this.lastAttempt,
-  });
-
-  final bool? id;
-
-  final bool? ipAddress;
-
-  final bool? attempts;
-
-  final bool? lastAttempt;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'ip_address': ipAddress,
-    'attempts': attempts,
-    'last_attempt': lastAttempt,
-  };
-}
-
 class NestedDateTimeNullableFilter
     implements _i1.JsonConvertible<Map<String, dynamic>> {
   const NestedDateTimeNullableFilter({
@@ -9352,27 +9600,23 @@ class NestedDateTimeNullableFilter
     this.not,
   });
 
-  final _i1.PrismaUnion<DateTime, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
+    DateTime,
+    _i1.PrismaUnion<_i1.Reference<DateTime>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? $in;
 
-  final DateTime? lt;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? notIn;
 
-  final DateTime? lte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lt;
 
-  final DateTime? gt;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lte;
 
-  final DateTime? gte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gt;
+
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gte;
 
   final _i1.PrismaUnion<
     DateTime,
@@ -9406,27 +9650,23 @@ class DateTimeNullableFilter
     this.not,
   });
 
-  final _i1.PrismaUnion<DateTime, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
+    DateTime,
+    _i1.PrismaUnion<_i1.Reference<DateTime>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? $in;
 
-  final DateTime? lt;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? notIn;
 
-  final DateTime? lte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lt;
 
-  final DateTime? gt;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lte;
 
-  final DateTime? gte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gt;
+
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gte;
 
   final _i1.PrismaUnion<
     DateTime,
@@ -9490,6 +9730,81 @@ class AuthRateLimitWhereInput
     'AND': AND,
     'OR': OR,
     'NOT': NOT,
+    'id': id,
+    'ip_address': ipAddress,
+    'attempts': attempts,
+    'last_attempt': lastAttempt,
+  };
+}
+
+class AuthRateLimitWhereUniqueInput
+    implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const AuthRateLimitWhereUniqueInput({
+    this.id,
+    this.ipAddress,
+    this.AND,
+    this.OR,
+    this.NOT,
+    this.attempts,
+    this.lastAttempt,
+  });
+
+  final int? id;
+
+  final String? ipAddress;
+
+  final _i1.PrismaUnion<
+    _i2.AuthRateLimitWhereInput,
+    Iterable<_i2.AuthRateLimitWhereInput>
+  >?
+  AND;
+
+  final Iterable<_i2.AuthRateLimitWhereInput>? OR;
+
+  final _i1.PrismaUnion<
+    _i2.AuthRateLimitWhereInput,
+    Iterable<_i2.AuthRateLimitWhereInput>
+  >?
+  NOT;
+
+  final _i1.PrismaUnion<_i2.IntFilter, int>? attempts;
+
+  final _i1.PrismaUnion<
+    _i2.DateTimeNullableFilter,
+    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
+  >?
+  lastAttempt;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'ip_address': ipAddress,
+    'AND': AND,
+    'OR': OR,
+    'NOT': NOT,
+    'attempts': attempts,
+    'last_attempt': lastAttempt,
+  };
+}
+
+class AuthRateLimitSelect implements _i1.JsonConvertible<Map<String, dynamic>> {
+  const AuthRateLimitSelect({
+    this.id,
+    this.ipAddress,
+    this.attempts,
+    this.lastAttempt,
+  });
+
+  final bool? id;
+
+  final bool? ipAddress;
+
+  final bool? attempts;
+
+  final bool? lastAttempt;
+
+  @override
+  Map<String, dynamic> toJson() => {
     'id': id,
     'ip_address': ipAddress,
     'attempts': attempts,
@@ -10100,27 +10415,23 @@ class NestedDateTimeNullableWithAggregatesFilter
     this.$max,
   });
 
-  final _i1.PrismaUnion<DateTime, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
+    DateTime,
+    _i1.PrismaUnion<_i1.Reference<DateTime>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? $in;
 
-  final DateTime? lt;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? notIn;
 
-  final DateTime? lte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lt;
 
-  final DateTime? gt;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lte;
 
-  final DateTime? gte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gt;
+
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gte;
 
   final _i1.PrismaUnion<
     DateTime,
@@ -10169,27 +10480,23 @@ class DateTimeNullableWithAggregatesFilter
     this.$max,
   });
 
-  final _i1.PrismaUnion<DateTime, _i1.PrismaNull>? equals;
-
   final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
+    DateTime,
+    _i1.PrismaUnion<_i1.Reference<DateTime>, _i1.PrismaNull>
   >?
-  $in;
+  equals;
 
-  final _i1.PrismaUnion<
-    Iterable<DateTime>,
-    _i1.PrismaUnion<DateTime, _i1.PrismaNull>
-  >?
-  notIn;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? $in;
 
-  final DateTime? lt;
+  final _i1.PrismaUnion<Iterable<DateTime>, _i1.PrismaNull>? notIn;
 
-  final DateTime? lte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lt;
 
-  final DateTime? gt;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? lte;
 
-  final DateTime? gte;
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gt;
+
+  final _i1.PrismaUnion<DateTime, _i1.Reference<DateTime>>? gte;
 
   final _i1.PrismaUnion<
     DateTime,

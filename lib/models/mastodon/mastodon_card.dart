@@ -37,10 +37,10 @@ class MastodonCard {
 
   /// Constructs a potential [MastodonCard] from a [UPostViewEmbed].
   static Future<MastodonCard?> fromEmbed(UPostViewEmbed? embed) async {
-    return embed?.map(
-      recordView: (record) => embedViewRecordToCard(record.data),
-      externalView: (embed) {
-        final external = embed.data.external;
+    return embed?.when(
+      embedRecordView: (record) => embedViewRecordToCard(record),
+      embedExternalView: (embed) {
+        final external = embed.external;
         return MastodonCard(
           url: external.uri,
           title: external.title,
@@ -57,9 +57,9 @@ class MastodonCard {
           image: external.thumb ?? '',
         );
       },
-      imagesView: (_) => null,
-      recordWithMediaView: (record) => embedViewRecordToCard(record.data.record),
-      videoView: (_) => null,
+      embedImagesView: (_) => null,
+      embedRecordWithMediaView: (record) => embedViewRecordToCard(record.record),
+      embedVideoView: (_) => null,
       unknown: (_) => null,
     );
   }
@@ -90,36 +90,39 @@ class MastodonCard {
     var useAttachedMedia = false;
 
     // Get any data we need from the post's record.
-    record.record.map(
-      viewRecord: (post) {
-        handle = post.data.author.handle;
-        title = 'Quote Post - (@$handle) \n ${post.data.value.text}';
-        description = post.data.value.text;
+    record.record.when(
+      embedRecordViewRecord: (post) {
+        handle = post.author.handle;
+        title = 'Quote Post - (@$handle) \n ${post.value['text']}';
+        description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
 
         // If the record has a media attachment, we can use that instead.
-        final embeds = post.data.embeds;
+        final embeds = post.embeds;
         if (embeds != null) {
           for (final embed in embeds) {
-            embed.map(
-              recordView: (_) {},
-              imagesView: (images) {
-                quoteImage = images.data.images.first.fullsize;
+            embed.when(
+              embedRecordView: (_) {},
+              embedImagesView: (images) {
+                quoteImage = images.images.first.fullsize;
                 useAttachedMedia = true;
               },
-              externalView: (_) {},
-              recordWithMediaView: (_) {},
-              videoView: (_) {},
+              embedExternalView: (_) {},
+              embedRecordWithMediaView: (_) {},
+              embedVideoView: (_) {},
               unknown: (_) {},
             );
           }
         }
       },
-      notFoundPost: (_) {},
-      viewBlocked: (_) {},
+      embedRecordViewNotFound: (_) {},
+      embedRecordViewBlocked: (_) {},
+      embedRecordViewDetached: (_) {},
       generatorView: (_) {},
-      unknown: (_) {},
       listView: (_) {},
+      labelerView: (_) {},
+      starterPackViewBasic: (_) {},
+      unknown: (_) {},
     );
 
     return MastodonCard(

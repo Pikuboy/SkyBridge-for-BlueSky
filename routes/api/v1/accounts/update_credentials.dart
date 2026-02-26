@@ -26,7 +26,7 @@ Future<Response> onRequest(RequestContext context) async {
   final bluesky = bsky.Bluesky.fromSession(session);
 
   // Return the current profile (read-only for now).
-  final profile = await bluesky.actor.getProfile(actor: session.did);
+  final profile = await bluesky.actor.getProfile(actor: session.did!);
   final account = await databaseTransaction(
     () => MastodonAccount.fromActorProfile(profile.data),
   );

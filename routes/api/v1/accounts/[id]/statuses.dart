@@ -7,7 +7,7 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/params/statuses_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Get statuses posted to the given account.
@@ -45,7 +45,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
 
   // Get the user's posts from Bluesky.
   final feed = await bluesky.feed.getAuthorFeed(
-    actor: user.did,
+    actor: user.did!,
     limit: limit,
     cursor: options.cursor,
   );

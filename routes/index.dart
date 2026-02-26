@@ -10,7 +10,7 @@ Future<Response> onRequest(RequestContext context) async {
     () => 'false',
   );
 
-  if (shouldShowIndex.toLowerCase() == 'false') {
+  if (shouldShowIndex!.toLowerCase() == 'false') {
     return Response.json(
       body: {},
     );

@@ -1,6 +1,7 @@
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/app_bsky_feed_post.dart' show AppBskyFeedPost;
+import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
 import 'package:bluesky/app_bsky_notification_listnotifications.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -46,7 +47,7 @@ class MastodonNotification {
       try {
         final unknownRecord = notification.record ?? {};
 
-        switch (notification.reason.value) {
+        switch (notification.reason) {
           case 'repost':
           case 'like':
             final subject = unknownRecord['subject'] as Map<String, dynamic>?;
@@ -68,7 +69,7 @@ class MastodonNotification {
             pairs[notification] = uri;
             if (!postUris.contains(uri)) postUris.add(uri);
             try {
-              final record = AppBskyFeedPost.fromJson(unknownRecord);
+              final record = FeedPostRecord.fromJson(unknownRecord);
               final reply = record.reply;
               if (reply != null) {
                 if (!postUris.contains(reply.parent.uri)) {
@@ -118,7 +119,7 @@ class MastodonNotification {
     final mastodonPosts = <MastodonPost>[];
     for (final post in posts) {
       try {
-        mastodonPosts.add(await MastodonPost.fromBlueSkyPost(post));
+        mastodonPosts.add(await MastodonPost.fromBlueSkyPost(post as PostView));
       } catch (e) {
         print('Notifications: skipping post conversion ${post.uri} — $e');
       }
@@ -144,7 +145,7 @@ class MastodonNotification {
               )
             : null;
 
-        final type = NotificationType.fromBluesky(notification.reason.value);
+        final type = NotificationType.fromBluesky(notification.reason.toString());
 
         notifications.add(
           MastodonNotification(

@@ -6,13 +6,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Obtain information about a post.
 /// GET /api/v1/statuses/:id HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/statuses/#get
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // If the id is not a number we return 404 for now.
   if (int.tryParse(id) == null) {
     return Response(statusCode: HttpStatus.notFound);
@@ -34,7 +34,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
 
   // Get the post from bluesky, we assume we already know the post exists
   // and don't bother adding to the database or anything.
-  final uri = at.AtUri.parse(postRecord!.uri);
+  final uri = at.AtUri.parse(postRecord!.uri!);
   final response = await bluesky.feed.getPosts(uris: [uri]);
   final post = response.data.posts.first;
 

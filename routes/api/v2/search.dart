@@ -9,13 +9,13 @@ import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_tag.dart';
 import 'package:sky_bridge/models/params/search_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Perform a search.
 /// GET /api/v2/search HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/search/#v2
-Future<Response> onRequest<T>(RequestContext context) async {
+Future<Response> onRequest(RequestContext context) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -59,7 +59,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
         );
       }
 
-      final uri = at.AtUri.parse(postRecord.uri);
+      final uri = at.AtUri.parse(postRecord.uri!);
       final response = await bluesky.feed.getPosts(uris: [uri]);
       final post = response.data.posts.first;
 

@@ -5,13 +5,16 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_notification.dart';
 import 'package:sky_bridge/models/params/notification_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:orm/orm.dart';
+import 'package:orm/orm.dart';
+import 'package:orm/orm.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Receive notifications for activity on your account or posts.
 /// GET /api/v1/notifications HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/notifications/#get
-Future<Response> onRequest<T>(RequestContext context) async {
+Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -51,7 +54,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Fire-and-forget — don't block the response if this fails.
   bluesky.notification
       .updateSeen(seenAt: DateTime.now().toUtc())
-      .catchError((_) => null);
+      .catchError((_) => Future<void>.value());
 
   var notifs = await MastodonNotification.fromNotificationList(
     response.data.notifications,
@@ -80,8 +83,8 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Filter out dismissed notifications (stored as MediaRecord type=dismissed_notif).
   final dismissedRecords = await db.mediaRecord.findMany(
     where: MediaRecordWhereInput(
-      type: StringFilter(equals: 'dismissed_notif'),
-      mimeType: StringFilter(equals: session.did),
+      type: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1('dismissed_notif'))),
+      mimeType: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1(session.did))),
     ),
   );
   final dismissedIds = dismissedRecords.map((r) => r.link).toSet();

@@ -39,7 +39,7 @@ Future<Response> onRequest(RequestContext context) async {
     
     // Note: Bluesky API only allows fetching your own likes
     final response = await bluesky.feed.getActorLikes(
-      actor: session.did,
+      actor: session.did!,
       limit: limit,
       cursor: cursor,
     );

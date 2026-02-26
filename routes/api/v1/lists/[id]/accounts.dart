@@ -4,13 +4,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// View accounts in a list.
 /// GET /api/v1/lists/:id/accounts HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/lists/#accounts
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -35,7 +35,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   // Get up to date profile information and convert it to a [MastodonAccount].
-  final response = await bluesky.actor.getProfile(actor: record!.did);
+  final response = await bluesky.actor.getProfile(actor: record!.did!);
   final profile = await databaseTransaction(
     () => MastodonAccount.fromActorProfile(response.data),
   );

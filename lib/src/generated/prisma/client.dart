@@ -1,3 +1,4 @@
+// ignore_for_file: argument_type_not_assignable, not_enough_positional_arguments
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:orm/dmmf.dart' as _i4;
 import 'package:orm/engines/binary.dart' as _i5;

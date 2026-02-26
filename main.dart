@@ -6,7 +6,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:shelf_rate_limiter/shelf_rate_limiter.dart';
 import 'package:sky_bridge/crypto.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
 import 'package:sky_bridge/util.dart';
 
 import 'routes/_middleware.dart';
@@ -71,9 +71,7 @@ Future<void> init(InternetAddress ip, int port) async {
 
   // Open our database connections.
   db = PrismaClient(
-    datasources: Datasources(
-      db: '$databaseUrl?connection_limit=1',
-    ),
+    datasources: {'db': '$databaseUrl?connection_limit=1'},
   );
 
   // Enable WAL mode for SQLite.
@@ -109,8 +107,8 @@ Future<void> init(InternetAddress ip, int port) async {
   print('Attempting to connect to database...');
   await db.$connect();
 
-  final userCount = await db.userRecord.aggregate().$count().id();
-  final postCount = await db.postRecord.aggregate().$count().id();
+  final userCount = (await db.userRecord.findMany()).length;
+  final postCount = (await db.postRecord.findMany()).length;
 
   print('Indexed $userCount users and $postCount posts.');
 }

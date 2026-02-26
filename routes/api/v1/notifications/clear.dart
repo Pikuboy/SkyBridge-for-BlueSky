@@ -5,7 +5,9 @@ import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:orm/orm.dart';
+import 'package:orm/orm.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Dismiss ALL notifications for this user.
@@ -29,7 +31,7 @@ Future<Response> onRequest(RequestContext context) async {
         // Look up the DB record to get the snowflake ID.
         final record = await db.notificationRecord.findUnique(
           where: NotificationRecordWhereUniqueInput(
-            uri: notif.uri.toString(),
+            uri: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1(notif.uri.toString()))),
           ),
         );
         if (record == null) continue;
@@ -49,15 +51,14 @@ Future<Response> onRequest(RequestContext context) async {
           );
           if (existing == null) {
             await db.mediaRecord.create(
-              data: MediaRecordCreateInput(
+              data: PrismaUnion.$1(MediaRecordCreateInput(
                 id: recordId,
                 type: 'dismissed_notif',
                 mimeType: session.did,
                 size: 0,
                 link: notifId,
                 description: '',
-              ),
-            );
+              )));
           }
         } catch (_) {}
       }

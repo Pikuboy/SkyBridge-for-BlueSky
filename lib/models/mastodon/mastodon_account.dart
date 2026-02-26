@@ -64,7 +64,7 @@ class MastodonAccount {
     /* Get the user banner, if it exists.
     If not, ensure an empty string never gets passed through, so that clients
     such as Ice Cubes (that always expect a valid URL) don't break. */
-    final userBanner = user.banner.isNotEmpty ? user.banner : null;
+    final userBanner = (user.banner?.isNotEmpty ?? false) ? user.banner : null;
 
     return MastodonAccount(
       id: user.id.toString(),
@@ -107,7 +107,7 @@ class MastodonAccount {
     /* Get the user banner, if it exists.
     If not, ensure an empty string never gets passed through, so that clients
     such as Ice Cubes (that always expect a valid URL) don't break. */
-    final userBanner = user.banner.isNotEmpty ? user.banner : null;
+    final userBanner = (user.banner?.isNotEmpty ?? false) ? user.banner : null;
 
     return MastodonAccount(
       id: user.id.toString(),
@@ -118,7 +118,41 @@ class MastodonAccount {
       bot: false,
       group: false,
       createdAt: profile.indexedAt ?? DateTime.now().toUtc(),
-      note: await processProfileDescription(profile.description ?? user.description),
+      note: await processProfileDescription(profile.description ?? user.description ?? ''),
+      url: 'https://bsky.social/${profile.handle}',
+      avatar: profile.avatar ?? avatarFallback,
+      avatarStatic: profile.avatar ?? avatarFallback,
+      header: userBanner ?? bannerFallback,
+      headerStatic: userBanner ?? bannerFallback,
+      followersCount: user.followersCount,
+      followingCount: user.followsCount,
+      statusesCount: user.postsCount,
+      lastStatusAt: DateTime.now(),
+      emojis: [],
+      fields: [],
+    );
+  }
+
+  /// Creates a [MastodonAccount] from a [ProfileViewBasic].
+  static Future<MastodonAccount> fromActorBasic(ProfileViewBasic profile) async {
+    final user = await actorBasicToDatabase(profile);
+    final base = env.getOrElse(
+      'SKYBRIDGE_BASEURL',
+      () => throw Exception('SKYBRIDGE_BASEURL not set!'),
+    );
+    final avatarFallback = 'https://$base/pfp_fallback.png';
+    final bannerFallback = 'https://$base/bnr_fallback.png';
+    final userBanner = (user.banner?.isNotEmpty ?? false) ? user.banner : null;
+    return MastodonAccount(
+      id: user.id.toString(),
+      username: profile.handle,
+      acct: profile.handle,
+      displayName: profile.displayName ?? profile.handle,
+      locked: false,
+      bot: false,
+      group: false,
+      createdAt: DateTime.now().toUtc(),
+      note: '',
       url: 'https://bsky.social/${profile.handle}',
       avatar: profile.avatar ?? avatarFallback,
       avatarStatic: profile.avatar ?? avatarFallback,

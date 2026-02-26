@@ -5,13 +5,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_relationship.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Unblock the given account.
 /// POST /api/v1/accounts/:id/unblock HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/accounts/#unblock
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -30,8 +30,8 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
 
   // Find the block record URI via the viewer and delete it.
   try {
-    final profile = await bluesky.actor.getProfile(actor: record.did);
-    final blockUri = profile.data.viewer.blocking;
+    final profile = await bluesky.actor.getProfile(actor: record.did!);
+    final blockUri = profile.data.viewer?.blocking;
     if (blockUri != null) {
       final parsedBlockUri = at.AtUri.parse(blockUri.toString());
       await bluesky.atproto.repo.deleteRecord(
