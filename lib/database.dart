@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:crypto/crypto.dart';
 import 'package:orm/orm.dart';

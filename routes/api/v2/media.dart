@@ -73,7 +73,7 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   // Upload to Bluesky.
-  final response = await bluesky.atproto.repo.uploadBlob(fileBytes);
+  final response = await bluesky.atproto.repo.uploadBlob(bytes: fileBytes);
   final blob = response.data.blob;
 
   final description = formDataEncoded.description ?? '';

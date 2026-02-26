@@ -1,4 +1,3 @@
-import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:json_annotation/json_annotation.dart';

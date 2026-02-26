@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
-import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -131,11 +130,10 @@ Future<Response> onRequest<T>(RequestContext context) async {
           results.data.actors.map((actor) => actor.handle.toString()).toList();
 
       if (handles.isNotEmpty) {
-        // Fix 1: use aliased import for ActorProfile to avoid AOT type resolution issue
-        final profiles =
-            await chunkResults<bsky_actor_defs.ActorProfile, String>(
+        // Let Dart infer the profile type from the callback return type.
+        final profiles = await chunkResults(
           items: handles,
-          callback: (chunk) async {
+          callback: (List<String> chunk) async {
             final r = await bluesky.actor.getProfiles(actors: chunk);
             return r.data.profiles;
           },
@@ -143,7 +141,9 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
         accountResults = await databaseTransaction(() {
           return Future.wait(
-            profiles.map(MastodonAccount.fromActorProfile),
+            profiles.map<Future<MastodonAccount>>(
+              MastodonAccount.fromActorProfile,
+            ),
           );
         });
       }
@@ -155,11 +155,10 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Search statuses (posts).
   if (searchType == null || searchType == SearchType.statuses) {
     try {
-      // Fix 2: query is now a named parameter q: in bluesky 1.x
+      // Fix: query is now a named parameter q: in bluesky 1.x
       final results = await bluesky.feed.searchPosts(q: query, limit: limit);
 
       statusResults = await databaseTransaction(() async {
-        // Fix 3: explicit cast to Iterable<Future<MastodonPost>> for AOT
         final futures = results.data.posts
             .map<Future<MastodonPost>>(MastodonPost.fromBlueSkyPost);
         return Future.wait(futures);
@@ -187,8 +186,6 @@ Future<Response> onRequest<T>(RequestContext context) async {
       );
     }
 
-    // If the whole query looks like a bare word (no spaces, not an @-mention),
-    // also surface it as a hashtag so the client can navigate to the tag page.
     if (hashtagResults.isEmpty &&
         !query.contains(' ') &&
         !query.startsWith('@')) {

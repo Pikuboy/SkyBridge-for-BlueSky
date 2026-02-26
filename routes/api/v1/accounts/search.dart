@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -56,7 +55,7 @@ Future<Response> onRequest(RequestContext context) async {
     // Get all the handles from the results and grab the full profile info.
     final handles = results.data.actors.map((actor) => actor.handle).toList();
 
-    final profiles = await chunkResults<bsky_actor_defs.ActorProfile, String>(
+    final profiles = await chunkResults(
       items: handles,
       callback: (chunk) async {
         final response = await bluesky.actor.getProfiles(actors: chunk);
