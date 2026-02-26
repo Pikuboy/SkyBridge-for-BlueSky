@@ -6,7 +6,6 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:html/parser.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
-import 'package:template_expressions/template_expressions.dart';
 import 'package:yet_another_json_isolate/yet_another_json_isolate.dart';
 
 /// Environment variables loaded from a .env file.
@@ -65,12 +64,10 @@ extension StringFormatExtension on String {
   /// Formats the string using the provided [context].
   /// This is a very rudimentary implementation of string formatting/templating.
   String format(Map<String, dynamic> context) {
-    const syntax = HashExpressionSyntax();
-    final template = Template(
-      syntax: [syntax],
-      value: this,
+    return replaceAllMapped(
+      RegExp(r'##(\w+)##'),
+      (match) => context[match.group(1)]?.toString() ?? match.group(0)!,
     );
-    return template.process(context: context);
   }
 }
 
