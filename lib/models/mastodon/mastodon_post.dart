@@ -410,7 +410,7 @@ class MastodonPost {
 
       // Create the repost record via Bluesky feed service.
       // bluesky.feed.createRepost() is the high-level API in bluesky 1.x
-      await bluesky.feed.createRepost(
+      await bluesky.feed.repost(
         cid: postRecord.cid,
         uri: atp.AtUri.parse(postRecord.uri),
       );
