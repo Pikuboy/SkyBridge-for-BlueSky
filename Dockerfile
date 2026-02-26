@@ -24,15 +24,18 @@ RUN npm i prisma@5
 RUN rm -rf lib/src/generated/prisma
 RUN npx prisma generate
 
+# Save generated Prisma files BEFORE dart_frog build wipes lib/src/generated/
+RUN cp -r lib/src/generated/prisma /tmp/prisma_generated
+
 # Generate a production build.
 RUN dart pub global activate dart_frog_cli
 RUN dart pub global run dart_frog_cli:dart_frog build
 
-# Copy Prisma generated files into the build directory
-# (dart_frog build does not include generated/ files automatically)
+# Restore Prisma generated files into the build directory
+# (dart_frog build does not copy generated/ files)
 RUN mkdir -p build/lib/src/generated/prisma && \
-    cp lib/src/generated/prisma/prisma_client.dart build/lib/src/generated/prisma/ && \
-    cp lib/src/generated/prisma/prisma_client.g.dart build/lib/src/generated/prisma/
+    cp /tmp/prisma_generated/prisma_client.dart build/lib/src/generated/prisma/ && \
+    cp /tmp/prisma_generated/prisma_client.g.dart build/lib/src/generated/prisma/
 
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
