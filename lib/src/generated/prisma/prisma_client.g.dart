@@ -2904,6 +2904,7 @@ SessionRecordCreateInput _$SessionRecordCreateInputFromJson(
     SessionRecordCreateInput(
       did: json['did'] as String,
       session: json['session'] as String,
+      pdsUrl: json['pds_url'] as String? ?? 'https://bsky.social',
     );
 
 Map<String, dynamic> _$SessionRecordCreateInputToJson(
@@ -2911,6 +2912,7 @@ Map<String, dynamic> _$SessionRecordCreateInputToJson(
     <String, dynamic>{
       'did': instance.did,
       'session': instance.session,
+      'pds_url': instance.pdsUrl,
     };
 
 SessionRecordUncheckedCreateInput _$SessionRecordUncheckedCreateInputFromJson(
@@ -2948,6 +2950,10 @@ SessionRecordUpdateInput _$SessionRecordUpdateInputFromJson(
           ? null
           : StringFieldUpdateOperationsInput.fromJson(
               json['session'] as Map<String, dynamic>),
+      pdsUrl: json['pds_url'] == null
+          ? null
+          : StringFieldUpdateOperationsInput.fromJson(
+              json['pds_url'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$SessionRecordUpdateInputToJson(
@@ -2962,6 +2968,7 @@ Map<String, dynamic> _$SessionRecordUpdateInputToJson(
 
   writeNotNull('did', instance.did?.toJson());
   writeNotNull('session', instance.session?.toJson());
+  writeNotNull('pds_url', instance.pdsUrl?.toJson());
   return val;
 }
 
@@ -6412,6 +6419,7 @@ SessionRecord _$SessionRecordFromJson(Map<String, dynamic> json) =>
       id: json['id'] as int,
       did: json['did'] as String,
       session: json['session'] as String,
+      pdsUrl: json['pds_url'] as String? ?? 'https://bsky.social',
     );
 
 Map<String, dynamic> _$SessionRecordToJson(SessionRecord instance) =>
@@ -6419,6 +6427,7 @@ Map<String, dynamic> _$SessionRecordToJson(SessionRecord instance) =>
       'id': instance.id,
       'did': instance.did,
       'session': instance.session,
+      'pds_url': instance.pdsUrl,
     };
 
 AuthRateLimit _$AuthRateLimitFromJson(Map<String, dynamic> json) =>

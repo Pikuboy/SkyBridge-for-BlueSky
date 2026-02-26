@@ -93,10 +93,14 @@ enum FeedRecordScalarFieldEnum implements _i1.PrismaEnum {
 enum SessionRecordScalarFieldEnum implements _i1.PrismaEnum {
   id,
   did,
-  session;
+  session,
+  @JsonValue('pds_url')
+  pdsUrl(r'pds_url');
+
+  const SessionRecordScalarFieldEnum([this.originalName]);
 
   @override
-  String? get originalName => null;
+  final String? originalName;
 }
 
 enum AuthRateLimitScalarFieldEnum implements _i1.PrismaEnum {
@@ -2482,6 +2486,7 @@ class SessionRecordCreateInput implements _i1.JsonSerializable {
   const SessionRecordCreateInput({
     required this.did,
     required this.session,
+    this.pdsUrl = 'https://bsky.social',
   });
 
   factory SessionRecordCreateInput.fromJson(Map<String, dynamic> json) =>
@@ -2490,6 +2495,9 @@ class SessionRecordCreateInput implements _i1.JsonSerializable {
   final String did;
 
   final String session;
+
+  @JsonKey(name: 'pds_url')
+  final String pdsUrl;
 
   @override
   Map<String, dynamic> toJson() => _$SessionRecordCreateInputToJson(this);
@@ -2523,6 +2531,7 @@ class SessionRecordUpdateInput implements _i1.JsonSerializable {
   const SessionRecordUpdateInput({
     this.did,
     this.session,
+    this.pdsUrl,
   });
 
   factory SessionRecordUpdateInput.fromJson(Map<String, dynamic> json) =>
@@ -2531,6 +2540,9 @@ class SessionRecordUpdateInput implements _i1.JsonSerializable {
   final StringFieldUpdateOperationsInput? did;
 
   final StringFieldUpdateOperationsInput? session;
+
+  @JsonKey(name: 'pds_url')
+  final StringFieldUpdateOperationsInput? pdsUrl;
 
   @override
   Map<String, dynamic> toJson() => _$SessionRecordUpdateInputToJson(this);
@@ -5715,6 +5727,7 @@ class SessionRecord implements _i1.JsonSerializable {
     required this.id,
     required this.did,
     required this.session,
+    this.pdsUrl = 'https://bsky.social',
   });
 
   factory SessionRecord.fromJson(Map<String, dynamic> json) =>
@@ -5725,6 +5738,9 @@ class SessionRecord implements _i1.JsonSerializable {
   final String did;
 
   final String session;
+
+  @JsonKey(name: 'pds_url')
+  final String pdsUrl;
 
   @override
   Map<String, dynamic> toJson() => _$SessionRecordToJson(this);
