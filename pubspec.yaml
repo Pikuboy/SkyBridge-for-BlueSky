@@ -11,7 +11,7 @@ dependencies:
   bluesky: ^1.4.1
   bluesky_text: ^1.1.1
   collection: ^1.17.1
-  copy_with_extension: ^5.0.2
+  copy_with_extension: ^6.0.0
   crypto: ^3.0.2
   dart_frog: ^1.2.0
   dart_jsonwebtoken: ^2.8.2
@@ -31,7 +31,7 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.3.3
-  copy_with_extension_gen: ^5.0.2
+  copy_with_extension_gen: ^6.0.0
   fixnum: ^1.1.0
   json_serializable: ^6.9.0
   mocktail: ^1.0.0
