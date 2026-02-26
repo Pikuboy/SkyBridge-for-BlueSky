@@ -61,8 +61,7 @@ Future<Response> onRequest(RequestContext context) async {
         if (oauth.clientId == code.clientId &&
             oauth.clientSecret == clientSecret) {
 
-          // Attempt to sign in with the provided credentials.
-          // Resolve the PDS host from the user's handle first.
+          // Resolve the PDS host from the user's handle, then create session.
           final pdsHost = await resolvePdsHost(code.identifier);
           final session = await createBlueskySession(
             identifier: code.identifier,
