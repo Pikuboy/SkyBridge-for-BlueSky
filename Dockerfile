@@ -28,6 +28,12 @@ RUN npx prisma generate
 RUN dart pub global activate dart_frog_cli
 RUN dart pub global run dart_frog_cli:dart_frog build
 
+# Copy Prisma generated files into the build directory
+# (dart_frog build does not include generated/ files automatically)
+RUN mkdir -p build/lib/src/generated/prisma && \
+    cp lib/src/generated/prisma/prisma_client.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/prisma_client.g.dart build/lib/src/generated/prisma/
+
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
 RUN dart compile exe build/server/server.dart -o build/bin/server
