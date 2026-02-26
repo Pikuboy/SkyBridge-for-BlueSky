@@ -3,7 +3,9 @@ import 'package:atproto/core.dart';
 import 'package:bluesky/app_bsky_embed_images.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
+import 'package:bluesky/app_bsky_feed_post.dart' show AppBskyFeedPost;
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/com_atproto_repo_strongref.dart' show RepoStrongRef;
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:collection/collection.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
@@ -75,27 +77,31 @@ class MastodonPost {
 
     // Determine if this is a repost.
     final repost = view.reason?.map(
-      repost: (repost) => repost,
+      reasonRepost: (repost) => repost,
       unknown: (_) => null,
     );
     final isRepost = repost != null;
 
     // Process facets such as mentions and links.
+    // In bluesky 1.x, post.record is Map<String,dynamic> and must be decoded.
+    final postRecord = AppBskyFeedPost.fromJson(
+      post.record as Map<String, dynamic>,
+    );
     final processed = await processFacets(
-      view.post.record.facets ?? [],
-      post.record.text,
+      postRecord.facets ?? [],
+      postRecord.text,
     );
 
     // Bit of a mess right now, could use some cleaning up...
     MastodonAccount account;
     var id = (await postToDatabase(post)).id;
     var content = processed.htmlText;
-    var text = post.record.text;
-    var likeCount = post.likeCount;
-    var repostCount = post.repostCount;
-    var replyCount = post.replyCount;
+    var text = postRecord.text;
+    var likeCount = post.likeCount ?? 0;
+    var repostCount = post.repostCount ?? 0;
+    var replyCount = post.replyCount ?? 0;
     final mediaAttachments = <MastodonMediaAttachment>[];
-    String? language = post.record.langs?.firstOrNull ?? 'en';
+    String? language = postRecord.langs?.firstOrNull ?? 'en';
 
     final baseUrl = env.getOrElse(
       'SKYBRIDGE_BASEURL',
@@ -119,7 +125,7 @@ class MastodonPost {
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
         embedded.media.mapOrNull(
-          images: (media) {
+          imagesView: (media) {
             for (final image in media.data.images) {
               final attachment = MastodonMediaAttachment.fromEmbed(image);
               mediaAttachments.add(attachment);
@@ -133,7 +139,7 @@ class MastodonPost {
         // video data first and await outside the callback.
         dynamic videoEmbedData;
         embed.mapOrNull(
-          video: (videoEmbed) {
+          videoView: (videoEmbed) {
             videoEmbedData = videoEmbed.data;
           },
         );
@@ -208,7 +214,7 @@ class MastodonPost {
 
     // Then all the labels, capitalize the first letter, and join them
     // with a comma.
-    final labels = labelValues?.map(toBeginningOfSentenceCase).join(', ');
+    final labels = labelValues?.map((l) => toBeginningOfSentenceCase(l) ?? l).join(', ');
 
     // Add a 'CW:' prefix to the labels string.
     final labelsString = labels != null && labels.isNotEmpty
@@ -246,7 +252,7 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
-      replyPostUri: view.post.record.reply?.parent.uri,
+      replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: view.post.uri,
     );
   }
@@ -278,7 +284,7 @@ class MastodonPost {
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
         embedded.media.mapOrNull(
-          images: (media) {
+          imagesView: (media) {
             for (final image in media.data.images) {
               final attachment = MastodonMediaAttachment.fromEmbed(image);
               mediaAttachments.add(attachment);
@@ -292,7 +298,7 @@ class MastodonPost {
         // video data first and await outside the callback.
         dynamic videoEmbedData;
         embed.mapOrNull(
-          video: (videoEmbed) {
+          videoView: (videoEmbed) {
             videoEmbedData = videoEmbed.data;
           },
         );
@@ -307,9 +313,13 @@ class MastodonPost {
     }
 
     // Process facets such as mentions and links.
+    // In bluesky 1.x, post.record is Map<String,dynamic> and must be decoded.
+    final postRecord = AppBskyFeedPost.fromJson(
+      post.record as Map<String, dynamic>,
+    );
     final processed = await processFacets(
-      post.record.facets ?? [],
-      post.record.text,
+      postRecord.facets ?? [],
+      postRecord.text,
     );
 
     // Construct URL/URI
@@ -319,7 +329,7 @@ class MastodonPost {
     final url = '$base/profile/${account.username}/post/$postId';
 
     var content = processed.htmlText;
-    final text = post.record.text;
+    final text = postRecord.text;
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
@@ -357,7 +367,7 @@ class MastodonPost {
 
     // Then all the labels, capitalize the first letter, and join them
     // with a comma.
-    final labels = labelValues?.map(toBeginningOfSentenceCase).join(', ');
+    final labels = labelValues?.map((l) => toBeginningOfSentenceCase(l) ?? l).join(', ');
 
     // Add a 'CW:' prefix to the labels string.
     final labelsString = labels != null && labels.isNotEmpty
@@ -370,12 +380,12 @@ class MastodonPost {
       sensitive: post.labels?.isNotEmpty ?? false,
       spoilerText: labelsString ?? '',
       visibility: PostVisibility.public,
-      language: post.record.langs?.firstOrNull ?? 'en',
+      language: postRecord.langs?.firstOrNull ?? 'en',
       uri: url,
       url: url,
-      repliesCount: post.replyCount,
-      reblogsCount: post.repostCount,
-      favouritesCount: post.likeCount,
+      repliesCount: post.replyCount ?? 0,
+      reblogsCount: post.repostCount ?? 0,
+      favouritesCount: post.likeCount ?? 0,
       favourited: post.viewer?.like != null,
       reblogged: post.viewer?.repost != null,
       muted: false,
@@ -394,7 +404,7 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
-      replyPostUri: post.record.reply?.parent.uri,
+      replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: post.uri,
     );
   }
@@ -412,10 +422,12 @@ class MastodonPost {
       final createdAt = DateTime.now().toUtc();
 
       // Create the repost record via Bluesky feed service.
-      // bluesky.feed.createRepost() is the high-level API in bluesky 1.x
-      await bluesky.feed.repost(
-        cid: postRecord.cid,
-        uri: atp.AtUri.parse(postRecord.uri),
+      // In bluesky 1.x, the API is bluesky.feed.repost.create(subject: ...)
+      await bluesky.feed.repost.create(
+        subject: RepoStrongRef(
+          cid: postRecord.cid,
+          uri: atp.AtUri.parse(postRecord.uri),
+        ),
       );
 
       // Write the repost to the database.

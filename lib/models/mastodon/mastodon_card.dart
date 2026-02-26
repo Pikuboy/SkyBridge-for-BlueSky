@@ -38,8 +38,8 @@ class MastodonCard {
   /// Constructs a potential [MastodonCard] from a [UPostViewEmbed].
   static Future<MastodonCard?> fromEmbed(UPostViewEmbed? embed) async {
     return embed?.map(
-      record: (record) => embedViewRecordToCard(record.data),
-      external: (embed) {
+      recordView: (record) => embedViewRecordToCard(record.data),
+      externalView: (embed) {
         final external = embed.data.external;
         return MastodonCard(
           url: external.uri,
@@ -51,15 +51,15 @@ class MastodonCard {
           providerName: '',
           providerUrl: '',
           html: '',
-          width: external.thumbnail != null ? 864 : 0,
-          height: external.thumbnail != null ? 432 : 0,
-          embedUrl: external.thumbnail ?? '',
-          image: external.thumbnail ?? '',
+          width: external.thumb != null ? 864 : 0,
+          height: external.thumb != null ? 432 : 0,
+          embedUrl: external.thumb ?? '',
+          image: external.thumb ?? '',
         );
       },
-      images: (_) => null,
-      recordWithMedia: (record) => embedViewRecordToCard(record.data.record),
-      video: (_) => null,
+      imagesView: (_) => null,
+      recordWithMediaView: (record) => embedViewRecordToCard(record.data.record),
+      videoView: (_) => null,
       unknown: (_) => null,
     );
   }
@@ -91,7 +91,7 @@ class MastodonCard {
 
     // Get any data we need from the post's record.
     record.record.map(
-      record: (post) {
+      viewRecord: (post) {
         handle = post.data.author.handle;
         title = 'Quote Post - (@$handle) \n ${post.data.value.text}';
         description = post.data.value.text;
@@ -102,21 +102,21 @@ class MastodonCard {
         if (embeds != null) {
           for (final embed in embeds) {
             embed.map(
-              record: (_) {},
-              images: (images) {
+              recordView: (_) {},
+              imagesView: (images) {
                 quoteImage = images.data.images.first.fullsize;
                 useAttachedMedia = true;
               },
-              external: (_) {},
-              recordWithMedia: (_) {},
-              video: (_) {},
+              externalView: (_) {},
+              recordWithMediaView: (_) {},
+              videoView: (_) {},
               unknown: (_) {},
             );
           }
         }
       },
-      notFound: (_) {},
-      blocked: (_) {},
+      notFoundPost: (_) {},
+      viewBlocked: (_) {},
       generatorView: (_) {},
       unknown: (_) {},
       listView: (_) {},

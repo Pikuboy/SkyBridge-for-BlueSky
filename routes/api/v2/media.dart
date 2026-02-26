@@ -78,7 +78,11 @@ Future<Response> onRequest(RequestContext context) async {
 
   final description = formDataEncoded.description ?? '';
   final record = await databaseTransaction(
-    () async => BlobExtension.fromBlob(blob, description),
+    () async => BlobExtension.fromBlob(
+        blob,
+        description,
+        type: isGif ? 'gifv' : (isImage ? 'image' : 'video'),
+      ),
   );
 
   final attachmentType = isGif ? MediaType.gifv : MediaType.image;

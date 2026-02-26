@@ -1,5 +1,5 @@
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/app_bsky_feed_post.dart' show PostRecord;
+import 'package:bluesky/app_bsky_feed_post.dart' show AppBskyFeedPost;
 import 'package:bluesky/app_bsky_notification_listnotifications.dart';
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
@@ -46,7 +46,7 @@ class MastodonNotification {
       try {
         final unknownRecord = notification.record ?? {};
 
-        switch (notification.reason.name) {
+        switch (notification.reason.value) {
           case 'repost':
           case 'like':
             final subject = unknownRecord['subject'] as Map<String, dynamic>?;
@@ -68,7 +68,7 @@ class MastodonNotification {
             pairs[notification] = uri;
             if (!postUris.contains(uri)) postUris.add(uri);
             try {
-              final record = PostRecord.fromJson(unknownRecord);
+              final record = AppBskyFeedPost.fromJson(unknownRecord);
               final reply = record.reply;
               if (reply != null) {
                 if (!postUris.contains(reply.parent.uri)) {
@@ -144,7 +144,7 @@ class MastodonNotification {
               )
             : null;
 
-        final type = NotificationType.fromBluesky(notification.reason.name);
+        final type = NotificationType.fromBluesky(notification.reason.value);
 
         notifications.add(
           MastodonNotification(

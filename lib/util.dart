@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluesky/app_bsky_feed_defs.dart' show UPostThread;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dotenv/dotenv.dart';
@@ -115,18 +116,18 @@ Future<List<T>> chunkResults<T, K>({
   return results;
 }
 
-/// Traverse the replies of a [bsky.PostThreadView] and return a list of
+/// Traverse the replies of a [UPostThread] and return a list of
 /// [MastodonPost]s with the correct reply IDs set, down to a certain [depth].
 ///
 /// Creates a list of replies compatible with the Mastodon API
 /// status context endpoint.
 Future<List<MastodonPost>> traverseReplies(
-  bsky.PostThreadView view,
+  UPostThread view,
   int depth,
 ) async {
   final result = <MastodonPost>[];
   await view.map(
-    record: (record) async {
+    threadViewPost: (record) async {
       // Get the current depth post and add it to the list.
       final currentPost = await MastodonPost.fromBlueSkyPost(record.data.post);
       // Skip the first post.
@@ -154,26 +155,26 @@ Future<List<MastodonPost>> traverseReplies(
         }
       }
     },
-    notFound: (_) {},
-    blocked: (_) {},
+    notFoundPost: (_) {},
+    blockedPost: (_) {},
     unknown: (_) {},
   );
 
   return result;
 }
 
-/// Traverse the parents of a [bsky.PostThreadView] and return a list of
+/// Traverse the parents of a [UPostThread] and return a list of
 /// [MastodonPost]s with the correct reply IDs set, up to a certain [depth].
 ///
 /// Creates a list of parents compatible with the Mastodon API
 /// status context endpoint.
 Future<List<MastodonPost>> traverseParents(
-  bsky.PostThreadView view,
+  UPostThread view,
   int depth,
 ) async {
   final result = <MastodonPost>[];
   await view.map(
-    record: (record) async {
+    threadViewPost: (record) async {
       // Get the current depth post and add it to the list.
       final currentPost = await MastodonPost.fromBlueSkyPost(record.data.post);
 
@@ -198,8 +199,8 @@ Future<List<MastodonPost>> traverseParents(
       // Skip the first post.
       if (depth > 0) result.add(currentPost);
     },
-    notFound: (_) {},
-    blocked: (_) {},
+    notFoundPost: (_) {},
+    blockedPost: (_) {},
     unknown: (_) {},
   );
 

@@ -5,7 +5,14 @@ import 'package:orm/engine_core.dart' as _i3;
 import 'package:orm/graphql.dart' as _i2;
 import 'package:orm/logger.dart' as _i4;
 import 'package:orm/orm.dart' as _i1;
-import 'package:orm/orm.dart' show DateTimeJsonConverter;
+
+// DateTimeJsonConverter was removed from the public API of orm 5.3.4.
+// We redefine it locally to keep the generated .g.dart working.
+class DateTimeJsonConverter {
+  const DateTimeJsonConverter();
+  DateTime fromJson(dynamic value) => DateTime.parse(value as String);
+  dynamic toJson(DateTime value) => value.toIso8601String();
+}
 
 part 'prisma_client.g.dart';
 

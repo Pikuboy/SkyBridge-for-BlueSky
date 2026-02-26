@@ -44,11 +44,11 @@ class MastodonRelationship {
     // Get the profile for the account and check the relationship with the
     // current user.
     final profile = await bluesky.actor.getProfile(actor: account.did);
-    final blocking = profile.data.viewer.blocking != null;
-    final blockedBy = profile.data.viewer.isBlockedBy;
-    final muting = profile.data.viewer.isMuted;
-    final following = profile.data.viewer.following != null;
-    final followedBy = profile.data.viewer.followedBy != null;
+    final blocking = profile.data.viewer?.blocking != null;
+    final blockedBy = profile.data.viewer?.isBlockedBy ?? false;
+    final muting = profile.data.viewer?.isMuted ?? false;
+    final following = profile.data.viewer?.following != null;
+    final followedBy = profile.data.viewer?.followedBy != null;
 
     return MastodonRelationship(
       // Use the numeric database ID, not the DID, for Mastodon compatibility.

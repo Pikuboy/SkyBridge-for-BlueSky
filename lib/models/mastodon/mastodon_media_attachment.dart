@@ -36,7 +36,7 @@ class MastodonMediaAttachment {
       id: '0',
       type: MediaType.image,
       url: embed.fullsize,
-      previewUrl: embed.thumbnail,
+      previewUrl: embed.thumb,
       remoteUrl: embed.fullsize,
       description: description,
       meta: meta,

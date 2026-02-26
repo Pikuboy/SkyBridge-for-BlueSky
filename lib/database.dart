@@ -124,7 +124,7 @@ Future<PostRecord> postToDatabase(post) async {
 /// it one. Either the existing or the newly created [PostRecord] is returned.
 Future<PostRecord?> embedPostToDatabase(UEmbedRecordViewRecord view) async {
   return await view.map(
-    record: (record) async {
+    viewRecord: (record) async {
       final post = record.data;
       final existing = await db.postRecord.findUnique(
         where: PostRecordWhereUniqueInput(cid: post.cid),
@@ -151,8 +151,8 @@ Future<PostRecord?> embedPostToDatabase(UEmbedRecordViewRecord view) async {
         return existing;
       }
     },
-    notFound: (_) => null,
-    blocked: (_) => null,
+    viewNotFound: (_) => null,
+    viewBlocked: (_) => null,
     generatorView: (_) => null,
     unknown: (_) => null,
     listView: (_) => null,
@@ -163,7 +163,7 @@ Future<PostRecord?> embedPostToDatabase(UEmbedRecordViewRecord view) async {
 /// it one. Either the existing or the newly created [RepostRecord] is returned.
 Future<RepostRecord> repostToDatabase(FeedViewPost view) async {
   final repost = view.reason?.map(
-    repost: (repost) => repost,
+    reasonRepost: (repost) => repost,
     unknown: (_) => null,
   );
   final isRepost = repost != null;
@@ -364,8 +364,9 @@ extension RepostExtension on PostRecord {
 extension BlobExtension on MediaRecord {
   static Future<MediaRecord> fromBlob(
     atp.Blob blob,
-    String description,
-  ) async {
+    String description, {
+    String type = 'image',
+  }) async {
     final id = await generateUniqueSnowflake(
       date: DateTime.now().toUtc(),
       recordType: RecordType.media,
@@ -376,6 +377,7 @@ extension BlobExtension on MediaRecord {
     return db.mediaRecord.create(
       data: MediaRecordCreateInput(
         id: id,
+        type: type,
         mimeType: blob.mimeType,
         size: blob.size,
         link: blob.ref.link,
