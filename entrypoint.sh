@@ -19,6 +19,6 @@ mkdir -p /app/database
 touch /app/database/skybridge.db
 
 # Run any necessary database migrations.
-npx --yes prisma@5 migrate deploy
+npx --yes prisma@5 db push --skip-generate
 
 ./bin/server
