@@ -27,8 +27,9 @@ RUN dart pub global run dart_frog_cli:dart_frog build
 
 # Restore generated Prisma files into build/ after dart_frog bundling
 RUN mkdir -p build/lib/src/generated/prisma && \
-    cp lib/src/generated/prisma/prisma_client.dart build/lib/src/generated/prisma/ && \
-    cp lib/src/generated/prisma/prisma_client.g.dart build/lib/src/generated/prisma/
+    cp lib/src/generated/prisma/client.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/prisma.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/model.dart build/lib/src/generated/prisma/
 
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
