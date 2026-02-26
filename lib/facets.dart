@@ -25,8 +25,8 @@ class ProcessedFacets {
   final String htmlText;
 }
 
-/// A tuple class of a [bsky.FacetMention] and the handle that was used to
-/// reference it.
+/// A tuple class of a [bsky.RichtextFacetMention] and the handle that was used
+/// to reference it.
 class MentionTuple {
   /// Creates a new [MentionTuple] instance.
   MentionTuple({
@@ -35,7 +35,7 @@ class MentionTuple {
   });
 
   /// The mention that was found in the post.
-  final bsky.FacetMention facet;
+  final bsky.RichtextFacetMention facet;
 
   /// The handle that was used to reference the mention.
   final String handle;
@@ -47,7 +47,7 @@ class MentionTuple {
 ///
 /// This is used in [MastodonPost] to convert the content of a post to HTML.
 Future<ProcessedFacets> processFacets(
-  List<bsky.Facet> facets,
+  List<bsky.RichtextFacet> facets,
   String text,
 ) async {
   const escape = HtmlEscape(HtmlEscapeMode.element);
@@ -108,21 +108,21 @@ Future<ProcessedFacets> processFacets(
         ),
       );
 
-      if (feature.data is bsky.FacetLink) {
+      if (feature.isRichtextFacetLink) {
         // Facet is a link, attach url to <a> tag.
-        final link = feature.data as bsky.FacetLink;
+        final link = feature.richtextFacetLink!;
         output.add(
           '<a href="${link.uri}" rel="nofollow noopener noreferrer" target="_blank">$facetText</a>',
         );
-      } else if (feature.data is bsky.FacetMention) {
+      } else if (feature.isRichtextFacetMention) {
         // Facet is a mention, attach fake profile url to <a> tag.
-        final mention = feature.data as bsky.FacetMention;
+        final mention = feature.richtextFacetMention!;
         final url = 'https://$base/@$facetText';
         output.add(
           '<span class="h-card"><a href="$url" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">$facetText</a></span>',
         );
         mentions.add(MentionTuple(facet: mention, handle: facetText));
-      } else if (feature.data is bsky.FacetTag) {
+      } else if (feature.isRichtextFacetTag) {
         // Facet is a tag, attach tag url to <a> tag.
         // Strip hashtag from facet text.
         final tagName = facetText.substring(1);

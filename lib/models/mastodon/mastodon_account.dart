@@ -46,7 +46,7 @@ class MastodonAccount {
 
   /// Creates a [MastodonAccount] from an [bsky.ActorProfile].
   static Future<MastodonAccount> fromActorProfile(
-    bsky.ActorProfile profile,
+    bsky.ProfileViewDetailed profile,
   ) async {
     // Assign/get a user ID from the database.
     final user = await actorProfileToDatabase(profile);
@@ -90,7 +90,7 @@ class MastodonAccount {
   }
 
   /// Creates a [MastodonAccount] from an [bsky.Actor].
-  static Future<MastodonAccount> fromActor(bsky.Actor profile) async {
+  static Future<MastodonAccount> fromActor(bsky.ProfileView profile) async {
     // Assign/get a user ID from the database.
     final user = await actorToDatabase(profile);
 
@@ -231,7 +231,7 @@ class ProfileInfo {
   });
 
   /// Creates a new [ProfileInfo] instance from an [bsky.ActorProfile].
-  static Future<ProfileInfo>fromActorProfile(bsky.ActorProfile profile) async {
+  static Future<ProfileInfo>fromActorProfile(bsky.ProfileViewDetailed profile) async {
     return ProfileInfo(
       banner: profile.banner ?? '',
       followersCount: profile.followersCount ?? 0,
@@ -370,7 +370,7 @@ class AccountRole {
 Future<String> processProfileDescription(String description) async {
   final text = BlueskyText(description);
   final textFacets = await text.entities.toFacets();
-  final facets = textFacets.map(bsky.Facet.fromJson).toList();
+  final facets = textFacets.map(bsky.RichtextFacet.fromJson).toList();
   final processedBio = await processFacets(facets, description);
 
   return processedBio.htmlText;

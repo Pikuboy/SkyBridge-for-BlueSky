@@ -132,7 +132,7 @@ Future<PostRecord> postToDatabase(post) async {
 
 /// Checks if a embed post has been assigned a [PostRecord], and if not, gives
 /// it one. Either the existing or the newly created [PostRecord] is returned.
-Future<PostRecord?> embedPostToDatabase(bsky.EmbedViewRecordView view) async {
+Future<PostRecord?> embedPostToDatabase(bsky.UEmbedRecordViewRecord view) async {
   return await view.map(
     record: (record) async {
       final post = record.data;
@@ -171,7 +171,7 @@ Future<PostRecord?> embedPostToDatabase(bsky.EmbedViewRecordView view) async {
 
 /// Checks if a repost has been assigned a [RepostRecord], and if not, gives
 /// it one. Either the existing or the newly created [RepostRecord] is returned.
-Future<RepostRecord> repostToDatabase(bsky.FeedView view) async {
+Future<RepostRecord> repostToDatabase(bsky.FeedViewPost view) async {
   final repost = view.reason?.map(
     repost: (repost) => repost,
     unknown: (_) => null,
@@ -196,7 +196,7 @@ Future<RepostRecord> repostToDatabase(bsky.FeedView view) async {
 
 /// Checks if a DID has been assigned a [UserRecord], and if not, gives
 /// it one. Either the existing or the newly created [UserRecord] is returned.
-Future<UserRecord> actorToDatabase(bsky.Actor actor) async {
+Future<UserRecord> actorToDatabase(bsky.ProfileView actor) async {
   final existing = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(did: actor.did),
   );
@@ -219,7 +219,7 @@ Future<UserRecord> actorToDatabase(bsky.Actor actor) async {
 
 /// Checks if a DID has been assigned a [UserRecord], and if not, gives
 /// it one. Either the existing or the newly created [UserRecord] is returned.
-Future<UserRecord> actorProfileToDatabase(bsky.ActorProfile actor) async {
+Future<UserRecord> actorProfileToDatabase(bsky.ProfileViewDetailed actor) async {
   final existing = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(did: actor.did),
   );
@@ -328,7 +328,7 @@ Future<NotificationRecord> notificationToDatabase(
 
 /// Checks if a feed has been assigned a [FeedRecord], and if not, gives
 /// it one. Either the existing or the newly created [FeedRecord] is returned.
-Future<FeedRecord> feedToDatabase(bsky.FeedGeneratorView feed) async {
+Future<FeedRecord> feedToDatabase(bsky.GeneratorView feed) async {
   final existing = await db.feedRecord.findFirst(
     where: FeedRecordWhereInput(
       cid: StringFilter(equals: feed.cid),

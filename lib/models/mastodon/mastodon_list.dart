@@ -23,7 +23,7 @@ class MastodonList {
 
   /// Converts a [bsky.FeedGenerator] to a [MastodonList].
   static Future<MastodonList> fromFeedGenerator(
-    bsky.FeedGeneratorView gen,
+    bsky.GeneratorView gen,
   ) async {
     return MastodonList(
       id: (await feedToDatabase(gen)).id.toString(),

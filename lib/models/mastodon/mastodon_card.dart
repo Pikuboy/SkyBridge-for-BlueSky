@@ -34,8 +34,8 @@ class MastodonCard {
   /// Converts the [MastodonCard] to JSON.
   Map<String, dynamic> toJson() => _$MastodonCardToJson(this);
 
-  /// Constructs a potential [MastodonCard] from a [bsky.EmbedView].
-  static Future<MastodonCard?> fromEmbed(bsky.EmbedView? embed) async {
+  /// Constructs a potential [MastodonCard] from a [bsky.UPostViewEmbed].
+  static Future<MastodonCard?> fromEmbed(bsky.UPostViewEmbed? embed) async {
     return embed?.map(
       record: (record) => embedViewRecordToCard(record.data),
       external: (embed) {
@@ -63,10 +63,10 @@ class MastodonCard {
     );
   }
 
-  /// Constructs a potential [MastodonCard] from a [bsky.EmbedViewRecord].
+  /// Constructs a potential [MastodonCard] from a [bsky.EmbedRecordView].
   /// This is used to construct 'fake' quote posts by abusing embed cards.
   static Future<MastodonCard?> embedViewRecordToCard(
-    bsky.EmbedViewRecord record,
+    bsky.EmbedRecordView record,
   ) async {
     // Get the fallback URL for the avatar.
     final base = env.getOrElse(

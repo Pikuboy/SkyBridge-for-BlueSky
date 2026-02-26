@@ -19,9 +19,9 @@ class MastodonMediaAttachment {
     this.meta,
   });
 
-  /// Converts a [bsky.EmbedViewImagesView] to a [MastodonMediaAttachment].
+  /// Converts a [bsky.EmbedImagesViewImage] to a [MastodonMediaAttachment].
   factory MastodonMediaAttachment.fromEmbed(
-    bsky.EmbedViewImagesView embed,
+    bsky.EmbedImagesViewImage embed,
   ) {
     final description = embed.alt.isEmpty ? null : embed.alt;
 

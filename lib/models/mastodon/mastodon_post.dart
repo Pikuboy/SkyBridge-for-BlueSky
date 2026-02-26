@@ -67,7 +67,7 @@ class MastodonPost {
   Map<String, dynamic> toJson() => _$MastodonPostToJson(this);
 
   /// Converts a [bsky.FeedView] to a [MastodonPost].
-  static Future<MastodonPost> fromFeedView(bsky.FeedView view) async {
+  static Future<MastodonPost> fromFeedView(bsky.FeedViewPost view) async {
     final post = view.post;
 
     // Determine if this is a repost.
@@ -102,16 +102,16 @@ class MastodonPost {
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
-      if (embed.data is bsky.EmbedViewImages) {
-        final embedded = embed.data as bsky.EmbedViewImages;
+      if (embed.data is bsky.EmbedImagesView) {
+        final embedded = embed.data as bsky.EmbedImagesView;
 
         // Add the images to the list of media attachments.
         for (final image in embedded.images) {
           final attachment = MastodonMediaAttachment.fromEmbed(image);
           mediaAttachments.add(attachment);
         }
-      } else if (embed.data is bsky.EmbedViewRecordWithMedia) {
-        final embedded = embed.data as bsky.EmbedViewRecordWithMedia;
+      } else if (embed.data is bsky.EmbedRecordWithMediaView) {
+        final embedded = embed.data as bsky.EmbedRecordWithMediaView;
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
@@ -261,16 +261,16 @@ class MastodonPost {
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
-      if (embed.data is bsky.EmbedViewImages) {
-        final embedded = embed.data as bsky.EmbedViewImages;
+      if (embed.data is bsky.EmbedImagesView) {
+        final embedded = embed.data as bsky.EmbedImagesView;
 
         // Add the images to the list of media attachments.
         for (final image in embedded.images) {
           final attachment = MastodonMediaAttachment.fromEmbed(image);
           mediaAttachments.add(attachment);
         }
-      } else if (embed.data is bsky.EmbedViewRecordWithMedia) {
-        final embedded = embed.data as bsky.EmbedViewRecordWithMedia;
+      } else if (embed.data is bsky.EmbedRecordWithMediaView) {
+        final embedded = embed.data as bsky.EmbedRecordWithMediaView;
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
