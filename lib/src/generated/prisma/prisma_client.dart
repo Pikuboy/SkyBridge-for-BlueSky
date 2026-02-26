@@ -11,7 +11,7 @@ import 'package:orm/orm.dart' as _i1;
 class DateTimeJsonConverter {
   const DateTimeJsonConverter();
   DateTime fromJson(dynamic value) => DateTime.parse(value as String);
-  dynamic toJson(DateTime value) => value.toIso8601String();
+  String toJson(DateTime value) => value.toIso8601String();
 }
 
 part 'prisma_client.g.dart';

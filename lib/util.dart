@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bluesky/app_bsky_feed_defs.dart' show UPostThread;
+import 'package:bluesky/app_bsky_feed_defs.dart' show UThreadViewPostReplies;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dotenv/dotenv.dart';
@@ -122,7 +122,7 @@ Future<List<T>> chunkResults<T, K>({
 /// Creates a list of replies compatible with the Mastodon API
 /// status context endpoint.
 Future<List<MastodonPost>> traverseReplies(
-  UPostThread view,
+  UThreadViewPostReplies view,
   int depth,
 ) async {
   final result = <MastodonPost>[];
@@ -169,7 +169,7 @@ Future<List<MastodonPost>> traverseReplies(
 /// Creates a list of parents compatible with the Mastodon API
 /// status context endpoint.
 Future<List<MastodonPost>> traverseParents(
-  UPostThread view,
+  UThreadViewPostReplies view,
   int depth,
 ) async {
   final result = <MastodonPost>[];
