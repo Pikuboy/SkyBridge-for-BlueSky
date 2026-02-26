@@ -22,6 +22,11 @@ RUN set -uex; \
 RUN npm i prisma@4.16.2
 RUN npx prisma generate
 
+# Remove the stale json_serializable-generated part file (orm 4.x generates
+# a self-contained client with no `part` directive; keeping the old .g.dart
+# causes a "part-of" orphan error at compile time).
+RUN rm -f lib/src/generated/prisma/prisma_client.g.dart
+
 # Generate a production build.
 RUN dart pub global activate dart_frog_cli
 RUN dart pub global run dart_frog_cli:dart_frog build
