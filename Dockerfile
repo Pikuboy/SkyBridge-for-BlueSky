@@ -1,5 +1,4 @@
 # Official Dart image: https://hub.docker.com/_/dart
-# Specify the Dart SDK base image version using dart:<version> (ex: dart:2.17)
 FROM dart:3.8 AS build
 
 WORKDIR /app
@@ -20,20 +19,16 @@ RUN set -uex; \
     apt-get install -y nodejs
 
 RUN npm i prisma@5
+
 # Remove ALL generated files before regenerating to avoid conflicts
 RUN rm -rf lib/src/generated/prisma
-RUN npx prisma generate
 
-# Save generated Prisma files BEFORE dart_frog build wipes lib/src/generated/
-RUN cp -r lib/src/generated/prisma /tmp/prisma_generated
-
-# Generate a production build.
-RUN dart pub global activate dart_frog_cli
-RUN dart pub global run dart_frog_cli:dart_frog build
-
-# Restore Prisma generated files into the build directory
-# (dart_frog build does not copy generated/ files)
-RUN mkdir -p build/lib/src/generated/prisma && \
+# Generate, build, and restore Prisma files all in ONE RUN to stay in same layer
+RUN npx prisma generate && \
+    cp -r lib/src/generated/prisma /tmp/prisma_generated && \
+    dart pub global activate dart_frog_cli && \
+    dart pub global run dart_frog_cli:dart_frog build && \
+    mkdir -p build/lib/src/generated/prisma && \
     cp /tmp/prisma_generated/prisma_client.dart build/lib/src/generated/prisma/ && \
     cp /tmp/prisma_generated/prisma_client.g.dart build/lib/src/generated/prisma/
 
