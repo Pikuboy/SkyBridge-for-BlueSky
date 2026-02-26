@@ -93,21 +93,15 @@ Future<void> init(InternetAddress ip, int port) async {
   if (shouldWipeDB.toLowerCase() == 'true') {
     print('Wiping ID database...');
     await databaseTransaction(() async {
-      const tables = [
-        'UserRecord',
-        'PostRecord',
-        'RepostRecord',
-        'NotificationRecord',
-        'MediaRecord',
-        'FeedRecord',
-        'SessionRecord',
-      ];
-
-      await db.$queryRaw('PRAGMA foreign_keys=OFF;');
-      for (final table in tables) {
-        await db.$queryRaw('DELETE FROM $table;');
-      }
-      await db.$queryRaw('PRAGMA foreign_keys=ON;');
+      // Delete all records from tables in the correct order
+      // to avoid foreign key constraints
+      await db.sessionRecord.deleteMany();
+      await db.mediaRecord.deleteMany();
+      await db.feedRecord.deleteMany();
+      await db.notificationRecord.deleteMany();
+      await db.repostRecord.deleteMany();
+      await db.postRecord.deleteMany();
+      await db.userRecord.deleteMany();
     });
   }
 

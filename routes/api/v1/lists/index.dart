@@ -24,41 +24,30 @@ Future<Response> onRequest(RequestContext context) async {
     // Get saved feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
     for (final preference in response.data.preferences) {
-      await preference.map(
-        adultContent: (_) {},
-        contentLabel: (_) {},
-        personalDetails: (_) {},
-        feedView: (_) {},
-        threadView: (_) {},
-        savedFeedsV2: (_) {},
-        savedFeeds: (feedUris) async {
-          // Get the feed generator views for each saved feed, giving us info
-          // like the name of the feed and the accompanying IDs.
-          final result = await chunkResults<bsky.FeedGeneratorView, at.AtUri>(
-            items: feedUris.data.savedUris,
-            callback: (chunk) async {
-              final response = await bluesky.feed.getFeedGenerators(
-                uris: feedUris.data.savedUris,
-              );
-              return response.data.feeds;
-            },
-          );
-
-          // Convert the feed generator views to [MastodonList]'s, storing
-          // any info in the database we might need to access later.
-          lists = await databaseTransaction(() async {
-            final listFutures = result.map(
-              MastodonList.fromFeedGenerator,
+      // Check if this is a saved feeds preference
+      if (preference.data is bsky.SavedFeeds) {
+        final feedUris = preference.data as bsky.SavedFeeds;
+        // Get the feed generator views for each saved feed, giving us info
+        // like the name of the feed and the accompanying IDs.
+        final result = await chunkResults(
+          items: feedUris.savedUris,
+          callback: (chunk) async {
+            final response = await bluesky.feed.getFeedGenerators(
+              feeds: chunk,
             );
-            return Future.wait(listFutures);
-          });
-        },
-        hiddenPosts: (_) {},
-        interests: (_) {},
-        labelersPref: (_) {},
-        mutedWords: (_) {},
-        unknown: (_) {},
-      );
+            return response.data.feeds;
+          },
+        );
+
+        // Convert the feed generator views to [MastodonList]'s, storing
+        // any info in the database we might need to access later.
+        lists = await databaseTransaction(() async {
+          final listFutures = result.map(
+            MastodonList.fromFeedGenerator,
+          ).cast<Future<MastodonList>>();
+          return Future.wait(listFutures);
+        }) as List<MastodonList>;
+      }
     }
 
     return threadedJsonResponse(

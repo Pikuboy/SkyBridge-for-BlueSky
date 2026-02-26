@@ -22,7 +22,7 @@ Future<Response> onRequest(RequestContext context) async {
 
   if (encodedParams.resolve) {
     // Query is a single handle, just need to return a single account.
-    late final bsky.ActorProfile profile;
+    late final profile;
     try {
       // Strip the base url from the query handle.
       final base = env.getOrElse(

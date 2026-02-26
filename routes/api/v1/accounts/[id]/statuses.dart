@@ -54,9 +54,9 @@ Future<Response> onRequest(RequestContext context, String id) async {
 
   // Convert all the posts to MastodonPost futures and await them.
   var posts = await databaseTransaction(() {
-    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList().cast<Future<MastodonPost>>();
     return Future.wait(futures);
-  });
+  }) as List<MastodonPost>;
 
   // Filter out reposts if requested.
   if (options.excludeReblogs) {

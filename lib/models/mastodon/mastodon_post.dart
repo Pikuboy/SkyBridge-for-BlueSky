@@ -248,8 +248,8 @@ class MastodonPost {
     );
   }
 
-  /// Converts a [bsky.FeedPost] to a [MastodonPost].
-  static Future<MastodonPost> fromBlueSkyPost(bsky.FeedPost post) async {
+  /// Converts a BlueSky post to a [MastodonPost].
+  static Future<MastodonPost> fromBlueSkyPost(post) async {
     final mediaAttachments = <MastodonMediaAttachment>[];
     final account = await MastodonAccount.fromActor(post.author.toActor());
 
@@ -602,7 +602,7 @@ Future<List<MastodonPost>> processParentPosts(
 
   // Pull the posts from the server in chunks to avoid hitting the
   // maximum post limit.
-  final results = await chunkResults<bsky.FeedPost, atp.AtUri>(
+  final results = await chunkResults(
     items: uris,
     callback: (chunk) async {
       final response = await bluesky.feed.getPosts(uris: chunk);

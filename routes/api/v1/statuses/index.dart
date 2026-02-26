@@ -50,7 +50,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
     if (record == null) return Response(statusCode: HttpStatus.notFound);
 
     final uri = at.AtUri.parse(record.uri);
-    bsky.FeedPost? parentPost;
+    var parentPost;
 
     for (var i = 0; i < 3; i++) {
       try {
@@ -113,7 +113,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   );
 
   // Fetch the newly created post, retrying up to 3 times.
-  bsky.FeedPost? postData;
+  var postData;
   for (var i = 0; i < 3; i++) {
     try {
       final response = await bluesky.feed.getPosts(uris: [newPost.data.uri]);
