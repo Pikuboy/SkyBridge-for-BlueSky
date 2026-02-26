@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/atproto.dart' as batp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -246,24 +245,33 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
       } else {
         // The access token is expired but we have a valid refresh token,
         // try to refresh the session using the correct PDS.
-        final refreshedSession = await batp.refreshSession(
+        final refreshedSession = await refreshBlueskySession(
           refreshJwt: session.refreshJwt,
-          service: Uri.parse(pdsUrl),
+          pdsUrl: pdsUrl,
         );
+
+        if (refreshedSession == null) {
+          // Refresh failed, fall back to full re-auth.
+          return await createBlueskySession(
+            identifier: token.identifier,
+            appPassword: token.appPassword,
+            pdsUrl: pdsUrl,
+          );
+        }
 
         // Update the session in the database.
         await db.sessionRecord.update(
           where: SessionRecordWhereUniqueInput(
-            did: refreshedSession.data.did,
+            did: refreshedSession.did,
           ),
           data: SessionRecordUpdateInput(
             session: StringFieldUpdateOperationsInput(
-              set: jsonEncode(refreshedSession.data.toJson()),
+              set: jsonEncode(refreshedSession.toJson()),
             ),
           ),
         );
 
-        return refreshedSession.data;
+        return refreshedSession;
       }
     }
 
@@ -347,36 +355,70 @@ Future<atp.Session?> createBlueskySession({
     final resolvedPdsUrl = pdsUrl ?? await resolvePdsUrl(identifier);
     print('Creating session for $identifier using PDS: $resolvedPdsUrl');
 
-    // Try to authenticate with Bluesky with the given credentials.
-    final session = await batp.createSession(
-      identifier: identifier,
-      password: appPassword,
-      service: Uri.parse(resolvedPdsUrl),
+    // Call com.atproto.server.createSession directly on the correct PDS.
+    final url = Uri.parse('$resolvedPdsUrl/xrpc/com.atproto.server.createSession');
+    final response = await httpClient.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'identifier': identifier, 'password': appPassword}),
     );
 
-    // If we've gotten this far, the credentials are valid.
+    if (response.statusCode != 200) {
+      print('createSession failed: ${response.statusCode} ${response.body}');
+      return null;
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final session = atp.Session.fromJson(json);
+
     // Store the session and PDS URL in the database for later.
     await db.sessionRecord.upsert(
       where: SessionRecordWhereUniqueInput(
-        did: session.data.did,
+        did: session.did,
       ),
       create: SessionRecordCreateInput(
-        did: session.data.did,
-        session: jsonEncode(session.data.toJson()),
+        did: session.did,
+        session: jsonEncode(json),
         pdsUrl: resolvedPdsUrl,
       ),
       update: SessionRecordUpdateInput(
         session: StringFieldUpdateOperationsInput(
-          set: jsonEncode(session.data.toJson()),
+          set: jsonEncode(json),
         ),
         pdsUrl: StringFieldUpdateOperationsInput(
           set: resolvedPdsUrl,
         ),
       ),
     );
-    print('New session created for ${session.data.did}');
-    return session.data;
+    print('New session created for ${session.did}');
+    return session;
   } catch (e) {
+    print('createBlueskySession error: $e');
+    return null;
+  }
+}
+
+/// Refresh a Bluesky session using the refresh JWT and the stored PDS URL.
+Future<atp.Session?> refreshBlueskySession({
+  required String refreshJwt,
+  required String pdsUrl,
+}) async {
+  try {
+    final url = Uri.parse('$pdsUrl/xrpc/com.atproto.server.refreshSession');
+    final response = await httpClient.post(
+      url,
+      headers: {'Authorization': 'Bearer $refreshJwt'},
+    );
+
+    if (response.statusCode != 200) {
+      print('refreshSession failed: ${response.statusCode} ${response.body}');
+      return null;
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return atp.Session.fromJson(json);
+  } catch (e) {
+    print('refreshBlueskySession error: $e');
     return null;
   }
 }
