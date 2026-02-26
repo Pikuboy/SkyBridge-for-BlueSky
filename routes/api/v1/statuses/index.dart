@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
-import 'package:bluesky/atproto.dart' as batp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
 import 'package:dart_frog/dart_frog.dart';
@@ -59,7 +58,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
     if (parentPost == null) return Response(statusCode: HttpStatus.notFound);
 
-    final parentRef = batp.StrongRef(cid: parentPost.cid, uri: parentPost.uri);
+    final parentRef = at.StrongRef(cid: parentPost.cid, uri: parentPost.uri);
     final reply = parentPost.record.reply;
     postReplyRef = bsky.ReplyRef(
       root: reply != null ? reply.root : parentRef,

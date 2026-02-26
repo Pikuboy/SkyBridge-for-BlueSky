@@ -35,12 +35,11 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   try {
-    print('Favourites: Fetching likes for ${session.did} (bluesky session: ${bluesky.session.did}) with cursor=$cursor, limit=$limit');
+    print('Favourites: Fetching likes for ${session.did} with cursor=$cursor, limit=$limit');
     
     // Note: Bluesky API only allows fetching your own likes
-    // We must use bluesky.session.did which is guaranteed to be the authenticated user
     final response = await bluesky.feed.getActorLikes(
-      actor: bluesky.session.did,
+      actor: session.did,
       limit: limit,
       cursor: cursor,
     );
