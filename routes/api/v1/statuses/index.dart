@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
+import 'package:bluesky/app_bsky_richtext_facet.dart' show RichtextFacet;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
 import 'package:dart_frog/dart_frog.dart';
@@ -93,12 +94,12 @@ Future<Response> onRequest<T>(RequestContext context) async {
       : bsky.Embed.images(data: bsky.EmbedImages(images: images));
 
   // Post to Bluesky.
-  final newPost = await bluesky.feed.createPost(
+  final newPost = await bluesky.feed.post.create(
     text: form.status?.value ?? '',
-    facets: facets.map(bsky.Facet.fromJson).toList(),
+    facets: facets.map(RichtextFacet.fromJson).toList(),
     reply: postReplyRef,
     embed: embed,
-    languageTags: form.language != null ? [form.language!] : null,
+    langs: form.language != null ? [form.language!] : null,
   );
 
   // Fetch the newly created post, retrying up to 3 times.

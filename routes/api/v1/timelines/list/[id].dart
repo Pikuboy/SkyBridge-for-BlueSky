@@ -43,13 +43,13 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   final feed = await bluesky.feed.getFeed(
-    generatorUri: at.AtUri.parse(record.uri),
+    feed: at.AtUri.parse(record.uri),
   );
 
   // Take all the posts and convert them to Mastodon ones
   // Await all the futures, getting any necessary data from the database.
   final posts = await databaseTransaction(() async {
-    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+    final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
     return Future.wait(futures);
   });
 
