@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
+import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -130,7 +131,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
           results.data.actors.map((actor) => actor.handle.toString()).toList();
 
       if (handles.isNotEmpty) {
-        final profiles = await chunkResults<bsky.ActorProfile, String>(
+        final profiles = await chunkResults<ActorProfile, String>(
           items: handles,
           callback: (chunk) async {
             final r = await bluesky.actor.getProfiles(actors: chunk);
@@ -152,7 +153,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Search statuses (posts).
   if (searchType == null || searchType == SearchType.statuses) {
     try {
-      final results = await bluesky.feed.searchPosts(query, limit: limit);
+      final results = await bluesky.feed.searchPosts(q: query, limit: limit);
 
       statusResults = await databaseTransaction(() async {
         final futures = results.data.posts.map(MastodonPost.fromBlueSkyPost);

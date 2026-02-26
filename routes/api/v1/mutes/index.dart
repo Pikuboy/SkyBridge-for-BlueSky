@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -25,7 +26,7 @@ Future<Response> onRequest(RequestContext context) async {
 
     if (handles.isEmpty) return threadedJsonResponse(body: <MastodonAccount>[]);
 
-    final profiles = await chunkResults<bsky.ActorProfile, String>(
+    final profiles = await chunkResults<ActorProfile, String>(
       items: handles,
       callback: (chunk) async {
         final r = await bluesky.actor.getProfiles(actors: chunk);

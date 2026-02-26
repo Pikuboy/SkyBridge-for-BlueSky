@@ -1,4 +1,6 @@
 import 'package:atproto/core.dart' as atp;
+import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
+import 'package:bluesky/app_bsky_feed_post.dart' show PostRecord;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -66,7 +68,7 @@ class MastodonNotification {
             pairs[notification] = uri;
             if (!postUris.contains(uri)) postUris.add(uri);
             try {
-              final record = bsky.PostRecord.fromJson(unknownRecord);
+              final record = PostRecord.fromJson(unknownRecord);
               final reply = record.reply;
               if (reply != null) {
                 if (!postUris.contains(reply.parent.uri)) {

@@ -1,3 +1,4 @@
+import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -44,9 +45,9 @@ class MastodonAccount {
   /// Converts the [MastodonAccount] to JSON.
   Map<String, dynamic> toJson() => _$MastodonAccountToJson(this);
 
-  /// Creates a [MastodonAccount] from an [bsky.ActorProfile].
+  /// Creates a [MastodonAccount] from an [ActorProfile].
   static Future<MastodonAccount> fromActorProfile(
-    bsky.ActorProfile profile,
+    ActorProfile profile,
   ) async {
     // Assign/get a user ID from the database.
     final user = await actorProfileToDatabase(profile);
@@ -230,8 +231,8 @@ class ProfileInfo {
     this.description = '',
   });
 
-  /// Creates a new [ProfileInfo] instance from an [bsky.ActorProfile].
-  static Future<ProfileInfo>fromActorProfile(bsky.ActorProfile profile) async {
+  /// Creates a new [ProfileInfo] instance from an [ActorProfile].
+  static Future<ProfileInfo>fromActorProfile(ActorProfile profile) async {
     return ProfileInfo(
       banner: profile.banner ?? '',
       followersCount: profile.followersCount ?? 0,
