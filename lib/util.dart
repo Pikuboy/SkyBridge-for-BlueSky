@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluesky/app_bsky_feed_defs.dart' show ThreadViewPost;
-import 'package:bluesky/src/services/codegen/app/bsky/feed/getPostThread/union_main_thread.dart' show UFeedGetPostThreadThread;
+import 'package:bluesky/src/services/codegen/app/bsky/feed/getPostThread/union_main_thread.dart' show UFeedGetPostThreadThread, UFeedGetPostThreadThreadExtension;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dotenv/dotenv.dart';
@@ -128,36 +128,32 @@ Future<List<MastodonPost>> traverseReplies(
 ) async {
   final result = <MastodonPost>[];
   
-  await view.map(
-    threadViewPost: (threadViewPost) async {
-      final currentPost = await MastodonPost.fromBlueSkyPost(threadViewPost.data.post);
-      
-      // Skip the first post.
-      if (depth > 0) result.add(currentPost);
-      
-      // We don't want to traverse too deep, 6 is just a number I pulled out
-      // of thin air. Need to look into how deep Bluesky goes.
-      if (depth < 6 && threadViewPost.data.replies != null) {
-        for (final reply in threadViewPost.data.replies!) {
-          // Recursively traverse each reply
-          final list = await traverseReplies(reply, depth + 1);
-          for (final childPost in list) {
-            if (childPost.inReplyToId == null) {
-              // We have a dangling reply which means they are replying to
-              // this current post. Set the IDs accordingly.
-              childPost
-                ..inReplyToAccountId = currentPost.account.id
-                ..inReplyToId = currentPost.id;
-            }
-            result.add(childPost);
+  if (view.isThreadViewPost) {
+    final threadView = view.threadViewPost!;
+    final currentPost = await MastodonPost.fromBlueSkyPost(threadView.post);
+    
+    // Skip the first post.
+    if (depth > 0) result.add(currentPost);
+    
+    // We don't want to traverse too deep, 6 is just a number I pulled out
+    // of thin air. Need to look into how deep Bluesky goes.
+    if (depth < 6 && threadView.replies != null) {
+      for (final reply in threadView.replies!) {
+        // Recursively traverse each reply
+        final list = await traverseReplies(reply, depth + 1);
+        for (final childPost in list) {
+          if (childPost.inReplyToId == null) {
+            // We have a dangling reply which means they are replying to
+            // this current post. Set the IDs accordingly.
+            childPost
+              ..inReplyToAccountId = currentPost.account.id
+              ..inReplyToId = currentPost.id;
           }
+          result.add(childPost);
         }
       }
-    },
-    notFoundPost: (_) {},
-    blockedPost: (_) {},
-    unknown: (_) {},
-  );
+    }
+  }
 
   return result;
 }
@@ -173,36 +169,29 @@ Future<List<MastodonPost>> traverseParents(
 ) async {
   final result = <MastodonPost>[];
   
-  await view.map(
-    threadViewPost: (threadViewPost) async {
-      if (threadViewPost.data.parent != null) {
-        final parent = threadViewPost.data.parent!;
-        
-        // We don't want to traverse too deep, 6 is just a number I pulled out
-        // of thin air. Need to look into how deep Bluesky goes.
-        if (depth < 6) {
-          final list = await traverseParents(parent, depth + 1);
-          for (final childPost in list) {
-            result.add(childPost);
-          }
+  if (view.isThreadViewPost) {
+    final threadView = view.threadViewPost!;
+    
+    if (threadView.parent != null) {
+      final parent = threadView.parent!;
+      
+      // We don't want to traverse too deep, 6 is just a number I pulled out
+      // of thin air. Need to look into how deep Bluesky goes.
+      if (depth < 6) {
+        final list = await traverseParents(parent, depth + 1);
+        for (final childPost in list) {
+          result.add(childPost);
         }
-        
-        // Get the current parent post
-        await parent.map(
-          threadViewPost: (parentThreadView) async {
-            final currentPost = await MastodonPost.fromBlueSkyPost(parentThreadView.data.post);
-            result.add(currentPost);
-          },
-          notFoundPost: (_) {},
-          blockedPost: (_) {},
-          unknown: (_) {},
-        );
       }
-    },
-    notFoundPost: (_) {},
-    blockedPost: (_) {},
-    unknown: (_) {},
-  );
+      
+      // Get the current parent post
+      if (parent.isThreadViewPost) {
+        final parentThreadView = parent.threadViewPost!;
+        final currentPost = await MastodonPost.fromBlueSkyPost(parentThreadView.post);
+        result.add(currentPost);
+      }
+    }
+  }
 
   return result;
 }
