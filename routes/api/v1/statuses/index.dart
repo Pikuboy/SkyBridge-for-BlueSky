@@ -28,7 +28,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   if (type.contains('application/json')) {
     body = await request.json() as Map<String, dynamic>;
   } else {
-    body = await request.formData();
+    body = (await request.formData()).fields.cast<String, dynamic>();
   }
 
   final form = NewPostForm.fromJson(body);
@@ -93,7 +93,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
       : bsky.Embed.images(data: bsky.EmbedImages(images: images));
 
   // Post to Bluesky.
-  final newPost = await bluesky.feed.post(
+  final newPost = await bluesky.feed.createPost(
     text: form.status?.value ?? '',
     facets: facets.map(bsky.Facet.fromJson).toList(),
     reply: postReplyRef,

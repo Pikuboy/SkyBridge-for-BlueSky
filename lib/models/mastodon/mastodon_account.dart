@@ -234,9 +234,9 @@ class ProfileInfo {
   static Future<ProfileInfo>fromActorProfile(bsky.ActorProfile profile) async {
     return ProfileInfo(
       banner: profile.banner ?? '',
-      followersCount: profile.followersCount,
-      followsCount: profile.followsCount,
-      postsCount: profile.postsCount,
+      followersCount: profile.followersCount ?? 0,
+      followsCount: profile.followsCount ?? 0,
+      postsCount: profile.postsCount ?? 0,
       description: await processProfileDescription(profile.description ?? ''),
     );
   }

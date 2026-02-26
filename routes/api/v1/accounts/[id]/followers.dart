@@ -28,7 +28,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   final response = await bluesky.graph.getFollowers(actor: userRecord.did);
 
   // Get all the handles from the results and grab the full profile info.
-  final handles = response.data.followers.map((actor) => actor.handle).toList();
+  final handles = response.data.followers.map((actor) => actor.handle.toString()).toList();
 
   // We need to chunk the results because the Bluesky server has a limit on the
   // number of actors you can query at once.

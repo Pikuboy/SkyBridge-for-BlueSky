@@ -41,7 +41,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   );
 
   // Construct a list of handles from the response.
-  final handles = response.data.repostedBy.map((act) => act.handle).toList();
+  final handles = response.data.repostedBy.map((act) => act.handle.toString()).toList();
 
   // We need to chunk the results because the Bluesky server has a limit on the
   // number of actors you can query at once.

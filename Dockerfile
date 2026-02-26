@@ -7,7 +7,6 @@ WORKDIR /app
 # Resolve app dependencies.
 COPY pubspec.* ./
 RUN dart pub get
-RUN dart pub global activate dart_frog_cli
 
 # Copy app source code and AOT compile it.
 COPY . .
@@ -24,7 +23,7 @@ RUN npm i prisma@4.16.2
 RUN npx prisma generate
 
 # Generate a production build.
-RUN dart pub global activate dart_frog_cli 0.3.8
+RUN dart pub global activate dart_frog_cli
 RUN dart pub global run dart_frog_cli:dart_frog build
 
 # Ensure packages are still up-to-date if anything has changed.

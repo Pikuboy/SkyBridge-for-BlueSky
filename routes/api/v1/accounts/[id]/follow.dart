@@ -42,7 +42,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final alreadyFollowing = profile.data.viewer.following != null;
 
   // If we're not following the account, create a follow record.
-  if (!alreadyFollowing) await bluesky.graph.follow(did: did);
+  if (!alreadyFollowing) await bluesky.graph.createFollow(did: did);
 
   final rel = await MastodonRelationship.getActorRelationship(bluesky, record!);
 

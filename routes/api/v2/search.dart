@@ -127,7 +127,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
       );
 
       final handles =
-          results.data.actors.map((actor) => actor.handle).toList();
+          results.data.actors.map((actor) => actor.handle.toString()).toList();
 
       if (handles.isNotEmpty) {
         final profiles = await chunkResults<bsky.ActorProfile, String>(
