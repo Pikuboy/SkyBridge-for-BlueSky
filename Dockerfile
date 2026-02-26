@@ -19,7 +19,7 @@ RUN set -uex; \
     curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
     apt-get install -y nodejs
 
-RUN npm i prisma@4.16.2
+RUN npm i prisma@5
 RUN npx prisma generate
 
 # Remove the stale json_serializable-generated part file (orm 4.x generates
@@ -46,7 +46,7 @@ RUN set -uex; \
     curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
     apt-get install -y nodejs
 
-RUN npm i prisma@4.16.2
+RUN npm i prisma@5
 
 COPY --from=odroe/prisma-dart:latest / /runtime
 COPY --from=build /app/build/bin/server /app/bin/

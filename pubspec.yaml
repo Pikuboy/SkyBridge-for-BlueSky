@@ -22,7 +22,7 @@ dependencies:
   image: ^4.5.0
   intl: ^0.19.0
   json_annotation: ^4.9.0
-  orm: ^4.4.0
+  orm: ^5.0.6
   path: ^1.8.3
   shelf_cors_headers: ^0.1.5
   shelf_rate_limiter: ^1.0.1
