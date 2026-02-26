@@ -1,5 +1,8 @@
 import 'package:atproto/core.dart' as atp;
 import 'package:atproto/core.dart';
+import 'package:bluesky/app_bsky_embed_images.dart';
+import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:collection/collection.dart';
@@ -67,7 +70,7 @@ class MastodonPost {
   Map<String, dynamic> toJson() => _$MastodonPostToJson(this);
 
   /// Converts a [bsky.FeedView] to a [MastodonPost].
-  static Future<MastodonPost> fromFeedView(bsky.FeedViewPost view) async {
+  static Future<MastodonPost> fromFeedView(FeedViewPost view) async {
     final post = view.post;
 
     // Determine if this is a repost.
@@ -102,16 +105,16 @@ class MastodonPost {
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
-      if (embed.data is bsky.EmbedImagesView) {
-        final embedded = embed.data as bsky.EmbedImagesView;
+      if (embed.data is EmbedImagesView) {
+        final embedded = embed.data as EmbedImagesView;
 
         // Add the images to the list of media attachments.
         for (final image in embedded.images) {
           final attachment = MastodonMediaAttachment.fromEmbed(image);
           mediaAttachments.add(attachment);
         }
-      } else if (embed.data is bsky.EmbedRecordWithMediaView) {
-        final embedded = embed.data as bsky.EmbedRecordWithMediaView;
+      } else if (embed.data is EmbedRecordWithMediaView) {
+        final embedded = embed.data as EmbedRecordWithMediaView;
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
@@ -261,16 +264,16 @@ class MastodonPost {
     // Handle embedded content.
     final embed = post.embed;
     if (embed != null) {
-      if (embed.data is bsky.EmbedImagesView) {
-        final embedded = embed.data as bsky.EmbedImagesView;
+      if (embed.data is EmbedImagesView) {
+        final embedded = embed.data as EmbedImagesView;
 
         // Add the images to the list of media attachments.
         for (final image in embedded.images) {
           final attachment = MastodonMediaAttachment.fromEmbed(image);
           mediaAttachments.add(attachment);
         }
-      } else if (embed.data is bsky.EmbedRecordWithMediaView) {
-        final embedded = embed.data as bsky.EmbedRecordWithMediaView;
+      } else if (embed.data is EmbedRecordWithMediaView) {
+        final embedded = embed.data as EmbedRecordWithMediaView;
 
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.

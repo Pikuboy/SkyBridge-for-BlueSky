@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_richtext_facet.dart';
 
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_mention.dart';
@@ -25,7 +25,7 @@ class ProcessedFacets {
   final String htmlText;
 }
 
-/// A tuple class of a [bsky.RichtextFacetMention] and the handle that was used
+/// A tuple class of a [RichtextFacetMention] and the handle that was used
 /// to reference it.
 class MentionTuple {
   /// Creates a new [MentionTuple] instance.
@@ -35,7 +35,7 @@ class MentionTuple {
   });
 
   /// The mention that was found in the post.
-  final bsky.RichtextFacetMention facet;
+  final RichtextFacetMention facet;
 
   /// The handle that was used to reference the mention.
   final String handle;
@@ -47,7 +47,7 @@ class MentionTuple {
 ///
 /// This is used in [MastodonPost] to convert the content of a post to HTML.
 Future<ProcessedFacets> processFacets(
-  List<bsky.RichtextFacet> facets,
+  List<RichtextFacet> facets,
   String text,
 ) async {
   const escape = HtmlEscape(HtmlEscapeMode.element);

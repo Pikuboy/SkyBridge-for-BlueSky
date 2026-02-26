@@ -1,4 +1,5 @@
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/util.dart';
@@ -34,8 +35,8 @@ class MastodonCard {
   /// Converts the [MastodonCard] to JSON.
   Map<String, dynamic> toJson() => _$MastodonCardToJson(this);
 
-  /// Constructs a potential [MastodonCard] from a [bsky.UPostViewEmbed].
-  static Future<MastodonCard?> fromEmbed(bsky.UPostViewEmbed? embed) async {
+  /// Constructs a potential [MastodonCard] from a [UPostViewEmbed].
+  static Future<MastodonCard?> fromEmbed(UPostViewEmbed? embed) async {
     return embed?.map(
       record: (record) => embedViewRecordToCard(record.data),
       external: (embed) {
@@ -63,10 +64,10 @@ class MastodonCard {
     );
   }
 
-  /// Constructs a potential [MastodonCard] from a [bsky.EmbedRecordView].
+  /// Constructs a potential [MastodonCard] from a [EmbedRecordView].
   /// This is used to construct 'fake' quote posts by abusing embed cards.
   static Future<MastodonCard?> embedViewRecordToCard(
-    bsky.EmbedRecordView record,
+    EmbedRecordView record,
   ) async {
     // Get the fallback URL for the avatar.
     final base = env.getOrElse(

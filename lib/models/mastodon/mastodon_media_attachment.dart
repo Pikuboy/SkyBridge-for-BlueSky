@@ -1,4 +1,4 @@
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_embed_images.dart';
 import 'package:http/http.dart' as http;
 import 'package:json_annotation/json_annotation.dart';
 
@@ -19,9 +19,9 @@ class MastodonMediaAttachment {
     this.meta,
   });
 
-  /// Converts a [bsky.EmbedImagesViewImage] to a [MastodonMediaAttachment].
+  /// Converts a [EmbedImagesViewImage] to a [MastodonMediaAttachment].
   factory MastodonMediaAttachment.fromEmbed(
-    bsky.EmbedImagesViewImage embed,
+    EmbedImagesViewImage embed,
   ) {
     final description = embed.alt.isEmpty ? null : embed.alt;
 
