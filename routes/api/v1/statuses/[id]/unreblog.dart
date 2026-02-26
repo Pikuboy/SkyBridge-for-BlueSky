@@ -56,9 +56,9 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     () => MastodonPost.fromBlueSkyPost(post),
   );
 
-  if (post.viewer.repost != null) {
+  if (post.viewer?.repost != null) {
     // Unlike the post now that we have everything in order.
-    final repostUri = at.AtUri.parse(post.viewer.repost!.toString());
+    final repostUri = at.AtUri.parse(post.viewer!.repost!.toString());
     // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
     await bluesky.atproto.repo.deleteRecord(
       uri: repostUri,
