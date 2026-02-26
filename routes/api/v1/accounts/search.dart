@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
+import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -23,7 +23,7 @@ Future<Response> onRequest(RequestContext context) async {
 
   if (encodedParams.resolve) {
     // Query is a single handle, just need to return a single account.
-    late final ActorProfile profile;
+    late final bsky.ActorProfile profile;
     try {
       // Strip the base url from the query handle.
       final base = env.getOrElse(
@@ -56,7 +56,7 @@ Future<Response> onRequest(RequestContext context) async {
     // Get all the handles from the results and grab the full profile info.
     final handles = results.data.actors.map((actor) => actor.handle).toList();
 
-    final profiles = await chunkResults<ActorProfile, String>(
+    final profiles = await chunkResults<bsky_actor_defs.ActorProfile, String>(
       items: handles,
       callback: (chunk) async {
         final response = await bluesky.actor.getProfiles(actors: chunk);
@@ -67,7 +67,7 @@ Future<Response> onRequest(RequestContext context) async {
     // Convert all the profiles to MastodonAccounts.
     final accounts = await databaseTransaction(() {
       return Future.wait(
-        profiles.map(MastodonAccount.fromActorProfile),
+        profiles.map<Future<MastodonAccount>>(MastodonAccount.fromActorProfile),
       );
     });
 

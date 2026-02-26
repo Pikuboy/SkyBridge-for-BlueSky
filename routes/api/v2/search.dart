@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
-import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
+import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
@@ -131,7 +131,9 @@ Future<Response> onRequest<T>(RequestContext context) async {
           results.data.actors.map((actor) => actor.handle.toString()).toList();
 
       if (handles.isNotEmpty) {
-        final profiles = await chunkResults<ActorProfile, String>(
+        // Fix 1: use aliased import for ActorProfile to avoid AOT type resolution issue
+        final profiles =
+            await chunkResults<bsky_actor_defs.ActorProfile, String>(
           items: handles,
           callback: (chunk) async {
             final r = await bluesky.actor.getProfiles(actors: chunk);
@@ -153,10 +155,13 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Search statuses (posts).
   if (searchType == null || searchType == SearchType.statuses) {
     try {
+      // Fix 2: query is now a named parameter q: in bluesky 1.x
       final results = await bluesky.feed.searchPosts(q: query, limit: limit);
 
       statusResults = await databaseTransaction(() async {
-        final futures = results.data.posts.map(MastodonPost.fromBlueSkyPost);
+        // Fix 3: explicit cast to Iterable<Future<MastodonPost>> for AOT
+        final futures = results.data.posts
+            .map<Future<MastodonPost>>(MastodonPost.fromBlueSkyPost);
         return Future.wait(futures);
       });
 

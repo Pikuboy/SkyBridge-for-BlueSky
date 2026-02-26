@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
+import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:crypto/crypto.dart';
 import 'package:orm/orm.dart';
@@ -220,7 +220,7 @@ Future<UserRecord> actorToDatabase(bsky.Actor actor) async {
 
 /// Checks if a DID has been assigned a [UserRecord], and if not, gives
 /// it one. Either the existing or the newly created [UserRecord] is returned.
-Future<UserRecord> actorProfileToDatabase(ActorProfile actor) async {
+Future<UserRecord> actorProfileToDatabase(bsky.ActorProfile actor) async {
   final existing = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(did: actor.did),
   );

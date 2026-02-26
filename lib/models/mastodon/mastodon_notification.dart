@@ -1,5 +1,5 @@
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/app_bsky_actor_defs.dart' show ActorProfile;
+import 'package:bluesky/app_bsky_actor_defs.dart' as bsky_actor_defs;
 import 'package:bluesky/app_bsky_feed_post.dart' show PostRecord;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
