@@ -51,9 +51,11 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     );
   } else if (context.request.method == HttpMethod.delete) {
     // Delete the post from bluesky.
-    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    // Use the repo/collection/rkey format for compatibility
     await bluesky.atproto.repo.deleteRecord(
-      uri: uri,
+      repo: uri.hostname,
+      collection: uri.collection.toString(),
+      rkey: uri.rkey,
     );
 
     return threadedJsonResponse(

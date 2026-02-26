@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:atproto/core.dart' as at;
 import 'package:bluesky/app_bsky_embed_images.dart'
     show EmbedImages, EmbedImagesImage;
-// Post is accessible via bsky.Post from the main bluesky.dart import below
 import 'package:bluesky/app_bsky_feed_post.dart'
     show ReplyRef, UFeedPostEmbed;
 import 'package:bluesky/app_bsky_richtext_facet.dart' show RichtextFacet;
@@ -51,7 +50,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
     if (record == null) return Response(statusCode: HttpStatus.notFound);
 
     final uri = at.AtUri.parse(record.uri);
-    bsky.Post? parentPost;
+    bsky.FeedPost? parentPost;
 
     for (var i = 0; i < 3; i++) {
       try {
@@ -114,7 +113,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
   );
 
   // Fetch the newly created post, retrying up to 3 times.
-  bsky.Post? postData;
+  bsky.FeedPost? postData;
   for (var i = 0; i < 3; i++) {
     try {
       final response = await bluesky.feed.getPosts(uris: [newPost.data.uri]);

@@ -100,7 +100,7 @@ class MastodonNotification {
     }
 
     // Fetch all required posts in efficient chunks.
-    final posts = await chunkResults<bsky.Post, atp.AtUri>(
+    final posts = await chunkResults<bsky.FeedPost, atp.AtUri>(
       items: postUris,
       callback: (chunk) async {
         try {

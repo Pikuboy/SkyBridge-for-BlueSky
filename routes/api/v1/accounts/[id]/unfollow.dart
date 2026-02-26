@@ -45,9 +45,11 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   final followUri = profile.data.viewer.following;
   if (followUri != null) {
     final parsedFollowUri = at.AtUri.parse(followUri.toString());
-    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    // Use the repo/collection/rkey format for compatibility
     await bluesky.atproto.repo.deleteRecord(
-      uri: parsedFollowUri,
+      repo: parsedFollowUri.hostname,
+      collection: parsedFollowUri.collection.toString(),
+      rkey: parsedFollowUri.rkey,
     );
   }
 

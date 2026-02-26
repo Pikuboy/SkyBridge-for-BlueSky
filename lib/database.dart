@@ -102,7 +102,7 @@ Future<BigInt> generateUniqueSnowflake<T>({
 
 /// Checks if a post has been assigned a [PostRecord], and if not, gives
 /// it one. Either the existing or the newly created [PostRecord] is returned.
-Future<PostRecord> postToDatabase(bsky.Post post) async {
+Future<PostRecord> postToDatabase(bsky.FeedPost post) async {
   final existing = await db.postRecord.findUnique(
     where: PostRecordWhereUniqueInput(cid: post.cid),
   );

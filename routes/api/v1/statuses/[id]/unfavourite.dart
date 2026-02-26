@@ -59,9 +59,11 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (post.viewer?.like != null) {
     // Unlike the post now that we have everything in order.
     final likeUri = at.AtUri.parse(post.viewer!.like!.toString());
-    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    // Use the repo/collection/rkey format for compatibility
     await bluesky.atproto.repo.deleteRecord(
-      uri: likeUri,
+      repo: likeUri.hostname,
+      collection: likeUri.collection.toString(),
+      rkey: likeUri.rkey,
     );
     mastodonPost
       ..favourited = false
