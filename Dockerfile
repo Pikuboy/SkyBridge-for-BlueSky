@@ -48,7 +48,6 @@ RUN set -uex; \
     apt-get install -y nodejs
 
 RUN npm i prisma@5
-RUN npx prisma@5 generate
 
 COPY --from=odroe/prisma-dart:latest / /runtime
 COPY --from=build /app/build/bin/server /app/bin/
