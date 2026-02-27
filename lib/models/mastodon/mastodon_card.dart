@@ -1,4 +1,5 @@
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/util.dart';
@@ -34,12 +35,12 @@ class MastodonCard {
   /// Converts the [MastodonCard] to JSON.
   Map<String, dynamic> toJson() => _$MastodonCardToJson(this);
 
-  /// Constructs a potential [MastodonCard] from a [bsky.EmbedView].
-  static Future<MastodonCard?> fromEmbed(bsky.EmbedView? embed) async {
-    return embed?.map(
-      record: (record) => embedViewRecordToCard(record.data),
-      external: (embed) {
-        final external = embed.data.external;
+  /// Constructs a potential [MastodonCard] from a [UPostViewEmbed].
+  static Future<MastodonCard?> fromEmbed(UPostViewEmbed? embed) async {
+    return embed?.when(
+      embedRecordView: (record) => embedViewRecordToCard(record),
+      embedExternalView: (embed) {
+        final external = embed.external;
         return MastodonCard(
           url: external.uri,
           title: external.title,
@@ -50,23 +51,23 @@ class MastodonCard {
           providerName: '',
           providerUrl: '',
           html: '',
-          width: external.thumbnail != null ? 864 : 0,
-          height: external.thumbnail != null ? 432 : 0,
-          embedUrl: external.thumbnail ?? '',
-          image: external.thumbnail ?? '',
+          width: external.thumb != null ? 864 : 0,
+          height: external.thumb != null ? 432 : 0,
+          embedUrl: external.thumb ?? '',
+          image: external.thumb ?? '',
         );
       },
-      images: (_) => null,
-      recordWithMedia: (record) => embedViewRecordToCard(record.data.record),
-      video: (_) => null,
+      embedImagesView: (_) => null,
+      embedRecordWithMediaView: (record) => embedViewRecordToCard(record.record),
+      embedVideoView: (_) => null,
       unknown: (_) => null,
     );
   }
 
-  /// Constructs a potential [MastodonCard] from a [bsky.EmbedViewRecord].
+  /// Constructs a potential [MastodonCard] from a [EmbedRecordView].
   /// This is used to construct 'fake' quote posts by abusing embed cards.
   static Future<MastodonCard?> embedViewRecordToCard(
-    bsky.EmbedViewRecord record,
+    EmbedRecordView record,
   ) async {
     // Get the fallback URL for the avatar.
     final base = env.getOrElse(
@@ -89,36 +90,39 @@ class MastodonCard {
     var useAttachedMedia = false;
 
     // Get any data we need from the post's record.
-    record.record.map(
-      record: (post) {
-        handle = post.data.author.handle;
-        title = 'Quote Post - (@$handle) \n ${post.data.value.text}';
-        description = post.data.value.text;
+    record.record.when(
+      embedRecordViewRecord: (post) {
+        handle = post.author.handle;
+        title = 'Quote Post - (@$handle) \n ${post.value['text']}';
+        description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
 
         // If the record has a media attachment, we can use that instead.
-        final embeds = post.data.embeds;
+        final embeds = post.embeds;
         if (embeds != null) {
           for (final embed in embeds) {
-            embed.map(
-              record: (_) {},
-              images: (images) {
-                quoteImage = images.data.images.first.fullsize;
+            embed.when(
+              embedRecordView: (_) {},
+              embedImagesView: (images) {
+                quoteImage = images.images.first.fullsize;
                 useAttachedMedia = true;
               },
-              external: (_) {},
-              recordWithMedia: (_) {},
-              video: (_) {},
+              embedExternalView: (_) {},
+              embedRecordWithMediaView: (_) {},
+              embedVideoView: (_) {},
               unknown: (_) {},
             );
           }
         }
       },
-      notFound: (_) {},
-      blocked: (_) {},
+      embedRecordViewNotFound: (_) {},
+      embedRecordViewBlocked: (_) {},
+      embedRecordViewDetached: (_) {},
       generatorView: (_) {},
-      unknown: (_) {},
       listView: (_) {},
+      labelerView: (_) {},
+      starterPackViewBasic: (_) {},
+      unknown: (_) {},
     );
 
     return MastodonCard(

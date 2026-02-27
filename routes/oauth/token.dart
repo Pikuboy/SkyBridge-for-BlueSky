@@ -61,11 +61,12 @@ Future<Response> onRequest(RequestContext context) async {
         if (oauth.clientId == code.clientId &&
             oauth.clientSecret == clientSecret) {
 
-          // Attempt to sign in with the provided credentials.
-          // If successful a session is stored globally in [sessions].
+          // Resolve the PDS host from the user's handle, then create session.
+          final pdsHost = await resolvePdsHost(code.identifier);
           final session = await createBlueskySession(
             identifier: code.identifier,
             appPassword: code.appPassword,
+            pdsHost: pdsHost,
           );
 
           // Credentials don't match a bluesky account, time to bail.
@@ -76,8 +77,9 @@ Future<Response> onRequest(RequestContext context) async {
 
           final accessToken = OAuthAccessToken(
             identifier: code.identifier,
-            did: session.did,
+            did: session.did!,
             appPassword: code.appPassword,
+            pdsUrl: pdsHost,
             preferences: SkybridgePreferences(
               showRepliesInHome: code.showRepliesInHome,
             ),

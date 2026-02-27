@@ -1,21 +1,28 @@
 import 'dart:io';
 
 import 'package:atproto/core.dart' as at;
-import 'package:bluesky/atproto.dart' as batp;
+import 'package:bluesky/app_bsky_embed_images.dart'
+    show EmbedImages, EmbedImagesImage;
+import 'package:bluesky/app_bsky_feed_post.dart'
+    show ReplyRef, UFeedPostEmbed;
+import 'package:bluesky/app_bsky_richtext_facet.dart' show RichtextFacet;
 import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_feed_defs.dart' show PostView;
+import 'package:bluesky/app_bsky_feed_defs.dart' show PostView;
+import 'package:bluesky/com_atproto_repo_strongref.dart' show RepoStrongRef;
 import 'package:collection/collection.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/forms/new_post_form.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Publish a new post with the given parameters.
 /// POST /api/v1/statuses HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/statuses/#create
-Future<Response> onRequest<T>(RequestContext context) async {
+Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -29,14 +36,14 @@ Future<Response> onRequest<T>(RequestContext context) async {
   if (type.contains('application/json')) {
     body = await request.json() as Map<String, dynamic>;
   } else {
-    body = await request.formData();
+    body = (await request.formData()).fields.cast<String, dynamic>();
   }
 
   final form = NewPostForm.fromJson(body);
   var facets = <Map<String, dynamic>>[];
 
   // Handle reply threading.
-  bsky.ReplyRef? postReplyRef;
+  ReplyRef? postReplyRef;
   final replyId = form.inReplyToId;
   if (replyId != null) {
     final record = await db.postRecord.findUnique(
@@ -44,8 +51,8 @@ Future<Response> onRequest<T>(RequestContext context) async {
     );
     if (record == null) return Response(statusCode: HttpStatus.notFound);
 
-    final uri = at.AtUri.parse(record.uri);
-    bsky.Post? parentPost;
+    final uri = at.AtUri.parse(record.uri!);
+    PostView? parentPost;
 
     for (var i = 0; i < 3; i++) {
       try {
@@ -59,9 +66,11 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
     if (parentPost == null) return Response(statusCode: HttpStatus.notFound);
 
-    final parentRef = batp.StrongRef(cid: parentPost.cid, uri: parentPost.uri);
-    final reply = parentPost.record.reply;
-    postReplyRef = bsky.ReplyRef(
+    final parentRef =
+        RepoStrongRef(cid: parentPost.cid, uri: parentPost.uri);
+    final replyMap = parentPost.record['reply'] as Map<String, dynamic>?;
+    final reply = replyMap != null ? ReplyRef.fromJson(replyMap) : null;
+    postReplyRef = ReplyRef(
       root: reply != null ? reply.root : parentRef,
       parent: parentRef,
     );
@@ -75,7 +84,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
   // Build image embed (video not supported in this version).
   final mediaIds = form.mediaIds;
-  final images = <bsky.Image>[];
+  final images = <EmbedImagesImage>[];
   if (mediaIds != null) {
     for (final idString in mediaIds) {
       final id = BigInt.parse(idString);
@@ -83,27 +92,31 @@ Future<Response> onRequest<T>(RequestContext context) async {
         where: MediaRecordWhereUniqueInput(id: id),
       );
       if (record == null) continue;
-      // Skip video blobs — video embedding not supported in bluesky 0.15.x.
-      if (record.mimeType.toLowerCase().startsWith('video/')) continue;
-      images.add(bsky.Image(alt: record.description, image: record.toBlob()));
+      // Skip video blobs — video embedding not supported.
+      if (record.mimeType!.toLowerCase().startsWith('video/')) continue;
+      images.add(
+        EmbedImagesImage(alt: record.description ?? '', image: record.toBlob()),
+      );
     }
   }
 
   final embed = images.isEmpty
       ? null
-      : bsky.Embed.images(data: bsky.EmbedImages(images: images));
+      : UFeedPostEmbed.embedImages(
+          data: EmbedImages(images: images),
+        );
 
   // Post to Bluesky.
-  final newPost = await bluesky.feed.post(
+  final newPost = await bluesky.feed.post.create(
     text: form.status?.value ?? '',
-    facets: facets.map(bsky.Facet.fromJson).toList(),
+    facets: facets.map(RichtextFacet.fromJson).toList(),
     reply: postReplyRef,
     embed: embed,
-    languageTags: form.language != null ? [form.language!] : null,
+    langs: form.language != null ? [form.language!] : null,
   );
 
   // Fetch the newly created post, retrying up to 3 times.
-  bsky.Post? postData;
+  PostView? postData;
   for (var i = 0; i < 3; i++) {
     try {
       final response = await bluesky.feed.getPosts(uris: [newPost.data.uri]);

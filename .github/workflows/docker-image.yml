@@ -3,8 +3,8 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - master
-
+      - v1.2.1_migration-bsky_v1.O
+ 
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -30,10 +30,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/pikuboy/skybridge-for-bluesky:latest
+            ghcr.io/pikuboy/skybridge-for-bluesky:test
             ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.sha }}
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max

@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
 
 part 'nodeinfo.g.dart';
 
@@ -27,8 +27,8 @@ class NodeInfo {
   /// Returns a [NodeInfo] instance with default values applicable
   /// for spoofing a Mastodon instance.
   static Future<NodeInfo> fromDefaults() async {
-    final userCount = await db.sessionRecord.aggregate().$count().id();
-    final postCount = await db.postRecord.aggregate().$count().id();
+    final userCount = (await db.sessionRecord.findMany()).length;
+    final postCount = (await db.postRecord.findMany()).length;
 
     return NodeInfo(
       software: NodeSoftware(

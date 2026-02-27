@@ -41,7 +41,7 @@ Future<Response> onRequest(RequestContext context) async {
       );
 
       final posts = await databaseTransaction(() async {
-        final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+        final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
         return Future.wait(futures);
       });
 
@@ -84,7 +84,7 @@ Future<Response> onRequest(RequestContext context) async {
     );
 
     allPosts = await databaseTransaction(() async {
-      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+      final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
       return Future.wait(futures);
     });
     nextCursor = feed.data.cursor;

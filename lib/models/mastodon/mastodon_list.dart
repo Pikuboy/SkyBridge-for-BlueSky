@@ -1,4 +1,4 @@
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
 
@@ -23,7 +23,7 @@ class MastodonList {
 
   /// Converts a [bsky.FeedGenerator] to a [MastodonList].
   static Future<MastodonList> fromFeedGenerator(
-    bsky.FeedGeneratorView gen,
+    GeneratorView gen,
   ) async {
     return MastodonList(
       id: (await feedToDatabase(gen)).id.toString(),

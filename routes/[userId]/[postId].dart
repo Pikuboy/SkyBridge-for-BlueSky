@@ -2,14 +2,14 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 
 /// Handles redirects for URLs like /@username/1234 which are used
 /// by the likes of Ivory to link to posts without leaving the app.
 ///
 /// Other Mastodon clients don't do this so we just point directly to the
 /// post on the web for now.
-Future<Response> onRequest<T>(
+Future<Response> onRequest(
   RequestContext context,
   String userId,
   String postId,
@@ -42,7 +42,7 @@ Future<Response> onRequest<T>(
   if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   // Get the string after the last slash in the records URI.
-  final post = record.uri.split('/').last;
+  final post = record.uri!.split('/').last;
 
   final relocateUrl = 'https://bsky.app/profile/$userHandle/post/$post';
 

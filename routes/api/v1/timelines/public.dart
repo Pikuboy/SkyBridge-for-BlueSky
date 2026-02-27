@@ -35,7 +35,7 @@ Future<Response> onRequest(RequestContext context) async {
     final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
 
     final feed = await bluesky.feed.getFeed(
-      generatorUri: at.AtUri.parse(whatsHotUri),
+      feed: at.AtUri.parse(whatsHotUri),
       limit: encodedParams.limit.clamp(1, 40),
       cursor: paginationCursor,
     );

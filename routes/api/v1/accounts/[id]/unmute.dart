@@ -4,13 +4,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_relationship.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Unmute the given account.
 /// POST /api/v1/accounts/:id/unmute HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/accounts/#unmute
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -28,7 +28,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   try {
-    await bluesky.graph.unmuteActor(actor: record.did);
+    await bluesky.graph.unmuteActor(actor: record.did!);
   } catch (e) {
     print('Unmute error (non-fatal): $e');
   }

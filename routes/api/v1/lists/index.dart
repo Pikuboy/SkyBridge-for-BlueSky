@@ -24,21 +24,22 @@ Future<Response> onRequest(RequestContext context) async {
     // Get saved feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
     for (final preference in response.data.preferences) {
-      await preference.map(
-        adultContent: (_) {},
-        contentLabel: (_) {},
-        personalDetails: (_) {},
-        feedView: (_) {},
-        threadView: (_) {},
-        savedFeedsV2: (_) {},
-        savedFeeds: (feedUris) async {
+      // Check if this preference has savedUris property (SavedFeeds type)
+      try {
+        final data = preference.data;
+        // Use reflection/dynamic access to check for savedUris
+        if (data.runtimeType.toString().contains('SavedFeeds')) {
+          // Access savedUris dynamically
+          final feedUris = (data as dynamic).savedUris as List;
+          if (feedUris.isEmpty) continue;
+          
           // Get the feed generator views for each saved feed, giving us info
           // like the name of the feed and the accompanying IDs.
-          final result = await chunkResults<bsky.FeedGeneratorView, at.AtUri>(
-            items: feedUris.data.savedUris,
+          final result = await chunkResults(
+            items: feedUris.cast<at.AtUri>(),
             callback: (chunk) async {
               final response = await bluesky.feed.getFeedGenerators(
-                uris: feedUris.data.savedUris,
+                feeds: chunk,
               );
               return response.data.feeds;
             },
@@ -49,16 +50,14 @@ Future<Response> onRequest(RequestContext context) async {
           lists = await databaseTransaction(() async {
             final listFutures = result.map(
               MastodonList.fromFeedGenerator,
-            );
+            ).cast<Future<MastodonList>>();
             return Future.wait(listFutures);
-          });
-        },
-        hiddenPosts: (_) {},
-        interests: (_) {},
-        labelersPref: (_) {},
-        mutedWords: (_) {},
-        unknown: (_) {},
-      );
+          }) as List<MastodonList>;
+        }
+      } catch (e) {
+        // Skip preferences that don't match
+        continue;
+      }
     }
 
     return threadedJsonResponse(

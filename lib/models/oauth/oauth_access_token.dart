@@ -11,6 +11,7 @@ class OAuthAccessToken {
     required this.identifier,
     required this.did,
     required this.appPassword,
+    this.pdsUrl = 'https://bsky.social',
     this.preferences = const SkybridgePreferences(),
   });
 
@@ -30,6 +31,10 @@ class OAuthAccessToken {
   /// The app password entered by the user, used to authenticate with Bluesky.
   @JsonKey(name: 'app_password')
   final String appPassword;
+
+  /// The PDS URL resolved from the user's handle.
+  @JsonKey(name: 'pds_url')
+  final String pdsUrl;
 
   /// Per-user preferences set by the user when signing in.
   final SkybridgePreferences preferences;

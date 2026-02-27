@@ -1,4 +1,7 @@
 import 'package:atproto/core.dart' as atp;
+import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
+import 'package:bluesky/app_bsky_notification_listnotifications.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -28,15 +31,15 @@ class MastodonNotification {
   /// Converts the [MastodonNotification] to JSON.
   Map<String, dynamic> toJson() => _$MastodonNotificationToJson(this);
 
-  /// Takes a list of [bsky.Notification]s and converts them to a list of
+  /// Takes a list of [Notification]s and converts them to a list of
   /// [MastodonNotification]s with the appropriate post data attached.
   ///
   /// DO NOT execute in a [db] transaction, this is handled internally.
   static Future<List<MastodonNotification>> fromNotificationList(
-    List<bsky.Notification> notifs,
+    List<Notification> notifs,
     bsky.Bluesky bluesky,
   ) async {
-    final pairs = <bsky.Notification, atp.AtUri?>{};
+    final pairs = <Notification, atp.AtUri?>{};
     final postUris = <atp.AtUri>[];
 
     // Find the appropriate record for each notification.
@@ -44,7 +47,7 @@ class MastodonNotification {
       try {
         final unknownRecord = notification.record ?? {};
 
-        switch (notification.reason.name) {
+        switch (notification.reason) {
           case 'repost':
           case 'like':
             final subject = unknownRecord['subject'] as Map<String, dynamic>?;
@@ -66,7 +69,7 @@ class MastodonNotification {
             pairs[notification] = uri;
             if (!postUris.contains(uri)) postUris.add(uri);
             try {
-              final record = bsky.PostRecord.fromJson(unknownRecord);
+              final record = FeedPostRecord.fromJson(unknownRecord);
               final reply = record.reply;
               if (reply != null) {
                 if (!postUris.contains(reply.parent.uri)) {
@@ -99,7 +102,7 @@ class MastodonNotification {
     }
 
     // Fetch all required posts in efficient chunks.
-    final posts = await chunkResults<bsky.Post, atp.AtUri>(
+    final posts = await chunkResults(
       items: postUris,
       callback: (chunk) async {
         try {
@@ -116,7 +119,7 @@ class MastodonNotification {
     final mastodonPosts = <MastodonPost>[];
     for (final post in posts) {
       try {
-        mastodonPosts.add(await MastodonPost.fromBlueSkyPost(post));
+        mastodonPosts.add(await MastodonPost.fromBlueSkyPost(post as PostView));
       } catch (e) {
         print('Notifications: skipping post conversion ${post.uri} — $e');
       }
@@ -142,7 +145,7 @@ class MastodonNotification {
               )
             : null;
 
-        final type = NotificationType.fromBluesky(notification.reason.name);
+        final type = NotificationType.fromBluesky(notification.reason.toString());
 
         notifications.add(
           MastodonNotification(

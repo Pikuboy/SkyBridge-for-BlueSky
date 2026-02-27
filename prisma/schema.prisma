@@ -2,8 +2,10 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "dart run orm"
-  engineType = "binary"
+  provider      = "dart run orm"
+  output        = "../lib/src/generated/prisma"
+  engineType    = "binary"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -68,6 +70,7 @@ model SessionRecord {
   id Int @id @default(autoincrement())
   did String @unique
   session String
+  pds_url String @default("https://bsky.social")
 }
 
 model AuthRateLimit {

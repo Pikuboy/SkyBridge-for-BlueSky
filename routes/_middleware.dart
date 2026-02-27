@@ -6,7 +6,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 
 Handler middleware(Handler handler) {
   return (RequestContext context) async {
@@ -39,7 +39,7 @@ Handler middleware(Handler handler) {
         print('Deleting expired session for did: ${token.did}');
         await db.sessionRecord.delete(
           where: SessionRecordWhereUniqueInput(
-            did: token.did,
+            did: token.did!,
           ),
         );
       }

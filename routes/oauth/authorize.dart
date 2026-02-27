@@ -45,7 +45,7 @@ Future<Response> _get(RequestContext context) async {
     () => 'true',
   );
 
-  final requireBridgePassword = !(needBridgePass.toLowerCase() == 'false');
+  final requireBridgePassword = !(needBridgePass!.toLowerCase() == 'false');
   final bridgeClass = requireBridgePassword ? '' : 'hidden';
 
   return Response(
@@ -86,7 +86,7 @@ Future<Response> _post(RequestContext context) async {
 
   // Check if we need a bridge password, and if so check the user entered
   // the correct one.
-  final requireBridgePassword = !(needBridgePass.toLowerCase() == 'false');
+  final requireBridgePassword = !(needBridgePass!.toLowerCase() == 'false');
   if (requireBridgePassword) {
     final bridgePassword = env.getOrElse(
       'SKYBRIDGE_AUTH_PASSWORD',

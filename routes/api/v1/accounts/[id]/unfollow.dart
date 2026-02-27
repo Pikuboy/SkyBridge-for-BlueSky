@@ -6,13 +6,13 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 
 import 'package:sky_bridge/models/mastodon/mastodon_relationship.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Unfollow the given account.
 /// POST /api/v1/accounts/:id/unfollow HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/accounts/#unfollow
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow POST requests.
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -42,12 +42,14 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   // Check if we are actually following the account and get the follow uri
   // so we can delete it. Otherwise we just skip this step and return
   // the relationship.
-  final followUri = profile.data.viewer.following;
+  final followUri = profile.data.viewer?.following;
   if (followUri != null) {
     final parsedFollowUri = at.AtUri.parse(followUri.toString());
-    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    // Use the repo/collection/rkey format for compatibility
     await bluesky.atproto.repo.deleteRecord(
-      uri: parsedFollowUri,
+      repo: parsedFollowUri.hostname,
+      collection: parsedFollowUri.collection.toString(),
+      rkey: parsedFollowUri.rkey,
     );
   }
 

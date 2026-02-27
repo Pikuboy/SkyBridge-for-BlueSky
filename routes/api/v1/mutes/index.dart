@@ -25,7 +25,7 @@ Future<Response> onRequest(RequestContext context) async {
 
     if (handles.isEmpty) return threadedJsonResponse(body: <MastodonAccount>[]);
 
-    final profiles = await chunkResults<bsky.ActorProfile, String>(
+    final profiles = await chunkResults(
       items: handles,
       callback: (chunk) async {
         final r = await bluesky.actor.getProfiles(actors: chunk);
@@ -34,7 +34,7 @@ Future<Response> onRequest(RequestContext context) async {
     );
 
     final accounts = await databaseTransaction(
-      () => Future.wait(profiles.map(MastodonAccount.fromActorProfile)),
+      () => Future.wait(profiles.map<Future<MastodonAccount>>(MastodonAccount.fromActorProfile)),
     );
     return threadedJsonResponse(body: accounts);
   } catch (e) {

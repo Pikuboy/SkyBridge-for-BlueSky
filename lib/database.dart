@@ -2,11 +2,16 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/bluesky.dart' as bsky;
+import 'package:bluesky/app_bsky_actor_defs.dart';
+import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_feed_defs.dart';
+import 'package:bluesky/app_bsky_notification_listnotifications.dart';
 import 'package:crypto/crypto.dart';
 import 'package:orm/orm.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:sky_bridge/src/generated/prisma/model.dart';
 
 /// Global Isar database instance. Initialized in main.dart on startup.
 /// Used to store 64-bit integer IDs for posts and accounts.
@@ -66,13 +71,6 @@ BigInt generateSnowflake({
 
 /// Generates a *unique* 64bit time-sortable ID similar to Twitter/Mastodon's
 /// Snowflake IDs. This is used to generate unique IDs for various records.
-///
-/// [checkCallback] is a callback function that returns a boolean indicating
-/// if the ID already exists in the database. You should use a [ModelDelegate]
-/// for this.
-///
-/// [recordType] is the type of record you are generating an ID for. This gives
-/// each type a unique worker ID to prevent ID collisions between resources.
 Future<BigInt> generateUniqueSnowflake<T>({
   required Future<T?> Function(BigInt id) checkCallback,
   required DateTime date,
@@ -80,29 +78,24 @@ Future<BigInt> generateUniqueSnowflake<T>({
 }) async {
   var sequence = 0;
   while (sequence < 1024) {
-    // Generate a new Snowflake ID. Worker ID's are reserved in [recordType].
     final id = generateSnowflake(
       date: date,
       workerId: recordType.value,
       sequence: sequence,
     );
-
-    // Check if the ID already exists. Unlikely, but possible.
     final existing = await checkCallback(id);
     if (existing != null) {
-      // Entry with this ID already exists, increment and try again.
       sequence++;
     } else {
       return id;
     }
   }
-
   throw Exception('Failed to generate unique Snowflake ID, tried 1024 times.');
 }
 
 /// Checks if a post has been assigned a [PostRecord], and if not, gives
 /// it one. Either the existing or the newly created [PostRecord] is returned.
-Future<PostRecord> postToDatabase(bsky.Post post) async {
+Future<PostRecord> postToDatabase(PostView post) async {
   final existing = await db.postRecord.findUnique(
     where: PostRecordWhereUniqueInput(cid: post.cid),
   );
@@ -114,16 +107,15 @@ Future<PostRecord> postToDatabase(bsky.Post post) async {
         where: PostRecordWhereUniqueInput(id: id),
       ),
     );
-
     return db.postRecord.upsert(
       where: PostRecordWhereUniqueInput(cid: post.cid),
-      create: PostRecordCreateInput(
+      create: PrismaUnion.$1(PostRecordCreateInput(
         id: id,
         cid: post.cid,
         uri: post.uri.toString(),
         authorDid: post.author.did,
-      ),
-      update: const PostRecordUpdateInput(),
+      )),
+      update: PrismaUnion.$1(const PostRecordUpdateInput()),
     );
   } else {
     return existing;
@@ -132,56 +124,58 @@ Future<PostRecord> postToDatabase(bsky.Post post) async {
 
 /// Checks if a embed post has been assigned a [PostRecord], and if not, gives
 /// it one. Either the existing or the newly created [PostRecord] is returned.
-Future<PostRecord?> embedPostToDatabase(bsky.EmbedViewRecordView view) async {
-  return await view.map(
-    record: (record) async {
-      final post = record.data;
+Future<PostRecord?> embedPostToDatabase(UEmbedRecordViewRecord view) async {
+  return await view.when(
+    embedRecordViewRecord: (record) async {
       final existing = await db.postRecord.findUnique(
-        where: PostRecordWhereUniqueInput(cid: post.cid),
+        where: PostRecordWhereUniqueInput(cid: record.cid),
       );
       if (existing == null) {
         final id = await generateUniqueSnowflake(
-          date: post.indexedAt,
+          date: record.indexedAt,
           recordType: RecordType.post,
           checkCallback: (id) => db.postRecord.findUnique(
             where: PostRecordWhereUniqueInput(id: id),
           ),
         );
         return db.postRecord.upsert(
-          where: PostRecordWhereUniqueInput(cid: post.cid),
-          create: PostRecordCreateInput(
+          where: PostRecordWhereUniqueInput(cid: record.cid),
+          create: PrismaUnion.$1(PostRecordCreateInput(
             id: id,
-            cid: post.cid,
-            uri: post.uri.toString(),
-            authorDid: post.author.did,
-          ),
-          update: const PostRecordUpdateInput(),
+            cid: record.cid,
+            uri: record.uri.toString(),
+            authorDid: record.author.did,
+          )),
+          update: PrismaUnion.$1(const PostRecordUpdateInput()),
         );
       } else {
         return existing;
       }
     },
-    notFound: (_) => null,
-    blocked: (_) => null,
+    embedRecordViewNotFound: (_) => null,
+    embedRecordViewBlocked: (_) => null,
+    embedRecordViewDetached: (_) => null,
     generatorView: (_) => null,
-    unknown: (_) => null,
     listView: (_) => null,
+    labelerView: (_) => null,
+    starterPackViewBasic: (_) => null,
+    unknown: (_) => null,
   );
 }
 
 /// Checks if a repost has been assigned a [RepostRecord], and if not, gives
 /// it one. Either the existing or the newly created [RepostRecord] is returned.
-Future<RepostRecord> repostToDatabase(bsky.FeedView view) async {
-  final repost = view.reason?.map(
-    repost: (repost) => repost,
+Future<RepostRecord> repostToDatabase(FeedViewPost view) async {
+  final repostData = view.reason?.when(
+    reasonRepost: (repost) => repost,
+    reasonPin: (_) => null,
     unknown: (_) => null,
   );
-  final isRepost = repost != null;
+  final isRepost = repostData != null;
   if (!isRepost) {
     throw ArgumentError('FeedView is not a repost');
   }
 
-  // Get the original post, we are assuming we already have it in our database.
   final original = await db.postRecord.findUnique(
     where: PostRecordWhereUniqueInput(cid: view.post.cid),
   );
@@ -190,27 +184,39 @@ Future<RepostRecord> repostToDatabase(bsky.FeedView view) async {
     throw ArgumentError('Original post not found in database!');
   }
 
-  final reposterDid = repost.data.by.did;
-  return original.repost(repost.data.indexedAt, reposterDid);
+  final reposterDid = repostData.by.did;
+  return original.repost(repostData.indexedAt, reposterDid);
 }
 
 /// Checks if a DID has been assigned a [UserRecord], and if not, gives
 /// it one. Either the existing or the newly created [UserRecord] is returned.
-Future<UserRecord> actorToDatabase(bsky.Actor actor) async {
+Future<UserRecord> actorToDatabase(ProfileView actor) async {
   final existing = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(did: actor.did),
   );
-
   if (existing == null) {
-    // Doesn't exist, create a new record.
     final id = hashBlueskyToId(actor.did);
     return db.userRecord.upsert(
       where: UserRecordWhereUniqueInput(did: actor.did),
-      create: UserRecordCreateInput(
-        id: id,
-        did: actor.did,
-      ),
-      update: const UserRecordUpdateInput(),
+      create: PrismaUnion.$1(UserRecordCreateInput(id: id, did: actor.did)),
+      update: PrismaUnion.$1(const UserRecordUpdateInput()),
+    );
+  } else {
+    return existing;
+  }
+}
+
+/// Checks if a ProfileViewBasic has been assigned a [UserRecord].
+Future<UserRecord> actorBasicToDatabase(ProfileViewBasic actor) async {
+  final existing = await db.userRecord.findUnique(
+    where: UserRecordWhereUniqueInput(did: actor.did),
+  );
+  if (existing == null) {
+    final id = hashBlueskyToId(actor.did);
+    return db.userRecord.upsert(
+      where: UserRecordWhereUniqueInput(did: actor.did),
+      create: PrismaUnion.$1(UserRecordCreateInput(id: id, did: actor.did)),
+      update: PrismaUnion.$1(const UserRecordUpdateInput()),
     );
   } else {
     return existing;
@@ -219,19 +225,16 @@ Future<UserRecord> actorToDatabase(bsky.Actor actor) async {
 
 /// Checks if a DID has been assigned a [UserRecord], and if not, gives
 /// it one. Either the existing or the newly created [UserRecord] is returned.
-Future<UserRecord> actorProfileToDatabase(bsky.ActorProfile actor) async {
+Future<UserRecord> actorProfileToDatabase(ProfileViewDetailed actor) async {
   final existing = await db.userRecord.findUnique(
     where: UserRecordWhereUniqueInput(did: actor.did),
   );
-
   if (existing == null) {
-    // Doesn't exist, create a new record.
     final id = hashBlueskyToId(actor.did);
     final info = await ProfileInfo.fromActorProfile(actor);
-
     return db.userRecord.upsert(
       where: UserRecordWhereUniqueInput(did: actor.did),
-      create: UserRecordCreateInput(
+      create: PrismaUnion.$1(UserRecordCreateInput(
         id: id,
         did: actor.did,
         banner: info.banner,
@@ -239,32 +242,22 @@ Future<UserRecord> actorProfileToDatabase(bsky.ActorProfile actor) async {
         followersCount: info.followersCount,
         postsCount: info.postsCount,
         description: info.description,
-      ),
-      update: const UserRecordUpdateInput(),
+      )),
+      update: PrismaUnion.$1(const UserRecordUpdateInput()),
     );
   } else {
-    // Exists, update the record with any new information.
     await db.userRecord.update(
       where: UserRecordWhereUniqueInput(did: actor.did),
-      data: UserRecordUpdateInput(
-        banner: StringFieldUpdateOperationsInput(
-          set: actor.banner ?? '',
-        ),
-        followsCount: IntFieldUpdateOperationsInput(
-          set: actor.followsCount,
-        ),
-        followersCount: IntFieldUpdateOperationsInput(
-          set: actor.followersCount,
-        ),
-        postsCount: IntFieldUpdateOperationsInput(
-          set: actor.postsCount,
-        ),
-        description: StringFieldUpdateOperationsInput(
+      data: PrismaUnion.$1(UserRecordUpdateInput(
+        banner: PrismaUnion.$2(StringFieldUpdateOperationsInput(set: actor.banner ?? '')),
+        followsCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.followsCount)),
+        followersCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.followersCount)),
+        postsCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.postsCount)),
+        description: PrismaUnion.$2(StringFieldUpdateOperationsInput(
           set: actor.description ?? '',
-        ),
-      ),
+        )),
+      )),
     );
-
     return existing;
   }
 }
@@ -276,19 +269,11 @@ Future<UserRecord> didToDatabase(String did) async {
     where: UserRecordWhereUniqueInput(did: did),
   );
   if (existing == null) {
-    // Hash the DID and use the first 64 bits as the ID.
-    //
-    // I *think* this is ok to do, we don't have a way of knowing when
-    // an account was created so we can't use the creation date to construct
-    // a snowflake. We might have to change this in the future.
-    //
-    // The chances of collision are unbelievably low, but it's still
-    // technically possible. Might want to add a check for this in the future.
     final id = hashBlueskyToId(did);
     return db.userRecord.upsert(
       where: UserRecordWhereUniqueInput(did: did),
-      create: UserRecordCreateInput(id: id, did: did),
-      update: const UserRecordUpdateInput(),
+      create: PrismaUnion.$1(UserRecordCreateInput(id: id, did: did)),
+      update: PrismaUnion.$1(const UserRecordUpdateInput()),
     );
   } else {
     return existing;
@@ -296,17 +281,15 @@ Future<UserRecord> didToDatabase(String did) async {
 }
 
 /// Checks if a notification has been assigned a [NotificationRecord],
-/// and if not, gives it one. Either the existing or the newly
-/// created [NotificationRecord] is returned.
+/// and if not, gives it one.
 Future<NotificationRecord> notificationToDatabase(
-  bsky.Notification notification,
+  Notification notification,
 ) async {
   final existing = await db.notificationRecord.findFirst(
     where: NotificationRecordWhereInput(
-      cid: StringFilter(equals: notification.cid),
+      cid: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1(notification.cid))),
     ),
   );
-
   if (existing == null) {
     final id = await generateUniqueSnowflake(
       date: notification.indexedAt,
@@ -320,7 +303,7 @@ Future<NotificationRecord> notificationToDatabase(
       cid: notification.cid,
       uri: notification.uri.toString(),
     );
-    return db.notificationRecord.create(data: data);
+    return db.notificationRecord.create(data: PrismaUnion.$1(data));
   } else {
     return existing;
   }
@@ -328,13 +311,12 @@ Future<NotificationRecord> notificationToDatabase(
 
 /// Checks if a feed has been assigned a [FeedRecord], and if not, gives
 /// it one. Either the existing or the newly created [FeedRecord] is returned.
-Future<FeedRecord> feedToDatabase(bsky.FeedGeneratorView feed) async {
+Future<FeedRecord> feedToDatabase(GeneratorView feed) async {
   final existing = await db.feedRecord.findFirst(
     where: FeedRecordWhereInput(
-      cid: StringFilter(equals: feed.cid),
+      cid: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1(feed.cid))),
     ),
   );
-
   if (existing == null) {
     final id = await generateUniqueSnowflake(
       date: feed.indexedAt,
@@ -347,53 +329,37 @@ Future<FeedRecord> feedToDatabase(bsky.FeedGeneratorView feed) async {
       id: id,
       cid: feed.cid,
       uri: feed.uri.toString(),
-      authorDid: feed.did,
+      authorDid: feed.did != null ? PrismaUnion.$1(feed.did!) : PrismaUnion.$2(PrismaNull()),
     );
-    return await db.feedRecord.create(data: data);
+    return await db.feedRecord.create(data: PrismaUnion.$1(data));
   } else {
     return existing;
   }
 }
 
-/// Constructs a SHA256 hash of the reposter's DID and the original post's CID
-/// to create a reproducible ID used to query for a [RepostRecord].
+/// Constructs a SHA256 hash of the reposter's DID and the original post's CID.
 String constructRepostHash(String reposterDid, String cid) {
   return sha256.convert(utf8.encode(reposterDid + cid)).toString();
 }
 
 /// Hash the DID and use the first 64 bits as the ID.
-///
-/// I *think* this is ok to do, we don't have a way of knowing when
-/// an account was created so we can't use the creation date to construct
-/// a snowflake. We might have to change this in the future.
-///
-/// The chances of collision are unbelievably low, but it's still
-/// technically possible. Might want to add a check for this in the future.
 BigInt hashBlueskyToId(String bskyId) {
   final hashBytes = sha256.convert(utf8.encode(bskyId)).bytes;
   final hashUint8List = Uint8List.fromList(hashBytes);
   final hashData = ByteData.view(hashUint8List.buffer);
-  final id = hashData.getUint64(0) & 0x7fffffffffffffff; // 63-bit positive mask
+  final id = hashData.getUint64(0) & 0x7fffffffffffffff;
   return BigInt.from(id);
 }
 
-/// Extension on [PostRecord] to add a [repost] method, makes constructing
-/// a [RepostRecord] easier.
+/// Extension on [PostRecord] to add a [repost] method.
 extension RepostExtension on PostRecord {
-  /// Takes a a date ([createdAt]) and a reposter's DID ([reposterDid]) and
-  /// creates a [RepostRecord] for the post this is called on.
   Future<RepostRecord> repost(DateTime createdAt, String reposterDid) async {
-    // Hash the original post's CID and the reposter's DID.
-    final hash = constructRepostHash(reposterDid, cid);
-
+    final hash = constructRepostHash(reposterDid, cid!);
     final existing = await db.repostRecord.findUnique(
       where: RepostRecordWhereUniqueInput(hashId: hash),
     );
-
-    // If the repost already exists, return it.
     if (existing != null) return existing;
 
-    // Otherwise, create a new repost record.
     final id = await generateUniqueSnowflake(
       date: createdAt,
       recordType: RecordType.repost,
@@ -401,17 +367,16 @@ extension RepostExtension on PostRecord {
         where: RepostRecordWhereUniqueInput(id: id),
       ),
     );
-
     return db.repostRecord.upsert(
       where: RepostRecordWhereUniqueInput(hashId: hash),
-      create: RepostRecordCreateInput(
+      create: PrismaUnion.$1(RepostRecordCreateInput(
         id: id,
         hashId: hash,
         originalPost: PostRecordCreateNestedOneWithoutRepostsInput(
-          connect: PostRecordWhereUniqueInput(cid: cid),
+          connect: PostRecordWhereUniqueInput(cid: cid)),
         ),
       ),
-      update: const RepostRecordUpdateInput(),
+      update: PrismaUnion.$1(const RepostRecordUpdateInput()),
     );
   }
 }
@@ -419,11 +384,11 @@ extension RepostExtension on PostRecord {
 /// Extension methods for [MediaRecord] that convert back and forth between
 /// [MediaRecord] and [atp.Blob].
 extension BlobExtension on MediaRecord {
-  /// Turn a [atp.Blob] into a [MediaRecord] along with a [description].
   static Future<MediaRecord> fromBlob(
     atp.Blob blob,
-    String description,
-  ) async {
+    String description, {
+    String type = 'image',
+  }) async {
     final id = await generateUniqueSnowflake(
       date: DateTime.now().toUtc(),
       recordType: RecordType.media,
@@ -431,29 +396,23 @@ extension BlobExtension on MediaRecord {
         where: MediaRecordWhereUniqueInput(id: id),
       ),
     );
-
-    // Create a new media record.
-    final mediaRecord = await db.mediaRecord.create(
-      data: MediaRecordCreateInput(
+    return db.mediaRecord.create(
+      data: PrismaUnion.$1(MediaRecordCreateInput(
         id: id,
-        type: blob.type,
-        mimeType: blob.mimeType,
+        type: type,
+        mimeType: blob.mimeType ?? '',
         size: blob.size,
-        link: blob.ref.link,
+        link: blob.ref.link ?? '',
         description: description,
-      ),
+      )),
     );
-
-    return mediaRecord;
   }
 
-  /// Converts this [MediaRecord] back into a [atp.Blob].
   atp.Blob toBlob() {
     return atp.Blob(
-      type: type,
-      mimeType: mimeType,
-      size: size,
-      ref: atp.BlobRef(link: link),
+      mimeType: mimeType ?? '',
+      size: size ?? 0,
+      ref: atp.BlobRef(link: link ?? ''),
     );
   }
 }

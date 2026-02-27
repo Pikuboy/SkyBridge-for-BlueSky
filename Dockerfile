@@ -1,15 +1,14 @@
 # Official Dart image: https://hub.docker.com/_/dart
-# Specify the Dart SDK base image version using dart:<version> (ex: dart:2.17)
-FROM dart:3.3.0 AS build
+FROM dart:3.8 AS build
 
 WORKDIR /app
 
 # Resolve app dependencies.
 COPY pubspec.* ./
 RUN dart pub get
-RUN dart pub global activate dart_frog_cli
 
 # Copy app source code and AOT compile it.
+# This includes lib/src/generated/prisma/ which is committed to git.
 COPY . .
 
 # Install Node.js LTS.
@@ -20,12 +19,18 @@ RUN set -uex; \
     curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
     apt-get install -y nodejs
 
-RUN npm i prisma@4.16.2
-RUN npx prisma generate
+RUN npm i prisma@5
+RUN npx prisma@5 generate
 
 # Generate a production build.
-RUN dart pub global activate dart_frog_cli 0.3.8
+RUN dart pub global activate dart_frog_cli
 RUN dart pub global run dart_frog_cli:dart_frog build
+
+# Restore generated Prisma files into build/ after dart_frog bundling
+RUN mkdir -p build/lib/src/generated/prisma && \
+    cp lib/src/generated/prisma/client.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/prisma.dart build/lib/src/generated/prisma/ && \
+    cp lib/src/generated/prisma/model.dart build/lib/src/generated/prisma/
 
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
@@ -42,7 +47,7 @@ RUN set -uex; \
     curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
     apt-get install -y nodejs
 
-RUN npm i prisma@4.16.2
+RUN npm i prisma@5
 
 COPY --from=odroe/prisma-dart:latest / /runtime
 COPY --from=build /app/build/bin/server /app/bin/
@@ -50,6 +55,8 @@ COPY --from=build /app/build/public /app/public/
 COPY --from=build /app/entrypoint.sh /app/
 COPY --from=build /app/prisma /app/prisma
 COPY --from=build /app/node_modules/prisma/query-engine-* /app/bin/
+
+WORKDIR /app
 
 # Start the server.
 CMD ["/app/entrypoint.sh"]

@@ -4,7 +4,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_media_attachment.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Get a media attachment, before it is attached to a post and posted, but
@@ -12,7 +12,7 @@ import 'package:sky_bridge/util.dart';
 /// full-sized media has finished processing.
 /// GET /api/v1/media/:id HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/media/#get
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);

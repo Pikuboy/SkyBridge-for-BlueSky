@@ -44,7 +44,7 @@ import '../routes/api/v1/accounts/[id]/following.dart' as api_v1_accounts_$id_fo
 import '../routes/api/v1/accounts/[id]/followers.dart' as api_v1_accounts_$id_followers;
 import '../routes/api/v1/accounts/[id]/follow.dart' as api_v1_accounts_$id_follow;
 import '../routes/[userId]/[postId].dart' as $user_id_$post_id;
-import '../routes/.well-known/nodeinfo.dart' as well_known_nodeinfo;
+import '../routes/well_known/nodeinfo.dart' as well_known_nodeinfo;
 import '../routes/api/v1/video_proxy/index.dart' as api_v1_video_proxy_index;
 import '../routes/api/v1/video_proxy/[...path].dart' as api_v1_video_proxy_path;
 
@@ -81,6 +81,7 @@ Handler buildRootHandler() {
     ..mount('/api/v1/video_proxy', (context) => buildApiV1VideoProxyHandler()(context))
     ..mount('/api/v1', (context) => buildApiV1Handler()(context))
     ..mount('/api/v2', (context) => buildApiV2Handler()(context))
+    ..mount('/.well-known', (context) => buildWellKnownHandler()(context))
     ..mount('/nodeinfo', (context) => buildNodeinfoHandler()(context))
     ..mount('/oauth', (context) => buildOauthHandler()(context))
     ..mount('/', (context) => buildHandler()(context));

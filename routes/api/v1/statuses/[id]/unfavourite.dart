@@ -6,13 +6,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Undo a like for a post.
 /// POST /api/v1/statuses/:id/unfavourite HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/statuses/#unfavourite
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow POST requests.
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -39,7 +39,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
 
   // Get the post from bluesky, we assume we already know the post exists
   // and don't bother adding to the database or anything.
-  final uri = at.AtUri.parse(postRecord!.uri);
+  final uri = at.AtUri.parse(postRecord!.uri!);
   final response = await bluesky.feed.getPosts(uris: [uri]);
   final post = response.data.posts.first;
 
@@ -56,12 +56,14 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     () => MastodonPost.fromBlueSkyPost(post),
   );
 
-  if (post.viewer.like != null) {
+  if (post.viewer?.like != null) {
     // Unlike the post now that we have everything in order.
-    final likeUri = at.AtUri.parse(post.viewer.like!.toString());
-    // deleteRecord now takes uri: AtUri directly in atproto 0.12.x+
+    final likeUri = at.AtUri.parse(post.viewer!.like!.toString());
+    // Use the repo/collection/rkey format for compatibility
     await bluesky.atproto.repo.deleteRecord(
-      uri: likeUri,
+      repo: likeUri.hostname,
+      collection: likeUri.collection.toString(),
+      rkey: likeUri.rkey,
     );
     mastodonPost
       ..favourited = false

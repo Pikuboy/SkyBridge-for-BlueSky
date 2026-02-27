@@ -4,10 +4,10 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // If the id is not a number we return 404
   if (int.tryParse(id) == null) {
     return Response(statusCode: HttpStatus.notFound);
@@ -26,7 +26,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     return Response(statusCode: HttpStatus.notFound);
   }
 
-  final profile = await bluesky.actor.getProfile(actor: user.did);
+  final profile = await bluesky.actor.getProfile(actor: user.did!);
   final account = await databaseTransaction(
     () => MastodonAccount.fromActorProfile(profile.data),
   );

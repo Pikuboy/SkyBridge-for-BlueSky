@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:image_compression/image_compression.dart';
+import 'package:image/image.dart' as img;
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/forms/media_upload_form.dart';
@@ -30,7 +30,7 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   var fileBytes = Uint8List.fromList(await imageFile.readAsBytes());
-  final mimeType = imageFile.contentType.mimeType.toLowerCase();
+  final mimeType = imageFile.contentType.mimeType!.toLowerCase();
 
   // Detect the actual type from magic bytes.
   final extension = _detectExtension(fileBytes, mimeType);
@@ -43,28 +43,24 @@ Future<Response> onRequest(RequestContext context) async {
   final isGif = extension == 'gif';
   final isImage = !isGif && (extension == 'jpeg' || extension == 'png' || extension == 'webp');
 
-  // Compress JPEG/PNG images that exceed the Bluesky 976 KB limit.
+  // Compress images that exceed the Bluesky 976 KB limit.
   const bskyImageLimit = 976560;
   if (isImage && fileBytes.length > bskyImageLimit) {
     print('File size ${fileBytes.length} exceeds limit, compressing…');
 
-    final file = ImageFile(
-      rawBytes: fileBytes,
-      filePath: '/tmp/${imageFile.name}',
-      contentType: extension,
-    );
+    final decoded = img.decodeImage(fileBytes);
+    if (decoded == null) {
+      print('Could not decode image for compression.');
+      return _invalidMedia();
+    }
 
     var compressed = false;
     for (var i = 0; i < 5; i++) {
       final quality = 80 - (i * 10);
       print('Compression attempt ${i + 1}/5, quality $quality');
-      final config = ImageFileConfiguration(
-        input: file,
-        config: Configuration(jpgQuality: quality),
-      );
-      final result = await compressInQueue(config);
-      if (result.sizeInBytes < bskyImageLimit) {
-        fileBytes = result.rawBytes;
+      final encoded = img.encodeJpg(decoded, quality: quality);
+      if (encoded.length < bskyImageLimit) {
+        fileBytes = Uint8List.fromList(encoded);
         compressed = true;
         break;
       }
@@ -77,12 +73,16 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   // Upload to Bluesky.
-  final response = await bluesky.atproto.repo.uploadBlob(fileBytes);
+  final response = await bluesky.atproto.repo.uploadBlob(bytes: fileBytes);
   final blob = response.data.blob;
 
   final description = formDataEncoded.description ?? '';
   final record = await databaseTransaction(
-    () async => BlobExtension.fromBlob(blob, description),
+    () async => BlobExtension.fromBlob(
+        blob,
+        description,
+        type: isGif ? 'gifv' : (isImage ? 'image' : 'video'),
+      ),
   );
 
   final attachmentType = isGif ? MediaType.gifv : MediaType.image;

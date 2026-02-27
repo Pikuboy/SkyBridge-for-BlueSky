@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:atproto/core.dart' as atp;
-import 'package:bluesky/atproto.dart' as batp;
 import 'package:bluesky/bluesky.dart' as bsky;
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
@@ -10,10 +9,69 @@ import 'package:sky_bridge/crypto.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/oauth/oauth_access_token.dart';
 import 'package:sky_bridge/models/preferences.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:orm/orm.dart';
 
 /// Global client
 final httpClient = http.Client();
+
+/// Resolves the PDS host (without scheme) for a given handle.
+/// Returns e.g. "bsky.social" or "eurosky.social".
+/// Falls back to "bsky.social" on any error.
+Future<String> resolvePdsHost(String identifier) async {
+  try {
+    final handle = identifier.startsWith('@')
+        ? identifier.substring(1)
+        : identifier;
+
+    // Email identifiers cannot be resolved to a PDS via DID — fall back.
+    if (handle.contains('@') && !handle.startsWith('did:')) {
+      return 'bsky.social';
+    }
+
+    String did = handle;
+
+    // Resolve handle -> DID via the public AppView.
+    if (!handle.startsWith('did:')) {
+      final url = Uri.parse(
+        'https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle'
+        '?handle=$handle',
+      );
+      final response = await httpClient.get(url);
+      if (response.statusCode != 200) return 'bsky.social';
+      did = (jsonDecode(response.body) as Map<String, dynamic>)['did'] as String;
+    }
+
+    // Resolve did:plc -> DID document -> PDS service endpoint.
+    if (did.startsWith('did:plc:')) {
+      final url = Uri.parse('https://plc.directory/$did');
+      final response = await httpClient.get(url);
+      if (response.statusCode != 200) return 'bsky.social';
+      final services =
+          (jsonDecode(response.body) as Map<String, dynamic>)['service']
+              as List<dynamic>?;
+      if (services != null) {
+        for (final svc in services.cast<Map<String, dynamic>>()) {
+          if (svc['id'] == '#atproto_pds' ||
+              svc['type'] == 'AtprotoPersonalDataServer') {
+            final endpoint = svc['serviceEndpoint'] as String;
+            // Strip scheme — the lib expects just the host.
+            return endpoint
+                .replaceFirst('https://', '')
+                .replaceFirst('http://', '');
+          }
+        }
+      }
+    }
+
+    if (did.startsWith('did:web:')) {
+      return did.substring('did:web:'.length);
+    }
+  } catch (e) {
+    print('resolvePdsHost error for $identifier: $e');
+  }
+  return 'bsky.social';
+}
 
 /// Takes an IP address and ensures that authentication attempts are not
 /// being made too frequently. Bluesky now has quite aggressive rate limiting
@@ -29,15 +87,15 @@ Future<void> incrementFailedAuthAttempt(RequestContext context) async {
     where: AuthRateLimitWhereUniqueInput(
       ipAddress: ip,
     ),
-    create: AuthRateLimitCreateInput(
+    create: PrismaUnion.$1(AuthRateLimitCreateInput(
       ipAddress: ip,
       attempts: 1,
-    ),
-    update: const AuthRateLimitUpdateInput(
-      attempts: IntFieldUpdateOperationsInput(
+    )),
+    update: PrismaUnion.$1(AuthRateLimitUpdateInput(
+      attempts: PrismaUnion.$2(IntFieldUpdateOperationsInput(
         increment: 1,
-      ),
-    ),
+      )),
+    )),
   );
 }
 
@@ -54,7 +112,7 @@ Future<bool> isIpRateLimited(RequestContext context) async {
   if (limit == null) return false;
 
   // We've hit the rate limit.
-  if (limit.attempts >= 5) {
+  if ((limit.attempts ?? 0) >= 5) {
     final now = DateTime.now().toUtc();
 
     // If the last time the limit was hit is null, set it to now.
@@ -63,11 +121,11 @@ Future<bool> isIpRateLimited(RequestContext context) async {
         where: AuthRateLimitWhereUniqueInput(
           ipAddress: ip,
         ),
-        data: AuthRateLimitUpdateInput(
-          lastAttempt: NullableDateTimeFieldUpdateOperationsInput(
-            set: now,
-          ),
-        ),
+        data: PrismaUnion.$1(AuthRateLimitUpdateInput(
+          lastAttempt: PrismaUnion.$2(PrismaUnion.$1(NullableDateTimeFieldUpdateOperationsInput(
+            set: PrismaUnion.$1(now),
+          ))),
+        )),
       );
     }
 
@@ -78,14 +136,14 @@ Future<bool> isIpRateLimited(RequestContext context) async {
         where: AuthRateLimitWhereUniqueInput(
           ipAddress: ip,
         ),
-        data: AuthRateLimitUpdateInput(
-          attempts: const IntFieldUpdateOperationsInput(
+        data: PrismaUnion.$1(AuthRateLimitUpdateInput(
+          attempts: PrismaUnion.$2(IntFieldUpdateOperationsInput(
             set: 1,
-          ),
-          lastAttempt: NullableDateTimeFieldUpdateOperationsInput(
-            set: now,
-          ),
-        ),
+          )),
+          lastAttempt: PrismaUnion.$2(PrismaUnion.$1(NullableDateTimeFieldUpdateOperationsInput(
+            set: PrismaUnion.$1(now),
+          ))),
+        )),
       );
     }
   }
@@ -131,8 +189,11 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
 
   // If we already have a session then great! Otherwise, try to create one.
   if (record != null) {
-    final json = jsonDecode(record.session) as Map<String, dynamic>;
+    final json = jsonDecode(record.session!) as Map<String, dynamic>;
     final session = atp.Session.fromJson(json);
+
+    // Use the stored PDS host for any re-auth against this account.
+    final pdsHost = record.pdsUrl;
 
     final accessJwt =
         JWT.decode(session.accessJwt).payload as Map<String, dynamic>;
@@ -159,6 +220,7 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
         final newSession = await createBlueskySession(
           identifier: token.identifier,
           appPassword: token.appPassword,
+          pdsHost: token.pdsUrl,
         );
 
         // Credentials are just straight up invalid. Bail.
@@ -172,25 +234,47 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
 
         return newSession;
       } else {
-        // The access token is expired but we have a valid refresh token,
-        // try to refresh the session.
-        final refreshedSession = await batp.refreshSession(
-          refreshJwt: session.refreshJwt,
-        );
+        // The access token is expired but we have a valid refresh token.
+        // Call refreshSession directly on the correct PDS via HTTP.
+        try {
+          final refreshUrl = Uri.parse(
+            'https://$pdsHost/xrpc/com.atproto.server.refreshSession',
+          );
+          final refreshResponse = await httpClient.post(
+            refreshUrl,
+            headers: {'Authorization': 'Bearer ${session.refreshJwt}'},
+          );
 
-        // Update the session in the database.
-        await db.sessionRecord.update(
-          where: SessionRecordWhereUniqueInput(
-            did: refreshedSession.data.did,
-          ),
-          data: SessionRecordUpdateInput(
-            session: StringFieldUpdateOperationsInput(
-              set: jsonEncode(refreshedSession.data.toJson()),
+          if (refreshResponse.statusCode != 200) {
+            // Refresh failed — fall back to full re-auth.
+            return await createBlueskySession(
+              identifier: token.identifier,
+              appPassword: token.appPassword,
+              pdsHost: pdsHost,
+            );
+          }
+
+          final refreshJson =
+              jsonDecode(refreshResponse.body) as Map<String, dynamic>;
+          final refreshedSession = atp.Session.fromJson(refreshJson);
+
+          // Update the session in the database.
+          await db.sessionRecord.update(
+            where: SessionRecordWhereUniqueInput(
+              did: refreshedSession.did,
             ),
-          ),
-        );
+            data: PrismaUnion.$1(SessionRecordUpdateInput(
+              session: PrismaUnion.$2(StringFieldUpdateOperationsInput(
+                set: jsonEncode(refreshJson),
+              )),
+            )),
+          );
 
-        return refreshedSession.data;
+          return refreshedSession;
+        } catch (e) {
+          print('Token refresh error: $e');
+          return null;
+        }
       }
     }
 
@@ -203,6 +287,7 @@ Future<atp.Session?> sessionFromContext(RequestContext context) async {
     final newSession = await createBlueskySession(
       identifier: token.identifier,
       appPassword: token.appPassword,
+      pdsHost: token.pdsUrl,
     );
 
     // Credentials are just straight up invalid. Bail.
@@ -230,11 +315,7 @@ SkybridgePreferences preferencesFromContext(RequestContext context) {
 Future<bsky.Bluesky?> blueskyFromContext(RequestContext context) async {
   final session = await sessionFromContext(context);
   if (session == null) return null;
-  return bsky.Bluesky.fromSession(
-    session,
-    mockedGetClient: httpClient.get,
-    mockedPostClient: httpClient.post,
-  );
+  return bsky.Bluesky.fromSession(session);
 }
 
 /// A helper function to return a 401 response for an invalid bearer token.
@@ -262,37 +343,49 @@ OAuthAccessToken? validateBearerToken(String? tokenString) {
 Map<String, atp.Session> sessions = {};
 
 /// Create a Bluesky session with the given credentials and store
-/// it in [sessions].
+/// it in the database. Uses direct HTTP to the resolved PDS.
 Future<atp.Session?> createBlueskySession({
   required String identifier,
   required String appPassword,
+  String? pdsHost,
 }) async {
   try {
-    // Try to authenticate with Bluesky with the given credentials.
-    final session = await batp.createSession(
-      identifier: identifier,
-      password: appPassword,
+    final resolvedHost = pdsHost ?? await resolvePdsHost(identifier);
+    print('Creating session for $identifier on PDS: $resolvedHost');
+
+    final url = Uri.parse(
+      'https://$resolvedHost/xrpc/com.atproto.server.createSession',
+    );
+    final response = await httpClient.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'identifier': identifier, 'password': appPassword}),
     );
 
-    // If we've gotten this far, the credentials are valid.
-    // Store the session in the global list for later.
+    if (response.statusCode != 200) {
+      print('createSession HTTP ${response.statusCode}: ${response.body}');
+      return null;
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final session = atp.Session.fromJson(json);
+
     await db.sessionRecord.upsert(
-      where: SessionRecordWhereUniqueInput(
-        did: session.data.did,
-      ),
-      create: SessionRecordCreateInput(
-        did: session.data.did,
-        session: jsonEncode(session.data.toJson()),
-      ),
-      update: SessionRecordUpdateInput(
-        session: StringFieldUpdateOperationsInput(
-          set: jsonEncode(session.data.toJson()),
-        ),
-      ),
+      where: SessionRecordWhereUniqueInput(did: session.did),
+      create: PrismaUnion.$1(SessionRecordCreateInput(
+        did: session.did,
+        session: jsonEncode(json),
+        pdsUrl: resolvedHost,
+      )),
+      update: PrismaUnion.$1(SessionRecordUpdateInput(
+        session: PrismaUnion.$2(StringFieldUpdateOperationsInput(set: jsonEncode(json))),
+        pdsUrl: PrismaUnion.$2(StringFieldUpdateOperationsInput(set: resolvedHost)),
+      )),
     );
-    print('New session created for ${session.data.did}');
-    return session.data;
+    print('New session created for ${session.did}');
+    return session;
   } catch (e) {
+    print('createBlueskySession error: $e');
     return null;
   }
 }

@@ -13,7 +13,7 @@ I think Fly.dev instruction are still working but didn't try.
 
 Docker image is available for arm64 and amd64
 https://ghcr.io/pikuboy/skybridge-for-bluesky:f41c89e27cc6d76ffe4046e1d7a6aa049049799f
-
+ 
 # ORIGINAL README FROM VIDEAH BELOW
 
 # SkyBridge

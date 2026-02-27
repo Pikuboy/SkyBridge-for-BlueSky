@@ -24,12 +24,12 @@ Future<Response> onRequest(RequestContext context) async {
         'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
 
     final feed = await bluesky.feed.getFeed(
-      generatorUri: at.AtUri.parse(whatsHotUri),
+      feed: at.AtUri.parse(whatsHotUri),
       limit: 40,
     );
 
     posts = await databaseTransaction(() async {
-      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+      final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
       return Future.wait(futures);
     });
   } catch (e) {

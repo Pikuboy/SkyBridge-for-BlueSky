@@ -5,7 +5,9 @@ import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
+import 'package:orm/orm.dart';
+import 'package:orm/orm.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Dismiss a single notification so it no longer appears.
@@ -13,7 +15,7 @@ import 'package:sky_bridge/util.dart';
 /// See: https://docs.joinmastodon.org/methods/notifications/#dismiss
 ///
 /// Dismissed IDs are stored in MediaRecord (type="dismissed_notif").
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   if (context.request.method != HttpMethod.post) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
@@ -39,14 +41,14 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
     );
     if (existing == null) {
       await db.mediaRecord.create(
-        data: MediaRecordCreateInput(
+        data: PrismaUnion.$1(MediaRecordCreateInput(
           id: recordId,
           type: 'dismissed_notif',
           mimeType: session.did,
           size: 0,
           link: id,
           description: '',
-        ),
+        )),
       );
     }
   } catch (e) {

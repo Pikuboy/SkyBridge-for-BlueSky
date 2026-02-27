@@ -6,13 +6,13 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// View who reblogged a given post.
 /// GET /api/v1/statuses/:id/reblogged_by HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/statuses/#reblogged_by
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -37,15 +37,15 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (postRecord == null) return Response(statusCode: HttpStatus.notFound);
 
   final response = await bluesky.feed.getRepostedBy(
-    uri: at.AtUri.parse(postRecord!.uri),
+    uri: at.AtUri.parse(postRecord!.uri!),
   );
 
   // Construct a list of handles from the response.
-  final handles = response.data.repostedBy.map((act) => act.handle).toList();
+  final handles = response.data.repostedBy.map((act) => act.handle.toString()).toList();
 
   // We need to chunk the results because the Bluesky server has a limit on the
   // number of actors you can query at once.
-  final profiles = await chunkResults<bsky.ActorProfile, String>(
+  final profiles = await chunkResults(
     items: handles,
     callback: (chunk) async {
       final response = await bluesky.actor.getProfiles(actors: chunk);
@@ -56,7 +56,7 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   // Convert the profiles to MastodonAccount objects.
   final rebloggers = await databaseTransaction(() {
     return Future.wait(
-      profiles.map(MastodonAccount.fromActorProfile),
+      profiles.map<Future<MastodonAccount>>(MastodonAccount.fromActorProfile),
     );
   });
 

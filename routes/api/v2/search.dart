@@ -9,13 +9,13 @@ import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_tag.dart';
 import 'package:sky_bridge/models/params/search_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Perform a search.
 /// GET /api/v2/search HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/search/#v2
-Future<Response> onRequest<T>(RequestContext context) async {
+Future<Response> onRequest(RequestContext context) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -59,7 +59,7 @@ Future<Response> onRequest<T>(RequestContext context) async {
         );
       }
 
-      final uri = at.AtUri.parse(postRecord.uri);
+      final uri = at.AtUri.parse(postRecord.uri!);
       final response = await bluesky.feed.getPosts(uris: [uri]);
       final post = response.data.posts.first;
 
@@ -127,12 +127,13 @@ Future<Response> onRequest<T>(RequestContext context) async {
       );
 
       final handles =
-          results.data.actors.map((actor) => actor.handle).toList();
+          results.data.actors.map((actor) => actor.handle.toString()).toList();
 
       if (handles.isNotEmpty) {
-        final profiles = await chunkResults<bsky.ActorProfile, String>(
+        // Let Dart infer the profile type from the callback return type.
+        final profiles = await chunkResults(
           items: handles,
-          callback: (chunk) async {
+          callback: (List<String> chunk) async {
             final r = await bluesky.actor.getProfiles(actors: chunk);
             return r.data.profiles;
           },
@@ -140,7 +141,9 @@ Future<Response> onRequest<T>(RequestContext context) async {
 
         accountResults = await databaseTransaction(() {
           return Future.wait(
-            profiles.map(MastodonAccount.fromActorProfile),
+            profiles.map<Future<MastodonAccount>>(
+              MastodonAccount.fromActorProfile,
+            ),
           );
         });
       }
@@ -152,10 +155,12 @@ Future<Response> onRequest<T>(RequestContext context) async {
   // Search statuses (posts).
   if (searchType == null || searchType == SearchType.statuses) {
     try {
-      final results = await bluesky.feed.searchPosts(query, limit: limit);
+      // Fix: query is now a named parameter q: in bluesky 1.x
+      final results = await bluesky.feed.searchPosts(q: query, limit: limit);
 
       statusResults = await databaseTransaction(() async {
-        final futures = results.data.posts.map(MastodonPost.fromBlueSkyPost);
+        final futures = results.data.posts
+            .map<Future<MastodonPost>>(MastodonPost.fromBlueSkyPost);
         return Future.wait(futures);
       });
 
@@ -181,8 +186,6 @@ Future<Response> onRequest<T>(RequestContext context) async {
       );
     }
 
-    // If the whole query looks like a bare word (no spaces, not an @-mention),
-    // also surface it as a hashtag so the client can navigate to the tag page.
     if (hashtagResults.isEmpty &&
         !query.contains(' ') &&
         !query.startsWith('@')) {

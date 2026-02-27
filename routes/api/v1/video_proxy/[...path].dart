@@ -121,7 +121,7 @@ String _getBaseUrlFromEnv() {
 /// Réécrit les URLs dans le m3u8 pour pointer vers ce proxy (format chemin).
 /// Strip le session_id des sous-playlists pour éviter les expirations.
 String _rewriteM3u8(String manifest, Uri baseUri, String baseUrl) {
-  final lines = manifest.split('\n');
+  final lines = manifest!.split('\n');
   final rewritten = <String>[];
 
   for (final line in lines) {

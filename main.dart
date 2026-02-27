@@ -3,11 +3,10 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:orm/logger.dart';
 import 'package:shelf_rate_limiter/shelf_rate_limiter.dart';
 import 'package:sky_bridge/crypto.dart';
 import 'package:sky_bridge/database.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/client.dart';
 import 'package:sky_bridge/util.dart';
 
 import 'routes/_middleware.dart';
@@ -67,19 +66,18 @@ Future<void> init(InternetAddress ip, int port) async {
   // Get the database URL from the environment.
   final databaseUrl = env.getOrElse(
     'DATABASE_URL',
-    () => 'file:./database/skybridge.db',
+    () => 'file:/app/database/skybridge.db',
   );
 
   // Open our database connections.
   db = PrismaClient(
-    event: [Event.query],
-    datasources: Datasources(
-      db: '$databaseUrl?connection_limit=1',
-    ),
+    datasources: {'db': '$databaseUrl'},
   );
 
   // Enable WAL mode for SQLite.
-  await db.$queryRaw('PRAGMA journal_mode=WAL;');
+  // Note: WAL mode configuration is not available via Prisma ORM in this version
+  // It should be configured at the database connection level or via migration scripts
+  // await db.$queryRaw('PRAGMA journal_mode=WAL;');
 
   // Check if we should wipe the database on startup.
   final shouldWipeDB = env.getOrElse(
@@ -93,21 +91,15 @@ Future<void> init(InternetAddress ip, int port) async {
   if (shouldWipeDB.toLowerCase() == 'true') {
     print('Wiping ID database...');
     await databaseTransaction(() async {
-      const tables = [
-        'UserRecord',
-        'PostRecord',
-        'RepostRecord',
-        'NotificationRecord',
-        'MediaRecord',
-        'FeedRecord',
-        'SessionRecord',
-      ];
-
-      await db.$queryRaw('PRAGMA foreign_keys=OFF;');
-      for (final table in tables) {
-        await db.$queryRaw('DELETE FROM $table;');
-      }
-      await db.$queryRaw('PRAGMA foreign_keys=ON;');
+      // Delete all records from tables in the correct order
+      // to avoid foreign key constraints
+      await db.sessionRecord.deleteMany();
+      await db.mediaRecord.deleteMany();
+      await db.feedRecord.deleteMany();
+      await db.notificationRecord.deleteMany();
+      await db.repostRecord.deleteMany();
+      await db.postRecord.deleteMany();
+      await db.userRecord.deleteMany();
     });
   }
 
@@ -115,8 +107,8 @@ Future<void> init(InternetAddress ip, int port) async {
   print('Attempting to connect to database...');
   await db.$connect();
 
-  final userCount = await db.userRecord.aggregate().$count().id();
-  final postCount = await db.postRecord.aggregate().$count().id();
+  final userCount = (await db.userRecord.findMany()).length;
+  final postCount = (await db.postRecord.findMany()).length;
 
   print('Indexed $userCount users and $postCount posts.');
 }

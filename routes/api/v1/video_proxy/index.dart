@@ -148,7 +148,7 @@ String _getBaseUrlFromEnv() {
 /// Also strips session_id query parameters from sub-playlist URLs to ensure
 /// stable URLs that work across player restarts and fullscreen transitions.
 String _rewriteM3u8(String manifest, Uri baseUri, String baseUrl) {
-  final lines = manifest.split('\n');
+  final lines = manifest!.split('\n');
   final rewritten = <String>[];
 
   for (final line in lines) {

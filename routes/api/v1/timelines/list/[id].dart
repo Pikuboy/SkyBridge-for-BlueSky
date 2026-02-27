@@ -7,13 +7,13 @@ import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/params/timeline_params.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// View posts in the given list timeline.
 /// GET /api/v1/timelines/list/:list_id HTTP/1.1
 /// See: https://docs.joinmastodon.org/methods/timelines/#list
-Future<Response> onRequest<T>(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   // Only allow GET requests.
   if (context.request.method != HttpMethod.get) {
     return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -43,13 +43,13 @@ Future<Response> onRequest<T>(RequestContext context, String id) async {
   if (record == null) return Response(statusCode: HttpStatus.notFound);
 
   final feed = await bluesky.feed.getFeed(
-    generatorUri: at.AtUri.parse(record.uri),
+    feed: at.AtUri.parse(record.uri!),
   );
 
   // Take all the posts and convert them to Mastodon ones
   // Await all the futures, getting any necessary data from the database.
   final posts = await databaseTransaction(() async {
-    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+    final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
     return Future.wait(futures);
   });
 

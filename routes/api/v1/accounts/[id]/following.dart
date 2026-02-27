@@ -5,7 +5,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
-import 'package:sky_bridge/src/generated/prisma/prisma_client.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Returns accounts which follow the given account.
@@ -25,14 +25,14 @@ Future<Response> onRequest(RequestContext context, String id) async {
   );
   if (userRecord == null) return Response(statusCode: HttpStatus.notFound);
 
-  final response = await bluesky.graph.getFollows(actor: userRecord.did);
+  final response = await bluesky.graph.getFollows(actor: userRecord.did!);
 
   // Get all the handles from the results and grab the full profile info.
   final handles = response.data.follows.map((actor) => actor.handle).toList();
 
   // We need to chunk the results because the Bluesky server has a limit on the
   // number of actors you can query at once.
-  final profiles = await chunkResults<bsky.ActorProfile, String>(
+  final profiles = await chunkResults(
     items: handles,
     callback: (chunk) async {
       final response = await bluesky.actor.getProfiles(actors: chunk);
@@ -43,7 +43,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   // Convert the profiles to MastodonAccount objects.
   final follows = await databaseTransaction(() {
     return Future.wait(
-      profiles.map(MastodonAccount.fromActorProfile),
+      profiles.map<Future<MastodonAccount>>(MastodonAccount.fromActorProfile),
     );
   });
 
