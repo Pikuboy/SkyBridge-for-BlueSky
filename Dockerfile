@@ -55,5 +55,7 @@ COPY --from=build /app/entrypoint.sh /app/
 COPY --from=build /app/prisma /app/prisma
 COPY --from=build /app/node_modules/prisma/query-engine-* /app/bin/
 
+WORKDIR /app
+
 # Start the server.
 CMD ["/app/entrypoint.sh"]
