@@ -3,6 +3,7 @@ This is a fork from https://github.com/videah/skybridge, the origial dev. I comp
 Video is now supported in Ivory, but only embedded in the post, full screen is not working. It seems Ivory full screen player is not supporting HLS video, it needs mp4 files which is not provided by Bluesky so it will never work.
 
 You can now use the search tab too. 
+Support for third party PDS (tested with eurosky.social)
 
 Support is still incomplete and I don't intend to do more. This repo will become private once Phoenix is released.
 
@@ -11,8 +12,8 @@ The docker_compose template reflect the one I used to configure it on my NAS.
 
 I think Fly.dev instruction are still working but didn't try.
 
-Docker image is available for arm64 and amd64
-https://ghcr.io/pikuboy/skybridge-for-bluesky:f41c89e27cc6d76ffe4046e1d7a6aa049049799f
+Docker image is available for arm64 and amd64:
+https://ghcr.io/pikuboy/skybridge-for-bluesky:826303afaad8b5e0ebc9e57d48422194d9c34d2f
  
 # ORIGINAL README FROM VIDEAH BELOW
 
