@@ -71,7 +71,7 @@ Future<void> init(InternetAddress ip, int port) async {
 
   // Open our database connections.
   db = PrismaClient(
-    datasources: {'db': '$databaseUrl?connection_limit=1'},
+    datasources: {'db': '$databaseUrl'},
   );
 
   // Enable WAL mode for SQLite.
