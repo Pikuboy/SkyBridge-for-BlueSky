@@ -158,15 +158,20 @@ Future<Response> onRequest(RequestContext context) async {
       // Fix: query is now a named parameter q: in bluesky 1.x
       final results = await bluesky.feed.searchPosts(q: query, limit: limit);
 
-      statusResults = await databaseTransaction(() async {
-        final futures = results.data.posts
-            .map<Future<MastodonPost>>(MastodonPost.fromBlueSkyPost);
-        return Future.wait(futures);
-      });
+      for (final post in results.data.posts) {
+        try {
+          final mastodonPost = await databaseTransaction(
+            () => MastodonPost.fromBlueSkyPost(post),
+          );
+          statusResults.add(mastodonPost);
+        } catch (e) {
+          print('Status search: skipping post \${post.uri} — \$e');
+        }
+      }
 
       statusResults = await processParentPosts(bluesky, statusResults);
-    } catch (e) {
-      print('Status search error: $e');
+    } catch (e, st) {
+      print('Status search error: $e\n$st');
     }
   }
 
