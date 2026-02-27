@@ -13,7 +13,7 @@ The docker_compose template reflect the one I used to configure it on my NAS.
 I think Fly.dev instruction are still working but didn't try.
 
 Docker image is available for arm64 and amd64:
-https://ghcr.io/pikuboy/skybridge-for-bluesky:826303afaad8b5e0ebc9e57d48422194d9c34d2f
+https://ghcr.io/pikuboy/skybridge-for-bluesky:latest
  
 # ORIGINAL README FROM VIDEAH BELOW
 
