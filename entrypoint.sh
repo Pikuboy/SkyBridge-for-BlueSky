@@ -14,8 +14,6 @@ fi
 
 cd /app || exit
 
-# Ensure database file exists
-mkdir -p /app/database
 
 
 # Run any necessary database migrations.
