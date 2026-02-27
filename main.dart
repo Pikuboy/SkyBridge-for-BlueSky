@@ -66,7 +66,7 @@ Future<void> init(InternetAddress ip, int port) async {
   // Get the database URL from the environment.
   final databaseUrl = env.getOrElse(
     'DATABASE_URL',
-    () => 'file:./database/skybridge.db',
+    () => 'file:/app/database/skybridge.db',
   );
 
   // Open our database connections.
