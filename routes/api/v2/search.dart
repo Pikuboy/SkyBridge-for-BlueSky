@@ -165,8 +165,8 @@ Future<Response> onRequest(RequestContext context) async {
       });
 
       statusResults = await processParentPosts(bluesky, statusResults);
-    } catch (e) {
-      print('Status search error: $e');
+    } catch (e, st) {
+      print('Status search error: $e\n$st');
     }
   }
 
