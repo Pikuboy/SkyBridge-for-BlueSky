@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
  
 jobs:
   docker:
@@ -34,6 +35,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/pikuboy/skybridge-for-bluesky:latest
-            ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.sha }}
+              ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.run_number }}
+
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max
