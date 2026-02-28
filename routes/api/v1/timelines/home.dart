@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
+import 'package:sky_bridge/feed_filters.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/params/timeline_params.dart';
 import 'package:sky_bridge/util.dart';
@@ -108,6 +109,10 @@ Future<Response> onRequest(RequestContext context) async {
   if (!preferences.showRepliesInHome) {
     processedPosts.removeWhere((post) => post.inReplyToId != null);
   }
+
+  // Apply parametric filters from filters.json (re-read automatically on change).
+  final filters = loadFeedFilters();
+  processedPosts.removeWhere(filters.shouldHide);
 
   return threadedJsonResponse(body: processedPosts, headers: headers);
 }

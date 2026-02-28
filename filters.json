@@ -1,0 +1,13 @@
+{
+  "hide_replies_from": [
+    "somehandle.bsky.social",
+    "did:plc:remplacerParLeVraiDID"
+  ],
+  "hide_keywords": [
+    "mot_a_filtrer",
+    "autre_mot"
+  ],
+  "hide_reposts_from": [
+    "comptespammeur.bsky.social"
+  ]
+}
