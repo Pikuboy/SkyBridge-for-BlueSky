@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 
 /// Path to the filters configuration file.
-/// Place this file at the root of your Skybridge installation.
-const _filtersPath = 'filters.json';
+/// Configurable via the SKYBRIDGE_FILTERS_PATH environment variable.
+/// Defaults to 'filters.json' in the current working directory.
+String get _filtersPath =>
+    Platform.environment['SKYBRIDGE_FILTERS_PATH'] ?? 'filters.json';
 
 /// Cached filters to avoid re-reading the file on every request.
 /// The cache is invalidated when the file modification time changes.
@@ -19,6 +21,7 @@ FeedFilters loadFeedFilters() {
   final file = File(_filtersPath);
 
   if (!file.existsSync()) {
+    print('[FeedFilters] File not found at: ${file.absolute.path} (set SKYBRIDGE_FILTERS_PATH to override)');
     return const FeedFilters();
   }
 
