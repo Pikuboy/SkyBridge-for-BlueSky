@@ -104,15 +104,17 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-  // If the user prefers not to see replies, we need to filter them out.
+  // Apply parametric filters from filters.json first (re-read automatically on change).
+  // Must run before the blanket reply filter so that hide_replies_from works
+  // even when showRepliesInHome is false.
+  final filters = loadFeedFilters();
+  processedPosts.removeWhere(filters.shouldHide);
+
+  // If the user prefers not to see replies, remove all remaining replies.
   final preferences = preferencesFromContext(context);
   if (!preferences.showRepliesInHome) {
     processedPosts.removeWhere((post) => post.inReplyToId != null);
   }
-
-  // Apply parametric filters from filters.json (re-read automatically on change).
-  final filters = loadFeedFilters();
-  processedPosts.removeWhere(filters.shouldHide);
 
   return threadedJsonResponse(body: processedPosts, headers: headers);
 }
