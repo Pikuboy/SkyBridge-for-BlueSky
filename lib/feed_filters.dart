@@ -9,13 +9,8 @@ import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 String get _filtersPath =>
     Platform.environment['SKYBRIDGE_FILTERS_PATH'] ?? 'filters.json';
 
-/// Cached filters to avoid re-reading the file on every request.
-/// The cache is invalidated when the file modification time changes.
-DateTime? _lastModified;
-FeedFilters? _cachedFilters;
-
 /// Loads and returns the current [FeedFilters] from [_filtersPath].
-/// The file is re-read automatically whenever it changes on disk.
+/// The file is re-read on every request so changes take effect immediately.
 /// If the file does not exist, returns empty (no-op) filters.
 FeedFilters loadFeedFilters() {
   final file = File(_filtersPath);
@@ -25,18 +20,10 @@ FeedFilters loadFeedFilters() {
     return const FeedFilters();
   }
 
-  final modified = file.lastModifiedSync();
-  if (_cachedFilters != null && _lastModified == modified) {
-    return _cachedFilters!;
-  }
-
   try {
     final content = file.readAsStringSync();
     final json = jsonDecode(content) as Map<String, dynamic>;
-    _cachedFilters = FeedFilters.fromJson(json);
-    _lastModified = modified;
-    print('[FeedFilters] Loaded filters from $_filtersPath');
-    return _cachedFilters!;
+    return FeedFilters.fromJson(json);
   } catch (e) {
     print('[FeedFilters] Error reading $_filtersPath: $e');
     return const FeedFilters();
@@ -86,10 +73,12 @@ class FeedFilters {
   final List<String> hideRepostsFrom;
 
   /// Returns true if this post should be removed from the feed.
-bool shouldHide(MastodonPost post) {
-  if (post.inReplyToId != null) {
-    print('[FeedFilters] Reply from: id=${post.account.id} acct=${post.account.acct} username=${post.account.username}');
-  }
+  bool shouldHide(MastodonPost post) {
+    // --- Keyword filter (applies to all posts) ---
+    if (hideKeywords.isNotEmpty) {
+      final contentLower = _stripHtml(post.content).toLowerCase();
+      if (hideKeywords.any((kw) => contentLower.contains(kw))) return true;
+    }
 
     // --- Reply filter ---
     if (post.inReplyToId != null && hideRepliesFrom.isNotEmpty) {
