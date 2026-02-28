@@ -86,12 +86,10 @@ class FeedFilters {
   final List<String> hideRepostsFrom;
 
   /// Returns true if this post should be removed from the feed.
-  bool shouldHide(MastodonPost post) {
-    // --- Keyword filter (applies to all posts) ---
-    if (hideKeywords.isNotEmpty) {
-      final contentLower = _stripHtml(post.content).toLowerCase();
-      if (hideKeywords.any((kw) => contentLower.contains(kw))) return true;
-    }
+bool shouldHide(MastodonPost post) {
+  if (post.inReplyToId != null) {
+    print('[FeedFilters] Reply from: id=${post.account.id} acct=${post.account.acct} username=${post.account.username}');
+  }
 
     // --- Reply filter ---
     if (post.inReplyToId != null && hideRepliesFrom.isNotEmpty) {
