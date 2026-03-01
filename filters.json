@@ -1,0 +1,17 @@
+{
+  "hide_replies_from": [
+    "bouletcorp.bsky.social",
+    "did:plc:r27hkquktzqguupumigfo672",
+    "ceciestmontweet.bsky.social",
+   "did:plc:2hzpwljvt6ufbrd7t6lqorft"
+  ],
+  "hide_keywords": [
+    "mot_a_filtrer",
+    "autre_mot"
+  ],
+  "hide_reposts_from": [
+    "comptespammeur.bsky.social"
+  ]
+}
+
+// https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=lehandle.bsky.social

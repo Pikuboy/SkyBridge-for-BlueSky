@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
+import 'package:sky_bridge/feed_filters.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_post.dart';
 import 'package:sky_bridge/models/params/timeline_params.dart';
 import 'package:sky_bridge/util.dart';
@@ -103,7 +104,13 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-  // If the user prefers not to see replies, we need to filter them out.
+  // Apply parametric filters from filters.json first (re-read automatically on change).
+  // Must run before the blanket reply filter so that hide_replies_from works
+  // even when showRepliesInHome is false.
+  final filters = loadFeedFilters();
+  processedPosts.removeWhere(filters.shouldHide);
+
+  // If the user prefers not to see replies, remove all remaining replies.
   final preferences = preferencesFromContext(context);
   if (!preferences.showRepliesInHome) {
     processedPosts.removeWhere((post) => post.inReplyToId != null);
