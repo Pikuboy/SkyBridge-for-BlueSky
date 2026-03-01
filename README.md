@@ -5,6 +5,11 @@ Video is now supported in Ivory, but only embedded in the post, full screen is n
 You can now use the search tab too. 
 Support for third party PDS (tested with eurosky.social)
 
+You can also filter replies, keywords and repost using the filters.json file.
+You just have to put it at the same location than the db (/app/database)
+You fill it like in the sample file. Link to get the DID is included in the filters.json file.
+After each edit, you need to restart the docker image, it only reads it at start.
+
 Support is still incomplete and I don't intend to do more. This repo will become private once Phoenix is released.
 
 I managed to make it run on my Synology NAS but it seems to work only with Ivory (tested with Mastodon official app and Icecube but doesn't work; maybe an issue with the way I installed it).
@@ -14,7 +19,7 @@ I think Fly.dev instruction are still working but didn't try.
 
 Docker image is available for arm64 and amd64:
 https://ghcr.io/pikuboy/skybridge-for-bluesky:latest
- 
+
 # ORIGINAL README FROM VIDEAH BELOW
 
 # SkyBridge
