@@ -1,7 +1,9 @@
 {
   "hide_replies_from": [
-    "somehandle.bsky.social",
-    "did:plc:remplacerParLeVraiDID"
+    "bouletcorp.bsky.social",
+    "did:plc:r27hkquktzqguupumigfo672",
+    "ceciestmontweet.bsky.social",
+   "did:plc:2hzpwljvt6ufbrd7t6lqorft"
   ],
   "hide_keywords": [
     "mot_a_filtrer",
@@ -11,3 +13,5 @@
     "comptespammeur.bsky.social"
   ]
 }
+
+// https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=lehandle.bsky.social

@@ -76,7 +76,7 @@ class MastodonAccount {
       group: false,
       createdAt: profile.indexedAt ?? DateTime.now().toUtc(),
       note: await processProfileDescription(profile.description ?? ''),
-      url: 'https://bsky.social/${profile.handle}',
+      url: 'https://bsky.app/profile/${profile.handle}',
       avatar: profile.avatar ?? avatarFallback,
       avatarStatic: profile.avatar ?? avatarFallback,
       header: userBanner ?? bannerFallback,
