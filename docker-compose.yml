@@ -6,6 +6,7 @@ services:
     restart: always
     volumes:
       - skybridge:/app/database
+      - skybridge/filters.json:/config/filters.json
     environment:
       # Base URL of where SkyBridge will be hosted without the protocol. Reverse proxy URL
       - SKYBRIDGE_BASEURL=
