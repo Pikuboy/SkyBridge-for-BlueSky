@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - master
+      - v1.4_fix_post_link
   workflow_dispatch:
   
 jobs:
@@ -31,10 +31,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/pikuboy/skybridge-for-bluesky:latest
+            ghcr.io/pikuboy/skybridge-for-bluesky:test
               ghcr.io/pikuboy/skybridge-for-bluesky:${{ github.run_number }}
 
           cache-from: type=gha   # cache entre les builds pour aller plus vite

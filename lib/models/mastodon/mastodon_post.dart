@@ -185,8 +185,13 @@ class MastodonPost {
     var card = await MastodonCard.fromEmbed(post.embed);
 
     // If there is a card but no link to it in the content, add it.
+    // We check both the raw text and the processed HTML content to avoid
+    // duplicating URLs that were already resolved by processFacets.
     if (card != null) {
-      if (!text.contains(card.url)) {
+      final cardUrlNormalized = card.url.toLowerCase();
+      final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
+      final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
+      if (!alreadyInText && !alreadyInContent) {
         content +=
         '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
 
@@ -338,8 +343,13 @@ class MastodonPost {
     var card = await MastodonCard.fromEmbed(post.embed);
 
     // If there is a card but no link to it in the content, add it.
+    // We check both the raw text and the processed HTML content to avoid
+    // duplicating URLs that were already resolved by processFacets.
     if (card != null) {
-      if (!text.contains(card.url)) {
+      final cardUrlNormalized = card.url.toLowerCase();
+      final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
+      final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
+      if (!alreadyInText && !alreadyInContent) {
         content +=
             '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
 
