@@ -38,6 +38,7 @@ RUN cp -r .dart_tool build/.dart_tool
 
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
+RUN find /root/.pub-cache -path "*/bluesky-1.4.1*" -name "*.freezed.dart" | wc -l
 RUN dart compile exe build/server/server.dart -o build/bin/server
 
 # Build minimal serving image from AOT-compiled `/server` and required system
