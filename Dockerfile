@@ -33,6 +33,9 @@ RUN mkdir -p build/lib/src/generated/prisma && \
     cp lib/src/generated/prisma/prisma.dart build/lib/src/generated/prisma/ && \
     cp lib/src/generated/prisma/model.dart build/lib/src/generated/prisma/
 
+# Copy .dart_tool so the AOT compiler can resolve package extensions in build/
+RUN cp -r .dart_tool build/.dart_tool
+
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
 RUN dart compile exe build/server/server.dart -o build/bin/server
