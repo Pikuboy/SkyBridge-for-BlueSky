@@ -193,7 +193,7 @@ class MastodonPost {
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         content +=
-        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
+        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
         if (mediaAttachments.isNotEmpty) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
@@ -351,7 +351,7 @@ class MastodonPost {
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         content +=
-            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
+            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
         if (mediaAttachments.isNotEmpty) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
