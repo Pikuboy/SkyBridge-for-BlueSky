@@ -208,9 +208,9 @@ class MastodonPost {
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         if (isRecordWithMedia) {
-          // Inject an invisible link so Ivory renders the quote card,
-          // without displaying a visible URL in the post content.
-          content += '<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank" style="display:none">${card.url}</a>';
+          // Use the author handle as link text instead of the raw URL
+          // to avoid displaying a long ugly URL in the post content.
+          content += '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">@${card.authorName}</a>';
         } else {
           content +=
           '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
@@ -391,7 +391,7 @@ class MastodonPost {
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         if (isRecordWithMedia) {
-          content += '<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank" style="display:none">${card.url}</a>';
+          content += '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">@${card.authorName}</a>';
         } else {
           content +=
               '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
