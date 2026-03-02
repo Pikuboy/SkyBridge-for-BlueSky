@@ -114,6 +114,16 @@ class MastodonPost {
 
     // Handle embedded content.
     final embed = post.embed;
+
+    // DEBUG: log raw embed JSON to help diagnose media+quote display issues.
+    if (embed != null) {
+      try {
+        final recordMap = post.record as Map<String, dynamic>;
+        print('[DEBUG fromFeedView] uri=${post.uri} embed_type=${embed.data.runtimeType} record=$recordMap');
+      } catch (e) {
+        print('[DEBUG fromFeedView] could not log embed: $e');
+      }
+    }
     if (embed != null) {
       if (embed.data is EmbedImagesView) {
         final embedded = embed.data as EmbedImagesView;
@@ -288,6 +298,16 @@ class MastodonPost {
 
     // Handle embedded content.
     final embed = post.embed;
+
+    // DEBUG: log raw embed JSON to help diagnose media+quote display issues.
+    if (embed != null) {
+      try {
+        final recordMap = post.record as Map<String, dynamic>;
+        print('[DEBUG fromBlueSkyPost] uri=${post.uri} embed_type=${embed.data.runtimeType} record=$recordMap');
+      } catch (e) {
+        print('[DEBUG fromBlueSkyPost] could not log embed: $e');
+      }
+    }
     if (embed != null) {
       if (embed.data is EmbedImagesView) {
         final embedded = embed.data as EmbedImagesView;
