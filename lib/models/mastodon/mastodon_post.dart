@@ -246,7 +246,7 @@ class MastodonPost {
         ? 'CW: $labels'
         : null;
 
-    return MastodonPost(
+    final postResult = MastodonPost(
       id: id.toString(),
       createdAt: post.indexedAt.toUtc(),
       sensitive: post.labels?.isNotEmpty ?? false,
@@ -280,6 +280,10 @@ class MastodonPost {
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: view.post.uri,
     );
+    if (isRecordWithMedia) {
+      print('[DEBUG post-json] id=$id card=${postResult.card?.toJson()} mediaCount=${postResult.mediaAttachments.length} content=${postResult.content}');
+    }
+    return postResult;
   }
 
   /// Converts a BlueSky post to a [MastodonPost].
