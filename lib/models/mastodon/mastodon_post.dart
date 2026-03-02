@@ -280,8 +280,8 @@ class MastodonPost {
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: view.post.uri,
     );
-    if (isRecordWithMedia) {
-      print('[DEBUG post-json] id=$id card=${postResult.card?.toJson()} mediaCount=${postResult.mediaAttachments.length} content=${postResult.content}');
+    if (isRecordWithMedia || (card != null && card.url.contains(baseUrl))) {
+      print('[DEBUG post-json] id=$id isRecordWithMedia=$isRecordWithMedia mediaCount=${postResult.mediaAttachments.length} card=${postResult.card?.toJson()} content=${postResult.content}');
     }
     return postResult;
   }
