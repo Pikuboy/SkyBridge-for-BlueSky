@@ -184,10 +184,16 @@ class MastodonPost {
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
+    // Determine early if this is a quote+media post, so we can avoid
+    // appending the card URL/description to the content (it would be
+    // shown twice: once in content, once in the card itself).
+    final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+
     // If there is a card but no link to it in the content, add it.
     // We check both the raw text and the processed HTML content to avoid
     // duplicating URLs that were already resolved by processFacets.
-    if (card != null) {
+    // Skip this for quote+media posts — the card already surfaces the info.
+    if (card != null && !isRecordWithMedia) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
@@ -208,7 +214,6 @@ class MastodonPost {
     // attached media), since the quoted post should always be shown.
     if (mediaAttachments.isNotEmpty) {
       final isQuoteCard = card != null && card.url.contains(baseUrl);
-      final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
       if (!isQuoteCard && !isRecordWithMedia) card = null;
     }
 
@@ -347,10 +352,16 @@ class MastodonPost {
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
+    // Determine early if this is a quote+media post, so we can avoid
+    // appending the card URL/description to the content (it would be
+    // shown twice: once in content, once in the card itself).
+    final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+
     // If there is a card but no link to it in the content, add it.
     // We check both the raw text and the processed HTML content to avoid
     // duplicating URLs that were already resolved by processFacets.
-    if (card != null) {
+    // Skip this for quote+media posts — the card already surfaces the info.
+    if (card != null && !isRecordWithMedia) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
@@ -371,7 +382,6 @@ class MastodonPost {
     // attached media), since the quoted post should always be shown.
     if (mediaAttachments.isNotEmpty) {
       final isQuoteCard = card != null && card.url.contains(baseUrl);
-      final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
       if (!isQuoteCard && !isRecordWithMedia) card = null;
     }
 
