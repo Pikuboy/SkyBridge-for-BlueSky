@@ -208,7 +208,7 @@ class MastodonPost {
       if (embed != null) {
         embed.whenOrNull(
           embedRecordView: (recordView) {
-            recordView.record.whenOrNull(
+            recordView.record.when(
               embedRecordViewRecord: (quotedPost) {
                 final quotedEmbeds = quotedPost.embeds;
                 if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
@@ -227,10 +227,35 @@ class MastodonPost {
                   }
                 }
               },
+              embedRecordViewNotFound: (_) {},
+              embedRecordViewBlocked: (_) {},
+              embedRecordViewDetached: (_) {},
+              generatorView: (_) {},
+              listView: (_) {},
+              labelerView: (_) {},
+              starterPackViewBasic: (_) {},
+              unknown: (_) {},
             );
           },
           embedRecordWithMediaView: (recordWithMedia) {
-            recordWithMedia.record.record.whenOrNull(
+            // Extract media from the media part
+            recordWithMedia.media.whenOrNull(
+              embedImagesView: (imagesView) {
+                for (final image in imagesView.images) {
+                  final attachment = MastodonMediaAttachment.fromEmbed(image);
+                  quotedMediaAttachments.add(attachment.toJson());
+                }
+              },
+              embedExternalView: (externalView) {
+                // Handle external link preview if needed
+              },
+              embedVideoView: (videoView) {
+                // Handle video if needed
+              },
+            );
+            
+            // Also check the record part for embeds
+            recordWithMedia.record.record.when(
               embedRecordViewRecord: (quotedPost) {
                 final quotedEmbeds = quotedPost.embeds;
                 if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
@@ -242,13 +267,18 @@ class MastodonPost {
                           quotedMediaAttachments.add(attachment.toJson());
                         }
                       },
-                      embedExternalView: (externalView) {
-                        // Handle external link preview if needed
-                      },
                     );
                   }
                 }
               },
+              embedRecordViewNotFound: (_) {},
+              embedRecordViewBlocked: (_) {},
+              embedRecordViewDetached: (_) {},
+              generatorView: (_) {},
+              listView: (_) {},
+              labelerView: (_) {},
+              starterPackViewBasic: (_) {},
+              unknown: (_) {},
             );
           },
         );
