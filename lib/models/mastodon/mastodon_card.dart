@@ -85,9 +85,10 @@ class MastodonCard {
     var clickableUrl = base;
 
     // Ivory expects an image to render a card so we pass a 1x1 transparent
-    // image to make it happy.
-    var quoteImage = 'https://$base/1px.png';
-    var useAttachedMedia = false;
+    // image to make it happy. We always use this transparent image for the
+    // card, regardless of whether the quoted post has media attachments,
+    // to avoid conflicts with the parent post's own media attachments.
+    final quoteImage = 'https://$base/1px.png';
 
     // Get any data we need from the post's record.
     record.record.when(
@@ -96,24 +97,6 @@ class MastodonCard {
         title = 'Quote Post - (@$handle) \n ${post.value['text']}';
         description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
-
-        // If the record has a media attachment, we can use that instead.
-        final embeds = post.embeds;
-        if (embeds != null) {
-          for (final embed in embeds) {
-            embed.when(
-              embedRecordView: (_) {},
-              embedImagesView: (images) {
-                quoteImage = images.images.first.fullsize;
-                useAttachedMedia = true;
-              },
-              embedExternalView: (_) {},
-              embedRecordWithMediaView: (_) {},
-              embedVideoView: (_) {},
-              unknown: (_) {},
-            );
-          }
-        }
       },
       embedRecordViewNotFound: (_) {},
       embedRecordViewBlocked: (_) {},
@@ -135,8 +118,8 @@ class MastodonCard {
       providerName: '',
       providerUrl: '',
       html: '',
-      width: useAttachedMedia ? 864 : 1000,
-      height: useAttachedMedia ? 432 : 1,
+      width: 1000,
+      height: 1,
       embedUrl: quoteImage,
       image: quoteImage,
     );
