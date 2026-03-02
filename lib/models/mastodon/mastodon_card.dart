@@ -114,7 +114,7 @@ class MastodonCard {
       unknown: (_) {},
     );
 
-    return MastodonCard(
+    final result = MastodonCard(
       url: clickableUrl,
       title: title,
       description: description,
@@ -129,6 +129,8 @@ class MastodonCard {
       embedUrl: quoteImage,
       image: quoteImage,
     );
+    print('[DEBUG card-built] url=${result.url} image=${result.image} width=${result.width} height=${result.height}');
+    return result;
   }
 
   /// Location of linked resource.
