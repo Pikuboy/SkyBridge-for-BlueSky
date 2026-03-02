@@ -7,27 +7,26 @@ part of 'mastodon_notification.dart';
 // **************************************************************************
 
 MastodonNotification _$MastodonNotificationFromJson(
-        Map<String, dynamic> json) =>
-    MastodonNotification(
-      id: json['id'] as String,
-      type: $enumDecode(_$NotificationTypeEnumMap, json['type']),
-      createdAt: dateTimeFromISO8601(json['created_at'] as String),
-      account:
-          MastodonAccount.fromJson(json['account'] as Map<String, dynamic>),
-      status: json['status'] == null
-          ? null
-          : MastodonPost.fromJson(json['status'] as Map<String, dynamic>),
-    );
+  Map<String, dynamic> json,
+) => MastodonNotification(
+  id: json['id'] as String,
+  type: $enumDecode(_$NotificationTypeEnumMap, json['type']),
+  createdAt: dateTimeFromISO8601(json['created_at'] as String),
+  account: MastodonAccount.fromJson(json['account'] as Map<String, dynamic>),
+  status: json['status'] == null
+      ? null
+      : MastodonPost.fromJson(json['status'] as Map<String, dynamic>),
+);
 
 Map<String, dynamic> _$MastodonNotificationToJson(
-        MastodonNotification instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'type': _$NotificationTypeEnumMap[instance.type]!,
-      'created_at': dateTimeToISO8601(instance.createdAt),
-      'account': instance.account,
-      'status': instance.status,
-    };
+  MastodonNotification instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'type': _$NotificationTypeEnumMap[instance.type]!,
+  'created_at': dateTimeToISO8601(instance.createdAt),
+  'account': instance.account,
+  'status': instance.status,
+};
 
 const _$NotificationTypeEnumMap = {
   NotificationType.mention: 'mention',

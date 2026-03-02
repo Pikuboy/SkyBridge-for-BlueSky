@@ -197,11 +197,10 @@ class MastodonPost {
 
     // Determine early if this is a quote+media post.
     final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
-    final isQuoteEmbed = embed?.data is EmbedRecordView || isRecordWithMedia;
 
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
-    if (card != null && isQuoteEmbed && card.url.contains(baseUrl)) {
+    if (card != null && card.url.contains(baseUrl)) {
       // Build a minimal quoted_status for the quote field.
       quote = {
         'state': 'accepted',
@@ -416,11 +415,10 @@ class MastodonPost {
     // appending the card URL/description to the content (it would be
     // shown twice: once in content, once in the card itself).
     final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
-    final isQuoteEmbed2 = embed?.data is EmbedRecordView || isRecordWithMedia;
 
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
-    if (card != null && isQuoteEmbed2 && card.url.contains(baseUrl)) {
+    if (card != null && card.url.contains(baseUrl)) {
       quote = {
         'state': 'accepted',
         'quoted_status': {

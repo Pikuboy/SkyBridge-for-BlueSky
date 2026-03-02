@@ -7,11 +7,10 @@ part of 'mastodon_list.dart';
 // **************************************************************************
 
 MastodonList _$MastodonListFromJson(Map<String, dynamic> json) => MastodonList(
-      title: json['title'] as String,
-      repliesPolicy:
-          $enumDecode(_$RepliesPolicyEnumMap, json['replies_policy']),
-      id: json['id'] as String?,
-    );
+  title: json['title'] as String,
+  repliesPolicy: $enumDecode(_$RepliesPolicyEnumMap, json['replies_policy']),
+  id: json['id'] as String?,
+);
 
 Map<String, dynamic> _$MastodonListToJson(MastodonList instance) =>
     <String, dynamic>{

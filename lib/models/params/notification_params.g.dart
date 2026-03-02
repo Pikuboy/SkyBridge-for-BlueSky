@@ -12,8 +12,9 @@ NotificationParams _$NotificationParamsFromJson(Map<String, dynamic> json) =>
       sinceId: json['since_id'] as String?,
       minId: json['min_id'] as String?,
       limit: json['limit'] == null ? 15 : int.parse(json['limit'] as String),
-      types:
-          (json['types'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      types: (json['types'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       excludeTypes: (json['exclude_types'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
