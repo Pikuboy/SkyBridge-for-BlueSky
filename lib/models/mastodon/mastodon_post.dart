@@ -206,11 +206,11 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      if (!alreadyInText && !alreadyInContent) {
+      if (!alreadyInText && !alreadyInContent && !isRecordWithMedia) {
         content +=
         '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty && !isRecordWithMedia) {
+        if (mediaAttachments.isNotEmpty) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
         }
       }
@@ -383,11 +383,11 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      if (!alreadyInText && !alreadyInContent) {
+      if (!alreadyInText && !alreadyInContent && !isRecordWithMedia) {
         content +=
             '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty && !isRecordWithMedia) {
+        if (mediaAttachments.isNotEmpty) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
         }
       }
