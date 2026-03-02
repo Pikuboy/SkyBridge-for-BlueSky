@@ -24,6 +24,7 @@ RUN npx prisma@5 generate
 
 # Generate a production build.
 RUN dart pub global activate dart_frog_cli
+RUN dart run build_runner build --delete-conflicting-outputs
 RUN dart pub global run dart_frog_cli:dart_frog build
 
 # Restore generated Prisma files into build/ after dart_frog bundling

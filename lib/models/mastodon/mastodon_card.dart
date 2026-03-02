@@ -90,10 +90,10 @@ class MastodonCard {
     var clickableUrl = base;
 
     // Ivory expects an image to render a card so we pass a 1x1 transparent
-    // image to make it happy. We always use this transparent image for the
-    // card, regardless of whether the quoted post has media attachments,
-    // to avoid conflicts with the parent post's own media attachments.
-    final quoteImage = 'https://$base/1px.png';
+    // image as fallback. If the quoted post has media, we use its thumbnail.
+    var quoteImage = 'https://$base/1px.png';
+    var imageWidth = 1000;
+    var imageHeight = 1;
 
     // Get any data we need from the post's record.
     record.record.when(
@@ -103,6 +103,64 @@ class MastodonCard {
         description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
         print('[DEBUG embedViewRecordToCard] handle=$handle clickableUrl=$clickableUrl');
+
+        // Extract thumbnail from the quoted post's embeds if available.
+        final embeds = post.embeds;
+        if (embeds != null && embeds.isNotEmpty) {
+          final firstEmbed = embeds.first;
+          firstEmbed.when(
+            embedImagesView: (imagesView) {
+              if (imagesView.images.isNotEmpty) {
+                quoteImage = imagesView.images.first.thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            embedExternalView: (externalView) {
+              final thumb = externalView.external.thumb;
+              if (thumb != null) {
+                quoteImage = thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            embedRecordView: (_) {},
+            embedRecordWithMediaView: (rwm) {
+              final media = rwm.media;
+              if (media.isEmbedImagesView) {
+                final images = media.embedImagesView?.images;
+                if (images != null && images.isNotEmpty) {
+                  quoteImage = images.first.thumb;
+                  imageWidth = 864;
+                  imageHeight = 432;
+                }
+              } else if (media.isEmbedExternalView) {
+                final thumb = media.embedExternalView?.external.thumb;
+                if (thumb != null) {
+                  quoteImage = thumb;
+                  imageWidth = 864;
+                  imageHeight = 432;
+                }
+              } else if (media.isEmbedVideoView) {
+                final thumb = media.embedVideoView?.thumbnail;
+                if (thumb != null) {
+                  quoteImage = thumb;
+                  imageWidth = 864;
+                  imageHeight = 432;
+                }
+              }
+            },
+            embedVideoView: (videoView) {
+              final thumb = videoView.thumbnail;
+              if (thumb != null) {
+                quoteImage = thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            unknown: (_) {},
+          );
+        }
       },
       embedRecordViewNotFound: (_) {},
       embedRecordViewBlocked: (_) {},
@@ -124,8 +182,8 @@ class MastodonCard {
       providerName: '',
       providerUrl: '',
       html: '',
-      width: 1000,
-      height: 1,
+      width: imageWidth,
+      height: imageHeight,
       embedUrl: quoteImage,
       image: quoteImage,
     );

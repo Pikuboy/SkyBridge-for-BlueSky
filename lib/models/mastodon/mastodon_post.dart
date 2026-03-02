@@ -201,6 +201,59 @@ class MastodonPost {
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
     if (card != null && card.url.contains(baseUrl)) {
+      // Extract media from the quoted post's embed if available
+      final quotedMediaAttachments = <Map<String, dynamic>>[];
+      
+      // Get the quoted post's embed from the record
+      if (embed != null) {
+        embed.whenOrNull(
+          embedRecordView: (recordView) {
+            recordView.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                final quotedEmbeds = quotedPost.embeds;
+                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                  for (final quotedEmbed in quotedEmbeds) {
+                    quotedEmbed.whenOrNull(
+                      embedImagesView: (imagesView) {
+                        for (final image in imagesView.images) {
+                          final attachment = MastodonMediaAttachment.fromEmbed(image);
+                          quotedMediaAttachments.add(attachment.toJson());
+                        }
+                      },
+                      embedExternalView: (externalView) {
+                        // Handle external link preview if needed
+                      },
+                    );
+                  }
+                }
+              },
+            );
+          },
+          embedRecordWithMediaView: (recordWithMedia) {
+            recordWithMedia.record.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                final quotedEmbeds = quotedPost.embeds;
+                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                  for (final quotedEmbed in quotedEmbeds) {
+                    quotedEmbed.whenOrNull(
+                      embedImagesView: (imagesView) {
+                        for (final image in imagesView.images) {
+                          final attachment = MastodonMediaAttachment.fromEmbed(image);
+                          quotedMediaAttachments.add(attachment.toJson());
+                        }
+                      },
+                      embedExternalView: (externalView) {
+                        // Handle external link preview if needed
+                      },
+                    );
+                  }
+                }
+              },
+            );
+          },
+        );
+      }
+      
       // Build a minimal quoted_status for the quote field.
       quote = {
         'state': 'accepted',
@@ -237,7 +290,7 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
-          'media_attachments': [],
+          'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
           'emojis': [],
