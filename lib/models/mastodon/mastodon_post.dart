@@ -204,9 +204,12 @@ class MastodonPost {
     // Keep the card if it's a quote post (URL points to our instance),
     // even when there are media attachments, so Ivory can display it.
     // For external link cards, drop them when media is present.
+    // Also keep the card when the embed is a record+media (quote post with
+    // attached media), since the quoted post should always be shown.
     if (mediaAttachments.isNotEmpty) {
       final isQuoteCard = card != null && card.url.contains(baseUrl);
-      if (!isQuoteCard) card = null;
+      final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+      if (!isQuoteCard && !isRecordWithMedia) card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
@@ -364,9 +367,12 @@ class MastodonPost {
     // Keep the card if it's a quote post (URL points to our instance),
     // even when there are media attachments, so Ivory can display it.
     // For external link cards, drop them when media is present.
+    // Also keep the card when the embed is a record+media (quote post with
+    // attached media), since the quoted post should always be shown.
     if (mediaAttachments.isNotEmpty) {
       final isQuoteCard = card != null && card.url.contains(baseUrl);
-      if (!isQuoteCard) card = null;
+      final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+      if (!isQuoteCard && !isRecordWithMedia) card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
