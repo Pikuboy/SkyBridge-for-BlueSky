@@ -60,6 +60,7 @@ class MastodonPost {
     this.reblog,
     this.card,
     this.poll,
+    this.quote,
     this.text,
     this.editedAt,
     this.pinned,
@@ -194,33 +195,75 @@ class MastodonPost {
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
-    // Determine early if this is a quote+media post, so we can avoid
-    // appending the card URL/description to the content (it would be
-    // shown twice: once in content, once in the card itself).
+    // Determine early if this is a quote+media post.
     final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+    final isQuoteEmbed = embed?.data is EmbedRecordView || isRecordWithMedia;
 
-    // If there is a card but no link to it in the content, add it.
-    // We check both the raw text and the processed HTML content to avoid
-    // duplicating URLs that were already resolved by processFacets.
+    // Build a native Mastodon quote object if this is a quote post.
+    Map<String, dynamic>? quote;
+    if (card != null && isQuoteEmbed && card.url.contains(baseUrl)) {
+      // Build a minimal quoted_status for the quote field.
+      quote = {
+        'state': 'accepted',
+        'quoted_status': {
+          'id': card.url.split('/').last,
+          'created_at': post.indexedAt.toUtc().toIso8601String(),
+          'sensitive': false,
+          'spoiler_text': '',
+          'visibility': 'public',
+          'uri': card.url,
+          'url': card.url,
+          'replies_count': 0,
+          'reblogs_count': 0,
+          'favourites_count': 0,
+          'content': '<p>${card.description}</p>',
+          'reblog': null,
+          'account': {
+            'id': card.url.split('/').last,
+            'username': card.authorName,
+            'acct': card.authorName,
+            'display_name': card.authorName,
+            'locked': false,
+            'bot': false,
+            'created_at': '2020-01-01T00:00:00.000Z',
+            'note': '',
+            'url': 'https://$baseUrl/@${card.authorName}',
+            'avatar': 'https://$baseUrl/1px.png',
+            'avatar_static': 'https://$baseUrl/1px.png',
+            'header': 'https://$baseUrl/1px.png',
+            'header_static': 'https://$baseUrl/1px.png',
+            'followers_count': 0,
+            'following_count': 0,
+            'statuses_count': 0,
+            'emojis': [],
+            'fields': [],
+          },
+          'media_attachments': [],
+          'mentions': [],
+          'tags': [],
+          'emojis': [],
+          'card': null,
+          'poll': null,
+        },
+      };
+      // Don't use card hack for quote posts — use native quote field instead.
+      card = null;
+    }
+
+    // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      print('[DEBUG card] isRecordWithMedia=$isRecordWithMedia alreadyInText=$alreadyInText alreadyInContent=$alreadyInContent cardUrl=${card.url}');
       if (!alreadyInText && !alreadyInContent) {
         content +=
         '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
-    // Keep the card if it's a quote post (URL points to our instance),
-    // even when there are media attachments, so Ivory can display it.
-    // For external link cards, drop them when media is present.
-    // Also keep the card when the embed is a record+media (quote post with
-    // attached media), since the quoted post should always be shown.
-    if (mediaAttachments.isNotEmpty) {
-      final isQuoteCard = card != null && card.url.contains(baseUrl);
-      if (!isQuoteCard && !isRecordWithMedia) card = null;
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
+      card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
@@ -246,7 +289,7 @@ class MastodonPost {
         ? 'CW: $labels'
         : null;
 
-    final postResult = MastodonPost(
+    return MastodonPost(
       id: id.toString(),
       createdAt: post.indexedAt.toUtc(),
       sensitive: post.labels?.isNotEmpty ?? false,
@@ -277,13 +320,10 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
+      quote: quote,
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: view.post.uri,
     );
-    if (isRecordWithMedia || (card != null && card.url.contains(baseUrl))) {
-      print('[DEBUG post-json] id=$id isRecordWithMedia=$isRecordWithMedia mediaCount=${postResult.mediaAttachments.length} card=${postResult.card?.toJson()} content=${postResult.content}');
-    }
-    return postResult;
   }
 
   /// Converts a BlueSky post to a [MastodonPost].
@@ -376,29 +416,71 @@ class MastodonPost {
     // appending the card URL/description to the content (it would be
     // shown twice: once in content, once in the card itself).
     final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+    final isQuoteEmbed2 = embed?.data is EmbedRecordView || isRecordWithMedia;
 
-    // If there is a card but no link to it in the content, add it.
-    // We check both the raw text and the processed HTML content to avoid
-    // duplicating URLs that were already resolved by processFacets.
+    // Build a native Mastodon quote object if this is a quote post.
+    Map<String, dynamic>? quote;
+    if (card != null && isQuoteEmbed2 && card.url.contains(baseUrl)) {
+      quote = {
+        'state': 'accepted',
+        'quoted_status': {
+          'id': card.url.split('/').last,
+          'created_at': post.indexedAt.toUtc().toIso8601String(),
+          'sensitive': false,
+          'spoiler_text': '',
+          'visibility': 'public',
+          'uri': card.url,
+          'url': card.url,
+          'replies_count': 0,
+          'reblogs_count': 0,
+          'favourites_count': 0,
+          'content': '<p>${card.description}</p>',
+          'reblog': null,
+          'account': {
+            'id': card.url.split('/').last,
+            'username': card.authorName,
+            'acct': card.authorName,
+            'display_name': card.authorName,
+            'locked': false,
+            'bot': false,
+            'created_at': '2020-01-01T00:00:00.000Z',
+            'note': '',
+            'url': 'https://$baseUrl/@${card.authorName}',
+            'avatar': 'https://$baseUrl/1px.png',
+            'avatar_static': 'https://$baseUrl/1px.png',
+            'header': 'https://$baseUrl/1px.png',
+            'header_static': 'https://$baseUrl/1px.png',
+            'followers_count': 0,
+            'following_count': 0,
+            'statuses_count': 0,
+            'emojis': [],
+            'fields': [],
+          },
+          'media_attachments': [],
+          'mentions': [],
+          'tags': [],
+          'emojis': [],
+          'card': null,
+          'poll': null,
+        },
+      };
+      card = null;
+    }
+
+    // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      print('[DEBUG card2] isRecordWithMedia=$isRecordWithMedia alreadyInText=$alreadyInText alreadyInContent=$alreadyInContent cardUrl=${card.url}');
       if (!alreadyInText && !alreadyInContent) {
         content +=
             '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
-    // Keep the card if it's a quote post (URL points to our instance),
-    // even when there are media attachments, so Ivory can display it.
-    // For external link cards, drop them when media is present.
-    // Also keep the card when the embed is a record+media (quote post with
-    // attached media), since the quoted post should always be shown.
-    if (mediaAttachments.isNotEmpty) {
-      final isQuoteCard = card != null && card.url.contains(baseUrl);
-      if (!isQuoteCard && !isRecordWithMedia) card = null;
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
+      card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
@@ -454,6 +536,7 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
+      quote: quote,
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: post.uri,
     );
@@ -581,6 +664,9 @@ class MastodonPost {
 
   /// Preview card for links included in the post content.
   final MastodonCard? card;
+
+  /// Quote post attached to this post (Mastodon 4.4+).
+  final Map<String, dynamic>? quote;
 
   /// Primary language of this post.
   final String? language;
