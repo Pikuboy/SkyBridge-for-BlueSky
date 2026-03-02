@@ -76,8 +76,13 @@ class MastodonCard {
     );
 
     // Get the database record for the post.
+    print('[DEBUG embedViewRecordToCard] record.record type=${record.record.runtimeType}');
     final dbRecord = await embedPostToDatabase(record.record);
-    if (dbRecord == null) return null;
+    if (dbRecord == null) {
+      print('[DEBUG embedViewRecordToCard] dbRecord is null — embedPostToDatabase returned null');
+      return null;
+    }
+    print('[DEBUG embedViewRecordToCard] dbRecord.id=${dbRecord.id}');
 
     var title = 'Quote Post';
     var handle = '@unknown.bsky.social';
@@ -97,6 +102,7 @@ class MastodonCard {
         title = 'Quote Post - (@$handle) \n ${post.value['text']}';
         description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
+        print('[DEBUG embedViewRecordToCard] handle=$handle clickableUrl=$clickableUrl');
       },
       embedRecordViewNotFound: (_) {},
       embedRecordViewBlocked: (_) {},
