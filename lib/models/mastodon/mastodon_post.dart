@@ -206,19 +206,10 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
+      print('[DEBUG card] isRecordWithMedia=$isRecordWithMedia alreadyInText=$alreadyInText alreadyInContent=$alreadyInContent cardUrl=${card.url}');
       if (!alreadyInText && !alreadyInContent) {
-        if (isRecordWithMedia) {
-          // Use the author handle as link text instead of the raw URL
-          // to avoid displaying a long ugly URL in the post content.
-          content += '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">@${card.authorName}</a>';
-        } else {
-          content +=
-          '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
-
-          if (mediaAttachments.isNotEmpty) {
-            content += '<p>"${card.description}" — @${card.authorName}</p>';
-          }
-        }
+        content +=
+        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
@@ -389,17 +380,10 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
+      print('[DEBUG card2] isRecordWithMedia=$isRecordWithMedia alreadyInText=$alreadyInText alreadyInContent=$alreadyInContent cardUrl=${card.url}');
       if (!alreadyInText && !alreadyInContent) {
-        if (isRecordWithMedia) {
-          content += '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">@${card.authorName}</a>';
-        } else {
-          content +=
-              '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
-
-          if (mediaAttachments.isNotEmpty) {
-            content += '<p>"${card.description}" — @${card.authorName}</p>';
-          }
-        }
+        content +=
+            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
