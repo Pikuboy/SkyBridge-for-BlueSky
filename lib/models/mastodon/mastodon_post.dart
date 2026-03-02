@@ -208,37 +208,26 @@ class MastodonPost {
       if (embed != null) {
         embed.whenOrNull(
           embedRecordView: (recordView) {
-            recordView.record.when(
-              embedRecordViewRecord: (quotedPost) {
-                final quotedEmbeds = quotedPost.embeds;
-                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                  for (final quotedEmbed in quotedEmbeds) {
-                    quotedEmbed.whenOrNull(
-                      embedImagesView: (imagesView) {
-                        for (final image in imagesView.images) {
-                          final attachment = MastodonMediaAttachment.fromEmbed(image);
-                          quotedMediaAttachments.add(attachment.toJson());
-                        }
-                      },
-                      embedExternalView: (externalView) {
-                        // Handle external link preview if needed
-                      },
-                    );
-                  }
+            // Use the getter to access embedRecordViewRecord if it exists
+            final quotedPost = recordView.record.embedRecordViewRecord;
+            if (quotedPost != null) {
+              final quotedEmbeds = quotedPost.embeds;
+              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                for (final quotedEmbed in quotedEmbeds) {
+                  quotedEmbed.whenOrNull(
+                    embedImagesView: (imagesView) {
+                      for (final image in imagesView.images) {
+                        final attachment = MastodonMediaAttachment.fromEmbed(image);
+                        quotedMediaAttachments.add(attachment.toJson());
+                      }
+                    },
+                  );
                 }
-              },
-              embedRecordViewNotFound: (_) {},
-              embedRecordViewBlocked: (_) {},
-              embedRecordViewDetached: (_) {},
-              generatorView: (_) {},
-              listView: (_) {},
-              labelerView: (_) {},
-              starterPackViewBasic: (_) {},
-              unknown: (_) {},
-            );
+              }
+            }
           },
           embedRecordWithMediaView: (recordWithMedia) {
-            // Extract media from the media part
+            // Extract media from the media part using whenOrNull
             recordWithMedia.media.whenOrNull(
               embedImagesView: (imagesView) {
                 for (final image in imagesView.images) {
@@ -246,40 +235,25 @@ class MastodonPost {
                   quotedMediaAttachments.add(attachment.toJson());
                 }
               },
-              embedExternalView: (externalView) {
-                // Handle external link preview if needed
-              },
-              embedVideoView: (videoView) {
-                // Handle video if needed
-              },
             );
             
-            // Also check the record part for embeds
-            recordWithMedia.record.record.when(
-              embedRecordViewRecord: (quotedPost) {
-                final quotedEmbeds = quotedPost.embeds;
-                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                  for (final quotedEmbed in quotedEmbeds) {
-                    quotedEmbed.whenOrNull(
-                      embedImagesView: (imagesView) {
-                        for (final image in imagesView.images) {
-                          final attachment = MastodonMediaAttachment.fromEmbed(image);
-                          quotedMediaAttachments.add(attachment.toJson());
-                        }
-                      },
-                    );
-                  }
+            // Also check the record part for embeds using the getter
+            final quotedPost = recordWithMedia.record.record.embedRecordViewRecord;
+            if (quotedPost != null) {
+              final quotedEmbeds = quotedPost.embeds;
+              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                for (final quotedEmbed in quotedEmbeds) {
+                  quotedEmbed.whenOrNull(
+                    embedImagesView: (imagesView) {
+                      for (final image in imagesView.images) {
+                        final attachment = MastodonMediaAttachment.fromEmbed(image);
+                        quotedMediaAttachments.add(attachment.toJson());
+                      }
+                    },
+                  );
                 }
-              },
-              embedRecordViewNotFound: (_) {},
-              embedRecordViewBlocked: (_) {},
-              embedRecordViewDetached: (_) {},
-              generatorView: (_) {},
-              listView: (_) {},
-              labelerView: (_) {},
-              starterPackViewBasic: (_) {},
-              unknown: (_) {},
-            );
+              }
+            }
           },
         );
       }
