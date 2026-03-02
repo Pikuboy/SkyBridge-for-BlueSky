@@ -206,12 +206,18 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      if (!alreadyInText && !alreadyInContent && !isRecordWithMedia) {
-        content +=
-        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
+      if (!alreadyInText && !alreadyInContent) {
+        if (isRecordWithMedia) {
+          // Inject an invisible link so Ivory renders the quote card,
+          // without displaying a visible URL in the post content.
+          content += '<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank" style="display:none">${card.url}</a>';
+        } else {
+          content +=
+          '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty) {
-          content += '<p>"${card.description}" — @${card.authorName}</p>';
+          if (mediaAttachments.isNotEmpty) {
+            content += '<p>"${card.description}" — @${card.authorName}</p>';
+          }
         }
       }
     }
@@ -383,12 +389,16 @@ class MastodonPost {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
-      if (!alreadyInText && !alreadyInContent && !isRecordWithMedia) {
-        content +=
-            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
+      if (!alreadyInText && !alreadyInContent) {
+        if (isRecordWithMedia) {
+          content += '<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank" style="display:none">${card.url}</a>';
+        } else {
+          content +=
+              '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty) {
-          content += '<p>"${card.description}" — @${card.authorName}</p>';
+          if (mediaAttachments.isNotEmpty) {
+            content += '<p>"${card.description}" — @${card.authorName}</p>';
+          }
         }
       }
     }
