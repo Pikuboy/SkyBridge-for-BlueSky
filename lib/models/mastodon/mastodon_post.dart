@@ -202,8 +202,7 @@ class MastodonPost {
     // If there is a card but no link to it in the content, add it.
     // We check both the raw text and the processed HTML content to avoid
     // duplicating URLs that were already resolved by processFacets.
-    // Skip this for quote+media posts — the card already surfaces the info.
-    if (card != null && !isRecordWithMedia) {
+    if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
@@ -211,7 +210,7 @@ class MastodonPost {
         content +=
         '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty) {
+        if (mediaAttachments.isNotEmpty && !isRecordWithMedia) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
         }
       }
@@ -380,8 +379,7 @@ class MastodonPost {
     // If there is a card but no link to it in the content, add it.
     // We check both the raw text and the processed HTML content to avoid
     // duplicating URLs that were already resolved by processFacets.
-    // Skip this for quote+media posts — the card already surfaces the info.
-    if (card != null && !isRecordWithMedia) {
+    if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
@@ -389,7 +387,7 @@ class MastodonPost {
         content +=
             '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
 
-        if (mediaAttachments.isNotEmpty) {
+        if (mediaAttachments.isNotEmpty && !isRecordWithMedia) {
           content += '<p>"${card.description}" — @${card.authorName}</p>';
         }
       }
