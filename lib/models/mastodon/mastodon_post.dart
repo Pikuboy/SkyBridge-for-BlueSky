@@ -201,10 +201,12 @@ class MastodonPost {
       }
     }
 
-    // If there's an image attached to the post we drop the card and instead
-    // include a link to the card url in the post content.
+    // Keep the card if it's a quote post (URL points to our instance),
+    // even when there are media attachments, so Ivory can display it.
+    // For external link cards, drop them when media is present.
     if (mediaAttachments.isNotEmpty) {
-      card = null;
+      final isQuoteCard = card != null && card.url.contains(baseUrl);
+      if (!isQuoteCard) card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
@@ -359,10 +361,12 @@ class MastodonPost {
       }
     }
 
-    // If there's an image attached to the post we drop the card and instead
-    // include a link to the card url in the post content.
+    // Keep the card if it's a quote post (URL points to our instance),
+    // even when there are media attachments, so Ivory can display it.
+    // For external link cards, drop them when media is present.
     if (mediaAttachments.isNotEmpty) {
-      card = null;
+      final isQuoteCard = card != null && card.url.contains(baseUrl);
+      if (!isQuoteCard) card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
