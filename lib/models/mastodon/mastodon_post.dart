@@ -208,23 +208,23 @@ class MastodonPost {
       if (embed != null) {
         embed.whenOrNull(
           embedRecordView: (recordView) {
-            // Use the getter to access embedRecordViewRecord if it exists
-            final quotedPost = recordView.record.embedRecordViewRecord;
-            if (quotedPost != null) {
-              final quotedEmbeds = quotedPost.embeds;
-              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                for (final quotedEmbed in quotedEmbeds) {
-                  quotedEmbed.whenOrNull(
-                    embedImagesView: (imagesView) {
-                      for (final image in imagesView.images) {
-                        final attachment = MastodonMediaAttachment.fromEmbed(image);
-                        quotedMediaAttachments.add(attachment.toJson());
-                      }
-                    },
-                  );
+            recordView.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                final quotedEmbeds = quotedPost.embeds;
+                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                  for (final quotedEmbed in quotedEmbeds) {
+                    quotedEmbed.whenOrNull(
+                      embedImagesView: (imagesView) {
+                        for (final image in imagesView.images) {
+                          final attachment = MastodonMediaAttachment.fromEmbed(image);
+                          quotedMediaAttachments.add(attachment.toJson());
+                        }
+                      },
+                    );
+                  }
                 }
-              }
-            }
+              },
+            );
           },
           embedRecordWithMediaView: (recordWithMedia) {
             // Extract media from the media part using whenOrNull
@@ -237,23 +237,24 @@ class MastodonPost {
               },
             );
             
-            // Also check the record part for embeds using the getter
-            final quotedPost = recordWithMedia.record.record.embedRecordViewRecord;
-            if (quotedPost != null) {
-              final quotedEmbeds = quotedPost.embeds;
-              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                for (final quotedEmbed in quotedEmbeds) {
-                  quotedEmbed.whenOrNull(
-                    embedImagesView: (imagesView) {
-                      for (final image in imagesView.images) {
-                        final attachment = MastodonMediaAttachment.fromEmbed(image);
-                        quotedMediaAttachments.add(attachment.toJson());
-                      }
-                    },
-                  );
+            // Also check the record part for embeds using whenOrNull
+            recordWithMedia.record.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                final quotedEmbeds = quotedPost.embeds;
+                if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                  for (final quotedEmbed in quotedEmbeds) {
+                    quotedEmbed.whenOrNull(
+                      embedImagesView: (imagesView) {
+                        for (final image in imagesView.images) {
+                          final attachment = MastodonMediaAttachment.fromEmbed(image);
+                          quotedMediaAttachments.add(attachment.toJson());
+                        }
+                      },
+                    );
+                  }
                 }
-              }
-            }
+              },
+            );
           },
         );
       }
