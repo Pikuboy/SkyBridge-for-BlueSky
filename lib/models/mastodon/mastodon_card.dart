@@ -58,7 +58,7 @@ class MastodonCard {
         );
       },
       embedImagesView: (_) => null,
-      embedRecordWithMediaView: (record) => embedViewRecordToCard(record.record, hasMedia: true),
+      embedRecordWithMediaView: (record) => embedViewRecordToCard(record.record),
       embedVideoView: (_) => null,
       unknown: (_) => null,
     );
@@ -67,9 +67,8 @@ class MastodonCard {
   /// Constructs a potential [MastodonCard] from a [EmbedRecordView].
   /// This is used to construct 'fake' quote posts by abusing embed cards.
   static Future<MastodonCard?> embedViewRecordToCard(
-    EmbedRecordView record, {
-    bool hasMedia = false,
-  }) async {
+    EmbedRecordView record,
+  ) async {
     // Get the fallback URL for the avatar.
     final base = env.getOrElse(
       'SKYBRIDGE_BASEURL',
@@ -90,7 +89,11 @@ class MastodonCard {
     var description = '';
     var clickableUrl = base;
 
-    final quoteImage = hasMedia ? null : 'https://$base/1px.png';
+    // Ivory expects an image to render a card so we pass a 1x1 transparent
+    // image to make it happy. We always use this transparent image for the
+    // card, regardless of whether the quoted post has media attachments,
+    // to avoid conflicts with the parent post's own media attachments.
+    final quoteImage = 'https://$base/1px.png';
 
     // Get any data we need from the post's record.
     record.record.when(
@@ -121,9 +124,9 @@ class MastodonCard {
       providerName: '',
       providerUrl: '',
       html: '',
-      width: hasMedia ? 0 : 1000,
-      height: hasMedia ? 0 : 1,
-      embedUrl: quoteImage ?? '',
+      width: 1000,
+      height: 1,
+      embedUrl: quoteImage,
       image: quoteImage,
     );
   }
