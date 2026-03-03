@@ -206,30 +206,34 @@ class MastodonPost {
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
       void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        print("[DEBUG extractQuotedImages] embeds count=${embeds?.length}");
+        print('[DEBUG extractQuotedImages] embeds count=\${embeds?.length}');
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
-          print("[DEBUG extractQuotedImages] embed type=${quotedEmbed.runtimeType}");
-          quotedEmbed.whenOrNull(
-            embedImagesView: (imagesView) {
-              for (final image in imagesView.images) {
+          print('[DEBUG extractQuotedImages] embed type=\${quotedEmbed.runtimeType}');
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              print('[DEBUG extractQuotedImages] images=\${data.images.length}');
+              for (final image in data.images) {
                 quotedMediaAttachments.add(
                   MastodonMediaAttachment.fromEmbed(image).toJson(),
                 );
               }
-            },
-            embedRecordWithMediaView: (rwm) {
-              rwm.media.whenOrNull(
-                embedImagesView: (imagesView) {
-                  for (final image in imagesView.images) {
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              print('[DEBUG extractQuotedImages] recordWithMedia');
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  print('[DEBUG extractQuotedImages] rwm images=\${data.images.length}');
+                  for (final image in data.images) {
                     quotedMediaAttachments.add(
                       MastodonMediaAttachment.fromEmbed(image).toJson(),
                     );
                   }
-                },
-              );
-            },
-          );
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
         }
       }
 
@@ -475,30 +479,34 @@ class MastodonPost {
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
       void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        print("[DEBUG extractQuotedImages] embeds count=${embeds?.length}");
+        print('[DEBUG extractQuotedImages] embeds count=\${embeds?.length}');
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
-          print("[DEBUG extractQuotedImages] embed type=${quotedEmbed.runtimeType}");
-          quotedEmbed.whenOrNull(
-            embedImagesView: (imagesView) {
-              for (final image in imagesView.images) {
+          print('[DEBUG extractQuotedImages] embed type=\${quotedEmbed.runtimeType}');
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              print('[DEBUG extractQuotedImages] images=\${data.images.length}');
+              for (final image in data.images) {
                 quotedMediaAttachments.add(
                   MastodonMediaAttachment.fromEmbed(image).toJson(),
                 );
               }
-            },
-            embedRecordWithMediaView: (rwm) {
-              rwm.media.whenOrNull(
-                embedImagesView: (imagesView) {
-                  for (final image in imagesView.images) {
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              print('[DEBUG extractQuotedImages] recordWithMedia');
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  print('[DEBUG extractQuotedImages] rwm images=\${data.images.length}');
+                  for (final image in data.images) {
                     quotedMediaAttachments.add(
                       MastodonMediaAttachment.fromEmbed(image).toJson(),
                     );
                   }
-                },
-              );
-            },
-          );
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
         }
       }
 
