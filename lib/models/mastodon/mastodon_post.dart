@@ -213,7 +213,7 @@ class MastodonPost {
             case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
               for (final image in data.images) {
                 quotedMediaAttachments.add(
-                  MastodonMediaAttachment.fromEmbed(image).toJson(),
+                  MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
                 );
               }
             case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
@@ -221,7 +221,7 @@ class MastodonPost {
                 case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
                   for (final image in data.images) {
                     quotedMediaAttachments.add(
-                      MastodonMediaAttachment.fromEmbed(image).toJson(),
+                      MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
                     );
                   }
                 default:
@@ -512,7 +512,7 @@ class MastodonPost {
             case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
               for (final image in data.images) {
                 quotedMediaAttachments.add(
-                  MastodonMediaAttachment.fromEmbed(image).toJson(),
+                  MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
                 );
               }
             case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
@@ -520,7 +520,7 @@ class MastodonPost {
                 case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
                   for (final image in data.images) {
                     quotedMediaAttachments.add(
-                      MastodonMediaAttachment.fromEmbed(image).toJson(),
+                      MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
                     );
                   }
                 default:
