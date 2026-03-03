@@ -235,6 +235,7 @@ class MastodonPost {
 
       Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
+        print('[DEBUG extractQuotedCard] called with ${embeds?.length} embeds');
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
@@ -527,6 +528,7 @@ class MastodonPost {
 
       Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
+        print('[DEBUG extractQuotedCard] called with ${embeds?.length} embeds');
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
