@@ -202,10 +202,65 @@ class MastodonPost {
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
     if (card != null && card.url.contains(baseUrl)) {
-      // Extract media from the quoted post's embed if available
+      // Extract media and card from the quoted post's embeds if available.
       final quotedMediaAttachments = <Map<String, dynamic>>[];
-      
-      // Get the quoted post's embed from the record
+      Map<String, dynamic>? quotedCard;
+
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              for (final image in data.images) {
+                quotedMediaAttachments.add(
+                  MastodonMediaAttachment.fromEmbed(image).toJson(),
+                );
+              }
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  for (final image in data.images) {
+                    quotedMediaAttachments.add(
+                      MastodonMediaAttachment.fromEmbed(image).toJson(),
+                    );
+                  }
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
+        }
+      }
+
+      void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
+              final thumb = data.external.thumb;
+              quotedCard = {
+                'url': data.external.uri,
+                'title': data.external.title,
+                'description': data.external.description,
+                'type': 'link',
+                'author_name': '',
+                'author_url': '',
+                'provider_name': '',
+                'provider_url': '',
+                'html': '',
+                'width': thumb != null ? 864 : 0,
+                'height': thumb != null ? 432 : 0,
+                'image': thumb,
+                'embed_url': thumb ?? '',
+                'blurhash': null,
+              };
+            default:
+              break;
+          }
+        }
+      }
+
       if (embed != null) {
         embed.whenOrNull(
           embedRecordView: (recordView) {
@@ -563,7 +618,7 @@ class MastodonPost {
           'mentions': [],
           'tags': [],
           'emojis': [],
-          'card': null,
+          'card': quotedCard,
           'poll': null,
         },
       };
