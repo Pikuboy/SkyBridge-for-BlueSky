@@ -262,24 +262,26 @@ class MastodonPost {
       }
 
       if (embed != null) {
-        embed.whenOrNull(
-          embedRecordView: (recordView) {
-            recordView.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-                extractQuotedCard(quotedPost.embeds);
-              },
-            );
-          },
-          embedRecordWithMediaView: (recordWithMedia) {
-            recordWithMedia.record.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-                extractQuotedCard(quotedPost.embeds);
-              },
-            );
-          },
-        );
+        switch (embed) {
+          case UPostViewEmbedEmbedRecordView(:final data):
+            switch (data.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          case UPostViewEmbedEmbedRecordWithMediaView(:final data):
+            switch (data.record.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          default:
+            break;
+        }
       }
       
       // Build a minimal quoted_status for the quote field.
@@ -559,24 +561,26 @@ class MastodonPost {
       }
 
       if (embed != null) {
-        embed.whenOrNull(
-          embedRecordView: (recordView) {
-            recordView.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-                extractQuotedCard(quotedPost.embeds);
-              },
-            );
-          },
-          embedRecordWithMediaView: (recordWithMedia) {
-            recordWithMedia.record.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-                extractQuotedCard(quotedPost.embeds);
-              },
-            );
-          },
-        );
+        switch (embed) {
+          case UPostViewEmbedEmbedRecordView(:final data):
+            switch (data.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          case UPostViewEmbedEmbedRecordWithMediaView(:final data):
+            switch (data.record.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          default:
+            break;
+        }
       }
 
       quote = {
