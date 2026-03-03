@@ -1,4 +1,5 @@
 import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
@@ -76,8 +77,13 @@ class MastodonCard {
     );
 
     // Get the database record for the post.
+    print('[DEBUG embedViewRecordToCard] record.record type=${record.record.runtimeType}');
     final dbRecord = await embedPostToDatabase(record.record);
-    if (dbRecord == null) return null;
+    if (dbRecord == null) {
+      print('[DEBUG embedViewRecordToCard] dbRecord is null — embedPostToDatabase returned null');
+      return null;
+    }
+    print('[DEBUG embedViewRecordToCard] dbRecord.id=${dbRecord.id}');
 
     var title = 'Quote Post';
     var handle = '@unknown.bsky.social';
@@ -85,34 +91,104 @@ class MastodonCard {
     var clickableUrl = base;
 
     // Ivory expects an image to render a card so we pass a 1x1 transparent
-    // image to make it happy.
+    // image as fallback. If the quoted post has media, we use its thumbnail.
     var quoteImage = 'https://$base/1px.png';
-    var useAttachedMedia = false;
+    var imageWidth = 1000;
+    var imageHeight = 1;
+    var authorAvatar = '';
 
     // Get any data we need from the post's record.
     record.record.when(
       embedRecordViewRecord: (post) {
         handle = post.author.handle;
+        authorAvatar = post.author.avatar ?? '';
         title = 'Quote Post - (@$handle) \n ${post.value['text']}';
         description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
+        print('[DEBUG embedViewRecordToCard] handle=$handle clickableUrl=$clickableUrl');
 
-        // If the record has a media attachment, we can use that instead.
-        final embeds = post.embeds;
-        if (embeds != null) {
-          for (final embed in embeds) {
-            embed.when(
-              embedRecordView: (_) {},
-              embedImagesView: (images) {
-                quoteImage = images.images.first.fullsize;
-                useAttachedMedia = true;
-              },
-              embedExternalView: (_) {},
-              embedRecordWithMediaView: (_) {},
-              embedVideoView: (_) {},
-              unknown: (_) {},
-            );
+        // Extract links from facets if no embeds
+        String? linkUrl;
+        final facets = post.value['facets'] as List?;
+        if (facets != null && facets.isNotEmpty) {
+          for (final facet in facets) {
+            final features = facet['features'] as List?;
+            if (features != null) {
+              for (final feature in features) {
+                if (feature['\$type'] == 'app.bsky.richtext.facet#link') {
+                  linkUrl = feature['uri'] as String?;
+                  break;
+                }
+              }
+              if (linkUrl != null) break;
+            }
           }
+        }
+
+        // Extract thumbnail from the quoted post's embeds if available.
+        final embeds = post.embeds;
+        if (embeds != null && embeds.isNotEmpty) {
+          final firstEmbed = embeds.first;
+          firstEmbed.when(
+            embedImagesView: (imagesView) {
+              if (imagesView.images.isNotEmpty) {
+                quoteImage = imagesView.images.first.thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            embedExternalView: (externalView) {
+              final thumb = externalView.external.thumb;
+              if (thumb != null) {
+                quoteImage = thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            embedRecordView: (_) {},
+            embedRecordWithMediaView: (rwm) {
+              switch (rwm.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  if (data.images.isNotEmpty) {
+                    quoteImage = data.images.first.thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                case UEmbedRecordWithMediaViewMediaEmbedExternalView(:final data):
+                  final thumb = data.external.thumb;
+                  if (thumb != null) {
+                    quoteImage = thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                case UEmbedRecordWithMediaViewMediaEmbedVideoView(:final data):
+                  final thumb = data.thumbnail;
+                  if (thumb != null) {
+                    quoteImage = thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                default:
+                  break;
+              }
+            },
+            embedVideoView: (videoView) {
+              final thumb = videoView.thumbnail;
+              if (thumb != null) {
+                quoteImage = thumb;
+                imageWidth = 864;
+                imageHeight = 432;
+              }
+            },
+            unknown: (_) {},
+          );
+        }
+        
+        // If link found in facets but no media, use it for the card
+        if (linkUrl != null && quoteImage == 'https://$base/1px.png') {
+          print('[DEBUG embedViewRecordToCard] Found link in facets: $linkUrl');
+          // Store link to be processed later
+          description = '$description\n[LINK:$linkUrl]';
         }
       },
       embedRecordViewNotFound: (_) {},
@@ -125,21 +201,23 @@ class MastodonCard {
       unknown: (_) {},
     );
 
-    return MastodonCard(
+    final result = MastodonCard(
       url: clickableUrl,
       title: title,
       description: description,
       type: CardType.link,
       authorName: handle,
-      authorUrl: '',
+      authorUrl: authorAvatar,
       providerName: '',
       providerUrl: '',
       html: '',
-      width: useAttachedMedia ? 864 : 1000,
-      height: useAttachedMedia ? 432 : 1,
+      width: imageWidth,
+      height: imageHeight,
       embedUrl: quoteImage,
       image: quoteImage,
     );
+    print('[DEBUG card-built] url=${result.url} image=${result.image} width=${result.width} height=${result.height}');
+    return result;
   }
 
   /// Location of linked resource.

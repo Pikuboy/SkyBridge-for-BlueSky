@@ -16,13 +16,15 @@ MastodonInstanceV1 _$MastodonInstanceV1FromJson(Map<String, dynamic> json) =>
       version: json['version'] as String,
       urls: json['urls'] as Map<String, dynamic>,
       stats: StatInfo.fromJson(json['stats'] as Map<String, dynamic>),
-      languages:
-          (json['languages'] as List<dynamic>).map((e) => e as String).toList(),
+      languages: (json['languages'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
       registrations: json['registrations'] as bool,
       approvalRequired: json['approval_required'] as bool,
       invitesEnabled: json['invites_enabled'] as bool,
       configuration: InstanceConfiguration.fromJson(
-          json['configuration'] as Map<String, dynamic>),
+        json['configuration'] as Map<String, dynamic>,
+      ),
       rules: (json['rules'] as List<dynamic>)
           .map((e) => Rule.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -30,7 +32,8 @@ MastodonInstanceV1 _$MastodonInstanceV1FromJson(Map<String, dynamic> json) =>
       contactAccount: json['contact_account'] == null
           ? null
           : MastodonAccount.fromJson(
-              json['contact_account'] as Map<String, dynamic>),
+              json['contact_account'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$MastodonInstanceV1ToJson(MastodonInstanceV1 instance) =>
@@ -54,13 +57,13 @@ Map<String, dynamic> _$MastodonInstanceV1ToJson(MastodonInstanceV1 instance) =>
     };
 
 StatInfo _$StatInfoFromJson(Map<String, dynamic> json) => StatInfo(
-      userCount: json['user_count'] as int,
-      statusCount: json['status_count'] as int,
-      domainCount: json['domain_count'] as int,
-    );
+  userCount: (json['user_count'] as num).toInt(),
+  statusCount: (json['status_count'] as num).toInt(),
+  domainCount: (json['domain_count'] as num).toInt(),
+);
 
 Map<String, dynamic> _$StatInfoToJson(StatInfo instance) => <String, dynamic>{
-      'user_count': instance.userCount,
-      'status_count': instance.statusCount,
-      'domain_count': instance.domainCount,
-    };
+  'user_count': instance.userCount,
+  'status_count': instance.statusCount,
+  'domain_count': instance.domainCount,
+};

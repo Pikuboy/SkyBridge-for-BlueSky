@@ -24,6 +24,7 @@ RUN npx prisma@5 generate
 
 # Generate a production build.
 RUN dart pub global activate dart_frog_cli
+RUN dart run build_runner build --delete-conflicting-outputs
 RUN dart pub global run dart_frog_cli:dart_frog build
 
 # Restore generated Prisma files into build/ after dart_frog bundling
@@ -32,8 +33,14 @@ RUN mkdir -p build/lib/src/generated/prisma && \
     cp lib/src/generated/prisma/prisma.dart build/lib/src/generated/prisma/ && \
     cp lib/src/generated/prisma/model.dart build/lib/src/generated/prisma/
 
+# Copy .dart_tool so the AOT compiler can resolve package extensions in build/
+RUN cp -r .dart_tool build/.dart_tool
+
 # Ensure packages are still up-to-date if anything has changed.
 RUN dart pub get --offline
+RUN find /root/.pub-cache -path "*/bluesky-1.4.1*" -name "*.freezed.dart" | wc -l
+RUN cat /root/.pub-cache/hosted/pub.dev/bluesky-1.4.1/lib/src/services/codegen/app/bsky/embed/recordWithMedia/union_view_media.dart | grep "isEmbedImagesView" | wc -l
+
 RUN dart compile exe build/server/server.dart -o build/bin/server
 
 # Build minimal serving image from AOT-compiled `/server` and required system

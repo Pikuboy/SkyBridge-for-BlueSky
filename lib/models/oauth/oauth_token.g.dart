@@ -7,11 +7,11 @@ part of 'oauth_token.dart';
 // **************************************************************************
 
 OAuthToken _$OAuthTokenFromJson(Map<String, dynamic> json) => OAuthToken(
-      accessToken: json['access_token'] as String,
-      tokenType: json['token_type'] as String,
-      scope: json['scope'] as String,
-      createdAt: dateTimeFromEpoch(json['created_at'] as int),
-    );
+  accessToken: json['access_token'] as String,
+  tokenType: json['token_type'] as String,
+  scope: json['scope'] as String,
+  createdAt: dateTimeFromEpoch((json['created_at'] as num).toInt()),
+);
 
 Map<String, dynamic> _$OAuthTokenToJson(OAuthToken instance) =>
     <String, dynamic>{

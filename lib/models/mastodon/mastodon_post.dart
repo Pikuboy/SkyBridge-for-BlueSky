@@ -1,6 +1,7 @@
 import 'package:atproto/core.dart' as atp;
 import 'package:atproto/core.dart';
 import 'package:bluesky/app_bsky_embed_images.dart';
+import 'package:bluesky/app_bsky_embed_record.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
@@ -60,6 +61,7 @@ class MastodonPost {
     this.reblog,
     this.card,
     this.poll,
+    this.quote,
     this.text,
     this.editedAt,
     this.pinned,
@@ -114,6 +116,16 @@ class MastodonPost {
 
     // Handle embedded content.
     final embed = post.embed;
+
+    // DEBUG: log raw embed JSON to help diagnose media+quote display issues.
+    if (embed != null) {
+      try {
+        final recordMap = post.record as Map<String, dynamic>;
+        print('[DEBUG fromFeedView] uri=${post.uri} embed_type=${embed.data.runtimeType} record=$recordMap');
+      } catch (e) {
+        print('[DEBUG fromFeedView] could not log embed: $e');
+      }
+    }
     if (embed != null) {
       if (embed.data is EmbedImagesView) {
         final embedded = embed.data as EmbedImagesView;
@@ -184,26 +196,156 @@ class MastodonPost {
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
-    // If there is a card but no link to it in the content, add it.
-    // We check both the raw text and the processed HTML content to avoid
-    // duplicating URLs that were already resolved by processFacets.
+    // Determine early if this is a quote+media post.
+    final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+
+    // Build a native Mastodon quote object if this is a quote post.
+    Map<String, dynamic>? quote;
+    if (card != null && card.url.contains(baseUrl)) {
+      // Extract media and card from the quoted post's embeds if available.
+      final quotedMediaAttachments = <Map<String, dynamic>>[];
+      Map<String, dynamic>? quotedCard;
+
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              for (final image in data.images) {
+                quotedMediaAttachments.add(
+                  MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
+                );
+              }
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  for (final image in data.images) {
+                    quotedMediaAttachments.add(
+                      MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
+                    );
+                  }
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
+        }
+      }
+
+      Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
+        if (embeds == null || embeds.isEmpty || quotedCard != null) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
+              final cardObj = await MastodonCard.fromEmbed(
+                UPostViewEmbed.embedExternalView(data: data)
+              );
+              if (cardObj != null) {
+                quotedCard = cardObj.toJson();
+              }
+              return;
+            case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
+              // Vidéos non supportées
+            default:
+              break;
+          }
+        }
+      }
+
+
+      if (embed != null) {
+        switch (embed) {
+          case UPostViewEmbedEmbedRecordView(:final data):
+            switch (data.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                await extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          case UPostViewEmbedEmbedRecordWithMediaView(:final data):
+            switch (data.record.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                await extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          default:
+            break;
+        }
+      }
+      
+      // Choose between card (old system) or quoted_status (new system)
+      if (quotedMediaAttachments.isEmpty) {
+        // No media in quoted post → use old card system (works for links)
+        // Keep the card, don't create quote object
+        print('[DEBUG] Quote has no media, using card system');
+      } else {
+        // Has media → use new quoted_status system
+        print('[DEBUG] Quote has media, using quoted_status system');
+        quote = {
+          'state': 'accepted',
+          'quoted_status': {
+            'id': card.url.split('/').last,
+            'created_at': post.indexedAt.toUtc().toIso8601String(),
+            'sensitive': false,
+            'spoiler_text': '',
+            'visibility': 'public',
+            'uri': card.url,
+            'url': card.url,
+            'replies_count': 0,
+            'reblogs_count': 0,
+            'favourites_count': 0,
+            'content': '<p>${card.description}</p>',
+            'reblog': null,
+            'account': {
+              'id': card.url.split('/').last,
+              'username': card.authorName,
+              'acct': card.authorName,
+              'display_name': card.authorName,
+              'locked': false,
+              'bot': false,
+              'created_at': '2020-01-01T00:00:00.000Z',
+              'note': '',
+              'url': 'https://$baseUrl/@${card.authorName}',
+              'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'header': 'https://$baseUrl/1px.png',
+              'header_static': 'https://$baseUrl/1px.png',
+              'followers_count': 0,
+              'following_count': 0,
+              'statuses_count': 0,
+              'emojis': [],
+              'fields': [],
+            },
+            'media_attachments': quotedMediaAttachments,
+            'mentions': [],
+            'tags': [],
+            'emojis': [],
+            'card': quotedCard,
+            'poll': null,
+          },
+        };
+        // Don't use card hack for quote posts with media — use native quote field instead.
+        card = null;
+      }
+    }
+
+    // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         content +=
-        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
-
-        if (mediaAttachments.isNotEmpty) {
-          content += '<p>"${card.description}" — @${card.authorName}</p>';
-        }
+        '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
-    // If there's an image attached to the post we drop the card and instead
-    // include a link to the card url in the post content.
-    if (mediaAttachments.isNotEmpty) {
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
       card = null;
     }
 
@@ -261,6 +403,7 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
+      quote: quote,
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: view.post.uri,
     );
@@ -278,6 +421,16 @@ class MastodonPost {
 
     // Handle embedded content.
     final embed = post.embed;
+
+    // DEBUG: log raw embed JSON to help diagnose media+quote display issues.
+    if (embed != null) {
+      try {
+        final recordMap = post.record as Map<String, dynamic>;
+        print('[DEBUG fromBlueSkyPost] uri=${post.uri} embed_type=${embed.data.runtimeType} record=$recordMap');
+      } catch (e) {
+        print('[DEBUG fromBlueSkyPost] could not log embed: $e');
+      }
+    }
     if (embed != null) {
       if (embed.data is EmbedImagesView) {
         final embedded = embed.data as EmbedImagesView;
@@ -342,26 +495,157 @@ class MastodonPost {
 
     var card = await MastodonCard.fromEmbed(post.embed);
 
-    // If there is a card but no link to it in the content, add it.
-    // We check both the raw text and the processed HTML content to avoid
-    // duplicating URLs that were already resolved by processFacets.
+    // Determine early if this is a quote+media post, so we can avoid
+    // appending the card URL/description to the content (it would be
+    // shown twice: once in content, once in the card itself).
+    final isRecordWithMedia = embed?.data is EmbedRecordWithMediaView;
+
+    // Build a native Mastodon quote object if this is a quote post.
+    Map<String, dynamic>? quote;
+    if (card != null && card.url.contains(baseUrl)) {
+      final quotedMediaAttachments = <Map<String, dynamic>>[];
+      Map<String, dynamic>? quotedCard;
+
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              for (final image in data.images) {
+                quotedMediaAttachments.add(
+                  MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
+                );
+              }
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  for (final image in data.images) {
+                    quotedMediaAttachments.add(
+                      MastodonMediaAttachment.fromEmbed(image, useThumbnail: true).toJson(),
+                    );
+                  }
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
+        }
+      }
+
+      Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
+        if (embeds == null || embeds.isEmpty || quotedCard != null) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
+              final cardObj = await MastodonCard.fromEmbed(
+                UPostViewEmbed.embedExternalView(data: data)
+              );
+              if (cardObj != null) {
+                quotedCard = cardObj.toJson();
+              }
+              return;
+            case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
+              // Vidéos non supportées
+            default:
+              break;
+          }
+        }
+      }
+
+
+      if (embed != null) {
+        switch (embed) {
+          case UPostViewEmbedEmbedRecordView(:final data):
+            switch (data.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                await extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          case UPostViewEmbedEmbedRecordWithMediaView(:final data):
+            switch (data.record.record) {
+              case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
+                extractQuotedImages(data.embeds);
+                await extractQuotedCard(data.embeds);
+              default:
+                break;
+            }
+          default:
+            break;
+        }
+      }
+
+      // Choose between card (old system) or quoted_status (new system)
+      if (quotedMediaAttachments.isEmpty) {
+        // No media in quoted post → use old card system (works for links)
+        // Keep the card, don't create quote object
+        print('[DEBUG] Quote has no media, using card system');
+      } else {
+        // Has media → use new quoted_status system
+        print('[DEBUG] Quote has media, using quoted_status system');
+        quote = {
+          'state': 'accepted',
+          'quoted_status': {
+            'id': card.url.split('/').last,
+            'created_at': post.indexedAt.toUtc().toIso8601String(),
+            'sensitive': false,
+            'spoiler_text': '',
+            'visibility': 'public',
+            'uri': card.url,
+            'url': card.url,
+            'replies_count': 0,
+            'reblogs_count': 0,
+            'favourites_count': 0,
+            'content': '<p>${card.description}</p>',
+            'reblog': null,
+            'account': {
+              'id': card.url.split('/').last,
+              'username': card.authorName,
+              'acct': card.authorName,
+              'display_name': card.authorName,
+              'locked': false,
+              'bot': false,
+              'created_at': '2020-01-01T00:00:00.000Z',
+              'note': '',
+              'url': 'https://$baseUrl/@${card.authorName}',
+              'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'header': 'https://$baseUrl/1px.png',
+              'header_static': 'https://$baseUrl/1px.png',
+              'followers_count': 0,
+              'following_count': 0,
+              'statuses_count': 0,
+              'emojis': [],
+              'fields': [],
+            },
+            'media_attachments': quotedMediaAttachments,
+            'mentions': [],
+            'tags': [],
+            'emojis': [],
+            'card': quotedCard,
+            'poll': null,
+          },
+        };
+        // Don't use card hack for quote posts with media — use native quote field instead.
+        card = null;
+      }
+    }
+
+    // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
       final alreadyInText = text.toLowerCase().contains(cardUrlNormalized);
       final alreadyInContent = content.toLowerCase().contains(cardUrlNormalized);
       if (!alreadyInText && !alreadyInContent) {
         content +=
-            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${mediaAttachments.isEmpty ? card.url : 'View Quote Post ⤵'}</a>';
-
-        if (mediaAttachments.isNotEmpty) {
-          content += '<p>"${card.description}" — @${card.authorName}</p>';
-        }
+            '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
     }
 
-    // If there's an image attached to the post we drop the card and instead
-    // include a link to the card url in the post content.
-    if (mediaAttachments.isNotEmpty) {
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
       card = null;
     }
 
@@ -418,6 +702,7 @@ class MastodonPost {
       pinned: false,
       filtered: [],
       card: card,
+      quote: quote,
       replyPostUri: postRecord.reply?.parent.uri,
       bskyUri: post.uri,
     );
@@ -545,6 +830,9 @@ class MastodonPost {
 
   /// Preview card for links included in the post content.
   final MastodonCard? card;
+
+  /// Quote post attached to this post (Mastodon 4.4+).
+  final Map<String, dynamic>? quote;
 
   /// Primary language of this post.
   final String? language;

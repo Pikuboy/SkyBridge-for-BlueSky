@@ -7,21 +7,21 @@ part of 'mastodon_card.dart';
 // **************************************************************************
 
 MastodonCard _$MastodonCardFromJson(Map<String, dynamic> json) => MastodonCard(
-      url: json['url'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      type: $enumDecode(_$CardTypeEnumMap, json['type']),
-      authorName: json['author_name'] as String,
-      authorUrl: json['author_url'] as String,
-      providerName: json['provider_name'] as String,
-      providerUrl: json['provider_url'] as String,
-      html: json['html'] as String,
-      width: json['width'] as int,
-      height: json['height'] as int,
-      embedUrl: json['embed_url'] as String,
-      image: json['image'] as String?,
-      blurhash: json['blurhash'] as String?,
-    );
+  url: json['url'] as String,
+  title: json['title'] as String,
+  description: json['description'] as String,
+  type: $enumDecode(_$CardTypeEnumMap, json['type']),
+  authorName: json['author_name'] as String,
+  authorUrl: json['author_url'] as String,
+  providerName: json['provider_name'] as String,
+  providerUrl: json['provider_url'] as String,
+  html: json['html'] as String,
+  width: (json['width'] as num).toInt(),
+  height: (json['height'] as num).toInt(),
+  embedUrl: json['embed_url'] as String,
+  image: json['image'] as String?,
+  blurhash: json['blurhash'] as String?,
+);
 
 Map<String, dynamic> _$MastodonCardToJson(MastodonCard instance) =>
     <String, dynamic>{

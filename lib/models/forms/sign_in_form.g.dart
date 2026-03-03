@@ -7,14 +7,14 @@ part of 'sign_in_form.dart';
 // **************************************************************************
 
 SignInForm _$SignInFormFromJson(Map<String, dynamic> json) => SignInForm(
-      stuff: json['stuff'] as String,
-      bridgePassword: json['bridge_password'] as String,
-      identifier: json['identifier'] as String,
-      appPassword: json['app_password'] as String,
-      showRepliesInHome: json['show_replies'] == null
-          ? false
-          : handleBoolParameter(json['show_replies'] as String?),
-    );
+  stuff: json['stuff'] as String,
+  bridgePassword: json['bridge_password'] as String,
+  identifier: json['identifier'] as String,
+  appPassword: json['app_password'] as String,
+  showRepliesInHome: json['show_replies'] == null
+      ? false
+      : handleBoolParameter(json['show_replies'] as String?),
+);
 
 Map<String, dynamic> _$SignInFormToJson(SignInForm instance) =>
     <String, dynamic>{

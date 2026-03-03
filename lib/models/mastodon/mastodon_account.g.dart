@@ -29,9 +29,9 @@ MastodonAccount _$MastodonAccountFromJson(Map<String, dynamic> json) =>
           .toList(),
       header: json['header'] as String?,
       headerStatic: json['header_static'] as String?,
-      followersCount: json['followers_count'] as int? ?? 0,
-      followingCount: json['following_count'] as int? ?? 0,
-      statusesCount: json['statuses_count'] as int? ?? 0,
+      followersCount: (json['followers_count'] as num?)?.toInt() ?? 0,
+      followingCount: (json['following_count'] as num?)?.toInt() ?? 0,
+      statusesCount: (json['statuses_count'] as num?)?.toInt() ?? 0,
       source: json['source'] == null
           ? null
           : AccountSource.fromJson(json['source'] as Map<String, dynamic>),
@@ -75,7 +75,7 @@ AccountSource _$AccountSourceFromJson(Map<String, dynamic> json) =>
       privacy: $enumDecode(_$PostVisibilityEnumMap, json['privacy']),
       sensitive: json['sensitive'] as bool,
       language: json['language'] as String,
-      followRequestsCount: json['follow_requests_count'] as int,
+      followRequestsCount: (json['follow_requests_count'] as num).toInt(),
     );
 
 Map<String, dynamic> _$AccountSourceToJson(AccountSource instance) =>
@@ -96,10 +96,10 @@ const _$PostVisibilityEnumMap = {
 };
 
 AccountField _$AccountFieldFromJson(Map<String, dynamic> json) => AccountField(
-      name: json['name'] as String,
-      value: json['value'] as String,
-      verifiedAt: dateTimeFromISO8601(json['verified_at'] as String),
-    );
+  name: json['name'] as String,
+  value: json['value'] as String,
+  verifiedAt: dateTimeFromISO8601(json['verified_at'] as String),
+);
 
 Map<String, dynamic> _$AccountFieldToJson(AccountField instance) =>
     <String, dynamic>{
@@ -109,12 +109,12 @@ Map<String, dynamic> _$AccountFieldToJson(AccountField instance) =>
     };
 
 AccountRole _$AccountRoleFromJson(Map<String, dynamic> json) => AccountRole(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      permissions: json['permissions'] as int,
-      highlighted: json['highlighted'] as bool,
-      color: json['color'] as String? ?? '',
-    );
+  id: (json['id'] as num).toInt(),
+  name: json['name'] as String,
+  permissions: (json['permissions'] as num).toInt(),
+  highlighted: json['highlighted'] as bool,
+  color: json['color'] as String? ?? '',
+);
 
 Map<String, dynamic> _$AccountRoleToJson(AccountRole instance) =>
     <String, dynamic>{

@@ -21,8 +21,9 @@ class MastodonMediaAttachment {
 
   /// Converts a [EmbedImagesViewImage] to a [MastodonMediaAttachment].
   factory MastodonMediaAttachment.fromEmbed(
-    EmbedImagesViewImage embed,
-  ) {
+    EmbedImagesViewImage embed, {
+    bool useThumbnail = false,
+  }) {
     final description = embed.alt.isEmpty ? null : embed.alt;
 
     final meta = MediaAttachmentMetadata(
@@ -32,10 +33,13 @@ class MastodonMediaAttachment {
       ),
     );
 
+    // Pour les posts cités, utiliser thumb pour un chargement plus rapide
+    final imageUrl = useThumbnail ? embed.thumb : embed.fullsize;
+
     return MastodonMediaAttachment(
       id: '0',
       type: MediaType.image,
-      url: embed.fullsize,
+      url: imageUrl,
       previewUrl: embed.thumb,
       remoteUrl: embed.fullsize,
       description: description,

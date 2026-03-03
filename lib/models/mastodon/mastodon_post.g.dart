@@ -63,6 +63,8 @@ abstract class _$MastodonPostCWProxy {
 
   MastodonPost poll(Map<String, dynamic>? poll);
 
+  MastodonPost quote(Map<String, dynamic>? quote);
+
   MastodonPost text(String? text);
 
   MastodonPost editedAt(DateTime? editedAt);
@@ -80,23 +82,23 @@ abstract class _$MastodonPostCWProxy {
   /// MastodonPost(...).copyWith(id: 12, name: "My name")
   /// ````
   MastodonPost call({
-    String? id,
-    DateTime? createdAt,
-    bool? sensitive,
-    String? spoilerText,
-    PostVisibility? visibility,
-    String? uri,
-    int? repliesCount,
-    int? reblogsCount,
-    int? favouritesCount,
-    String? content,
-    MastodonAccount? account,
-    List<MastodonMediaAttachment>? mediaAttachments,
-    List<MastodonMention>? mentions,
-    List<MastodonTag>? tags,
-    List<Map<String, dynamic>>? emojis,
-    Map<String, String?>? application,
-    List<String>? filtered,
+    String id,
+    DateTime createdAt,
+    bool sensitive,
+    String spoilerText,
+    PostVisibility visibility,
+    String uri,
+    int repliesCount,
+    int reblogsCount,
+    int favouritesCount,
+    String content,
+    MastodonAccount account,
+    List<MastodonMediaAttachment> mediaAttachments,
+    List<MastodonMention> mentions,
+    List<MastodonTag> tags,
+    List<Map<String, dynamic>> emojis,
+    Map<String, String?> application,
+    List<String> filtered,
     String? inReplyToId,
     String? inReplyToAccountId,
     String? language,
@@ -108,6 +110,7 @@ abstract class _$MastodonPostCWProxy {
     MastodonPost? reblog,
     MastodonCard? card,
     Map<String, dynamic>? poll,
+    Map<String, dynamic>? quote,
     String? text,
     DateTime? editedAt,
     bool? pinned,
@@ -162,8 +165,8 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
 
   @override
   MastodonPost mediaAttachments(
-          List<MastodonMediaAttachment> mediaAttachments) =>
-      this(mediaAttachments: mediaAttachments);
+    List<MastodonMediaAttachment> mediaAttachments,
+  ) => this(mediaAttachments: mediaAttachments);
 
   @override
   MastodonPost mentions(List<MastodonMention> mentions) =>
@@ -219,6 +222,9 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
   MastodonPost poll(Map<String, dynamic>? poll) => this(poll: poll);
 
   @override
+  MastodonPost quote(Map<String, dynamic>? quote) => this(quote: quote);
+
+  @override
   MastodonPost text(String? text) => this(text: text);
 
   @override
@@ -235,7 +241,6 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
   MastodonPost bskyUri(AtUri? bskyUri) => this(bskyUri: bskyUri);
 
   @override
-
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `MastodonPost(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -271,6 +276,7 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
     Object? reblog = const $CopyWithPlaceholder(),
     Object? card = const $CopyWithPlaceholder(),
     Object? poll = const $CopyWithPlaceholder(),
+    Object? quote = const $CopyWithPlaceholder(),
     Object? text = const $CopyWithPlaceholder(),
     Object? editedAt = const $CopyWithPlaceholder(),
     Object? pinned = const $CopyWithPlaceholder(),
@@ -278,78 +284,71 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
     Object? bskyUri = const $CopyWithPlaceholder(),
   }) {
     return MastodonPost(
-      id: id == const $CopyWithPlaceholder() || id == null
+      id: id == const $CopyWithPlaceholder()
           ? _value.id
           // ignore: cast_nullable_to_non_nullable
           : id as String,
-      createdAt: createdAt == const $CopyWithPlaceholder() || createdAt == null
+      createdAt: createdAt == const $CopyWithPlaceholder()
           ? _value.createdAt
           // ignore: cast_nullable_to_non_nullable
           : createdAt as DateTime,
-      sensitive: sensitive == const $CopyWithPlaceholder() || sensitive == null
+      sensitive: sensitive == const $CopyWithPlaceholder()
           ? _value.sensitive
           // ignore: cast_nullable_to_non_nullable
           : sensitive as bool,
-      spoilerText:
-          spoilerText == const $CopyWithPlaceholder() || spoilerText == null
-              ? _value.spoilerText
-              // ignore: cast_nullable_to_non_nullable
-              : spoilerText as String,
-      visibility:
-          visibility == const $CopyWithPlaceholder() || visibility == null
-              ? _value.visibility
-              // ignore: cast_nullable_to_non_nullable
-              : visibility as PostVisibility,
-      uri: uri == const $CopyWithPlaceholder() || uri == null
+      spoilerText: spoilerText == const $CopyWithPlaceholder()
+          ? _value.spoilerText
+          // ignore: cast_nullable_to_non_nullable
+          : spoilerText as String,
+      visibility: visibility == const $CopyWithPlaceholder()
+          ? _value.visibility
+          // ignore: cast_nullable_to_non_nullable
+          : visibility as PostVisibility,
+      uri: uri == const $CopyWithPlaceholder()
           ? _value.uri
           // ignore: cast_nullable_to_non_nullable
           : uri as String,
-      repliesCount:
-          repliesCount == const $CopyWithPlaceholder() || repliesCount == null
-              ? _value.repliesCount
-              // ignore: cast_nullable_to_non_nullable
-              : repliesCount as int,
-      reblogsCount:
-          reblogsCount == const $CopyWithPlaceholder() || reblogsCount == null
-              ? _value.reblogsCount
-              // ignore: cast_nullable_to_non_nullable
-              : reblogsCount as int,
-      favouritesCount: favouritesCount == const $CopyWithPlaceholder() ||
-              favouritesCount == null
+      repliesCount: repliesCount == const $CopyWithPlaceholder()
+          ? _value.repliesCount
+          // ignore: cast_nullable_to_non_nullable
+          : repliesCount as int,
+      reblogsCount: reblogsCount == const $CopyWithPlaceholder()
+          ? _value.reblogsCount
+          // ignore: cast_nullable_to_non_nullable
+          : reblogsCount as int,
+      favouritesCount: favouritesCount == const $CopyWithPlaceholder()
           ? _value.favouritesCount
           // ignore: cast_nullable_to_non_nullable
           : favouritesCount as int,
-      content: content == const $CopyWithPlaceholder() || content == null
+      content: content == const $CopyWithPlaceholder()
           ? _value.content
           // ignore: cast_nullable_to_non_nullable
           : content as String,
-      account: account == const $CopyWithPlaceholder() || account == null
+      account: account == const $CopyWithPlaceholder()
           ? _value.account
           // ignore: cast_nullable_to_non_nullable
           : account as MastodonAccount,
-      mediaAttachments: mediaAttachments == const $CopyWithPlaceholder() ||
-              mediaAttachments == null
+      mediaAttachments: mediaAttachments == const $CopyWithPlaceholder()
           ? _value.mediaAttachments
           // ignore: cast_nullable_to_non_nullable
           : mediaAttachments as List<MastodonMediaAttachment>,
-      mentions: mentions == const $CopyWithPlaceholder() || mentions == null
+      mentions: mentions == const $CopyWithPlaceholder()
           ? _value.mentions
           // ignore: cast_nullable_to_non_nullable
           : mentions as List<MastodonMention>,
-      tags: tags == const $CopyWithPlaceholder() || tags == null
+      tags: tags == const $CopyWithPlaceholder()
           ? _value.tags
           // ignore: cast_nullable_to_non_nullable
           : tags as List<MastodonTag>,
-      emojis: emojis == const $CopyWithPlaceholder() || emojis == null
+      emojis: emojis == const $CopyWithPlaceholder()
           ? _value.emojis
           // ignore: cast_nullable_to_non_nullable
           : emojis as List<Map<String, dynamic>>,
-      application:
-          application == const $CopyWithPlaceholder() || application == null
-              ? _value.application
-              // ignore: cast_nullable_to_non_nullable
-              : application as Map<String, String?>,
-      filtered: filtered == const $CopyWithPlaceholder() || filtered == null
+      application: application == const $CopyWithPlaceholder()
+          ? _value.application
+          // ignore: cast_nullable_to_non_nullable
+          : application as Map<String, String?>,
+      filtered: filtered == const $CopyWithPlaceholder()
           ? _value.filtered
           // ignore: cast_nullable_to_non_nullable
           : filtered as List<String>,
@@ -397,6 +396,10 @@ class _$MastodonPostCWProxyImpl implements _$MastodonPostCWProxy {
           ? _value.poll
           // ignore: cast_nullable_to_non_nullable
           : poll as Map<String, dynamic>?,
+      quote: quote == const $CopyWithPlaceholder()
+          ? _value.quote
+          // ignore: cast_nullable_to_non_nullable
+          : quote as Map<String, dynamic>?,
       text: text == const $CopyWithPlaceholder()
           ? _value.text
           // ignore: cast_nullable_to_non_nullable
@@ -432,53 +435,53 @@ extension $MastodonPostCopyWith on MastodonPost {
 // **************************************************************************
 
 MastodonPost _$MastodonPostFromJson(Map<String, dynamic> json) => MastodonPost(
-      id: json['id'] as String,
-      createdAt: dateTimeFromISO8601(json['created_at'] as String),
-      sensitive: json['sensitive'] as bool,
-      spoilerText: json['spoiler_text'] as String,
-      visibility: $enumDecode(_$PostVisibilityEnumMap, json['visibility']),
-      uri: json['uri'] as String,
-      repliesCount: json['replies_count'] as int,
-      reblogsCount: json['reblogs_count'] as int,
-      favouritesCount: json['favourites_count'] as int,
-      content: json['content'] as String,
-      account:
-          MastodonAccount.fromJson(json['account'] as Map<String, dynamic>),
-      mediaAttachments: (json['media_attachments'] as List<dynamic>)
-          .map((e) =>
-              MastodonMediaAttachment.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      mentions: (json['mentions'] as List<dynamic>)
-          .map((e) => MastodonMention.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      tags: (json['tags'] as List<dynamic>)
-          .map((e) => MastodonTag.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      emojis: (json['emojis'] as List<dynamic>)
-          .map((e) => e as Map<String, dynamic>)
-          .toList(),
-      application: Map<String, String?>.from(json['application'] as Map),
-      filtered:
-          (json['filtered'] as List<dynamic>).map((e) => e as String).toList(),
-      inReplyToId: json['in_reply_to_id'] as String?,
-      inReplyToAccountId: json['in_reply_to_account_id'] as String?,
-      language: json['language'] as String?,
-      url: json['url'] as String?,
-      favourited: json['favourited'] as bool?,
-      reblogged: json['reblogged'] as bool?,
-      muted: json['muted'] as bool?,
-      bookmarked: json['bookmarked'] as bool?,
-      reblog: json['reblog'] == null
-          ? null
-          : MastodonPost.fromJson(json['reblog'] as Map<String, dynamic>),
-      card: json['card'] == null
-          ? null
-          : MastodonCard.fromJson(json['card'] as Map<String, dynamic>),
-      poll: json['poll'] as Map<String, dynamic>?,
-      text: json['text'] as String?,
-      editedAt: dateTimeFromNullableISO8601(json['edited_at'] as String?),
-      pinned: json['pinned'] as bool?,
-    );
+  id: json['id'] as String,
+  createdAt: dateTimeFromISO8601(json['created_at'] as String),
+  sensitive: json['sensitive'] as bool,
+  spoilerText: json['spoiler_text'] as String,
+  visibility: $enumDecode(_$PostVisibilityEnumMap, json['visibility']),
+  uri: json['uri'] as String,
+  repliesCount: (json['replies_count'] as num).toInt(),
+  reblogsCount: (json['reblogs_count'] as num).toInt(),
+  favouritesCount: (json['favourites_count'] as num).toInt(),
+  content: json['content'] as String,
+  account: MastodonAccount.fromJson(json['account'] as Map<String, dynamic>),
+  mediaAttachments: (json['media_attachments'] as List<dynamic>)
+      .map((e) => MastodonMediaAttachment.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  mentions: (json['mentions'] as List<dynamic>)
+      .map((e) => MastodonMention.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  tags: (json['tags'] as List<dynamic>)
+      .map((e) => MastodonTag.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  emojis: (json['emojis'] as List<dynamic>)
+      .map((e) => e as Map<String, dynamic>)
+      .toList(),
+  application: Map<String, String?>.from(json['application'] as Map),
+  filtered: (json['filtered'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  inReplyToId: json['in_reply_to_id'] as String?,
+  inReplyToAccountId: json['in_reply_to_account_id'] as String?,
+  language: json['language'] as String?,
+  url: json['url'] as String?,
+  favourited: json['favourited'] as bool?,
+  reblogged: json['reblogged'] as bool?,
+  muted: json['muted'] as bool?,
+  bookmarked: json['bookmarked'] as bool?,
+  reblog: json['reblog'] == null
+      ? null
+      : MastodonPost.fromJson(json['reblog'] as Map<String, dynamic>),
+  card: json['card'] == null
+      ? null
+      : MastodonCard.fromJson(json['card'] as Map<String, dynamic>),
+  poll: json['poll'] as Map<String, dynamic>?,
+  quote: json['quote'] as Map<String, dynamic>?,
+  text: json['text'] as String?,
+  editedAt: dateTimeFromNullableISO8601(json['edited_at'] as String?),
+  pinned: json['pinned'] as bool?,
+);
 
 Map<String, dynamic> _$MastodonPostToJson(MastodonPost instance) =>
     <String, dynamic>{
@@ -504,6 +507,7 @@ Map<String, dynamic> _$MastodonPostToJson(MastodonPost instance) =>
       'reblog': instance.reblog,
       'poll': instance.poll,
       'card': instance.card,
+      'quote': instance.quote,
       'language': instance.language,
       'text': instance.text,
       'edited_at': dateTimeToISO8601(instance.editedAt),
