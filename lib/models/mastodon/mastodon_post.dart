@@ -212,6 +212,7 @@ class MastodonPost {
             recordView.record.whenOrNull(
               embedRecordViewRecord: (quotedPost) {
                 extractQuotedImages(quotedPost.embeds);
+                extractQuotedCard(quotedPost.embeds);
               },
             );
           },
@@ -219,6 +220,7 @@ class MastodonPost {
             recordWithMedia.record.record.whenOrNull(
               embedRecordViewRecord: (quotedPost) {
                 extractQuotedImages(quotedPost.embeds);
+                extractQuotedCard(quotedPost.embeds);
               },
             );
           },
@@ -265,7 +267,7 @@ class MastodonPost {
           'mentions': [],
           'tags': [],
           'emojis': [],
-          'card': null,
+          'card': quotedCard,
           'poll': null,
         },
       };
