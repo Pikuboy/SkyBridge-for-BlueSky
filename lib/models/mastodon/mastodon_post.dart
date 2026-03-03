@@ -206,8 +206,10 @@ class MastodonPost {
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
       void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        print("[DEBUG extractQuotedImages] embeds count=${embeds?.length}");
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
+          print("[DEBUG extractQuotedImages] embed type=${quotedEmbed.runtimeType}");
           quotedEmbed.whenOrNull(
             embedImagesView: (imagesView) {
               for (final image in imagesView.images) {
@@ -232,6 +234,7 @@ class MastodonPost {
       }
 
       if (embed != null) {
+        print("[DEBUG quotedMedia] embed type=${embed.runtimeType}");
         embed.whenOrNull(
           embedRecordView: (recordView) {
             recordView.record.whenOrNull(
@@ -286,6 +289,7 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
+          print('[DEBUG quotedMedia] attachments count=${quotedMediaAttachments.length}');
           'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
@@ -472,8 +476,10 @@ class MastodonPost {
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
       void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        print("[DEBUG extractQuotedImages] embeds count=${embeds?.length}");
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
+          print("[DEBUG extractQuotedImages] embed type=${quotedEmbed.runtimeType}");
           quotedEmbed.whenOrNull(
             embedImagesView: (imagesView) {
               for (final image in imagesView.images) {
@@ -498,6 +504,7 @@ class MastodonPost {
       }
 
       if (embed != null) {
+        print("[DEBUG quotedMedia] embed type=${embed.runtimeType}");
         embed.whenOrNull(
           embedRecordView: (recordView) {
             recordView.record.whenOrNull(
@@ -551,6 +558,7 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
+          print('[DEBUG quotedMedia] attachments count=${quotedMediaAttachments.length}');
           'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
