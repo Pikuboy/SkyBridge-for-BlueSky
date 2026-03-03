@@ -606,7 +606,7 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
-          'media_attachments': [],
+          'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
           'emojis': [],
