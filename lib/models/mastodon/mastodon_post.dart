@@ -1,7 +1,6 @@
 import 'package:atproto/core.dart' as atp;
 import 'package:atproto/core.dart';
 import 'package:bluesky/app_bsky_embed_images.dart';
-import 'package:bluesky/app_bsky_embed_record.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
@@ -202,57 +201,59 @@ class MastodonPost {
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
     if (card != null && card.url.contains(baseUrl)) {
-      // Extract media from the quoted post's embeds if available.
+      // Extract media from the quoted post's embed if available
       final quotedMediaAttachments = <Map<String, dynamic>>[];
-
-      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        print('[DEBUG extractQuotedImages] embeds count=\${embeds?.length}');
-        if (embeds == null || embeds.isEmpty) return;
-        for (final quotedEmbed in embeds) {
-          print('[DEBUG extractQuotedImages] embed type=\${quotedEmbed.runtimeType}');
-          switch (quotedEmbed) {
-            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
-              print('[DEBUG extractQuotedImages] images=\${data.images.length}');
-              for (final image in data.images) {
-                quotedMediaAttachments.add(
-                  MastodonMediaAttachment.fromEmbed(image).toJson(),
-                );
-              }
-            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
-              print('[DEBUG extractQuotedImages] recordWithMedia');
-              switch (data.media) {
-                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
-                  print('[DEBUG extractQuotedImages] rwm images=\${data.images.length}');
-                  for (final image in data.images) {
-                    quotedMediaAttachments.add(
-                      MastodonMediaAttachment.fromEmbed(image).toJson(),
-                    );
-                  }
-                default:
-                  break;
-              }
-            default:
-              break;
-          }
-        }
-      }
-
+      
+      // Get the quoted post's embed from the record
       if (embed != null) {
-        print("[DEBUG quotedMedia] embed type=${embed.runtimeType}");
         embed.whenOrNull(
           embedRecordView: (recordView) {
-            recordView.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-              },
-            );
+            // Use the getter to access embedRecordViewRecord if it exists
+            final quotedPost = recordView.record.embedRecordViewRecord;
+            if (quotedPost != null) {
+              final quotedEmbeds = quotedPost.embeds;
+              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                for (final quotedEmbed in quotedEmbeds) {
+                  quotedEmbed.whenOrNull(
+                    embedImagesView: (imagesView) {
+                      for (final image in imagesView.images) {
+                        final attachment = MastodonMediaAttachment.fromEmbed(image);
+                        quotedMediaAttachments.add(attachment.toJson());
+                      }
+                    },
+                  );
+                }
+              }
+            }
           },
           embedRecordWithMediaView: (recordWithMedia) {
-            recordWithMedia.record.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
+            // Extract media from the media part using whenOrNull
+            recordWithMedia.media.whenOrNull(
+              embedImagesView: (imagesView) {
+                for (final image in imagesView.images) {
+                  final attachment = MastodonMediaAttachment.fromEmbed(image);
+                  quotedMediaAttachments.add(attachment.toJson());
+                }
               },
             );
+            
+            // Also check the record part for embeds using the getter
+            final quotedPost = recordWithMedia.record.record.embedRecordViewRecord;
+            if (quotedPost != null) {
+              final quotedEmbeds = quotedPost.embeds;
+              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
+                for (final quotedEmbed in quotedEmbeds) {
+                  quotedEmbed.whenOrNull(
+                    embedImagesView: (imagesView) {
+                      for (final image in imagesView.images) {
+                        final attachment = MastodonMediaAttachment.fromEmbed(image);
+                        quotedMediaAttachments.add(attachment.toJson());
+                      }
+                    },
+                  );
+                }
+              }
+            }
           },
         );
       }
@@ -283,8 +284,8 @@ class MastodonPost {
             'created_at': '2020-01-01T00:00:00.000Z',
             'note': '',
             'url': 'https://$baseUrl/@${card.authorName}',
-            'avatar': 'https://$baseUrl/1px.png',
-            'avatar_static': 'https://$baseUrl/1px.png',
+            'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+            'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
             'header': 'https://$baseUrl/1px.png',
             'header_static': 'https://$baseUrl/1px.png',
             'followers_count': 0,
@@ -475,61 +476,6 @@ class MastodonPost {
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
     if (card != null && card.url.contains(baseUrl)) {
-      // Extract media from the quoted post's embeds if available.
-      final quotedMediaAttachments = <Map<String, dynamic>>[];
-
-      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        print('[DEBUG extractQuotedImages] embeds count=\${embeds?.length}');
-        if (embeds == null || embeds.isEmpty) return;
-        for (final quotedEmbed in embeds) {
-          print('[DEBUG extractQuotedImages] embed type=\${quotedEmbed.runtimeType}');
-          switch (quotedEmbed) {
-            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
-              print('[DEBUG extractQuotedImages] images=\${data.images.length}');
-              for (final image in data.images) {
-                quotedMediaAttachments.add(
-                  MastodonMediaAttachment.fromEmbed(image).toJson(),
-                );
-              }
-            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
-              print('[DEBUG extractQuotedImages] recordWithMedia');
-              switch (data.media) {
-                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
-                  print('[DEBUG extractQuotedImages] rwm images=\${data.images.length}');
-                  for (final image in data.images) {
-                    quotedMediaAttachments.add(
-                      MastodonMediaAttachment.fromEmbed(image).toJson(),
-                    );
-                  }
-                default:
-                  break;
-              }
-            default:
-              break;
-          }
-        }
-      }
-
-      if (embed != null) {
-        print("[DEBUG quotedMedia] embed type=${embed.runtimeType}");
-        embed.whenOrNull(
-          embedRecordView: (recordView) {
-            recordView.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-              },
-            );
-          },
-          embedRecordWithMediaView: (recordWithMedia) {
-            recordWithMedia.record.record.whenOrNull(
-              embedRecordViewRecord: (quotedPost) {
-                extractQuotedImages(quotedPost.embeds);
-              },
-            );
-          },
-        );
-      }
-
       quote = {
         'state': 'accepted',
         'quoted_status': {
@@ -555,8 +501,8 @@ class MastodonPost {
             'created_at': '2020-01-01T00:00:00.000Z',
             'note': '',
             'url': 'https://$baseUrl/@${card.authorName}',
-            'avatar': 'https://$baseUrl/1px.png',
-            'avatar_static': 'https://$baseUrl/1px.png',
+            'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+            'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
             'header': 'https://$baseUrl/1px.png',
             'header_static': 'https://$baseUrl/1px.png',
             'followers_count': 0,
@@ -565,7 +511,7 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
-          'media_attachments': quotedMediaAttachments,
+          'media_attachments': [],
           'mentions': [],
           'tags': [],
           'emojis': [],

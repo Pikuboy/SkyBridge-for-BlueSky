@@ -1,5 +1,4 @@
 import 'package:bluesky/app_bsky_embed_record.dart';
-import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
@@ -95,11 +94,13 @@ class MastodonCard {
     var quoteImage = 'https://$base/1px.png';
     var imageWidth = 1000;
     var imageHeight = 1;
+    var authorAvatar = '';
 
     // Get any data we need from the post's record.
     record.record.when(
       embedRecordViewRecord: (post) {
         handle = post.author.handle;
+        authorAvatar = post.author.avatar ?? '';
         title = 'Quote Post - (@$handle) \n ${post.value['text']}';
         description = post.value['text'] as String? ?? '';
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
@@ -179,7 +180,7 @@ class MastodonCard {
       description: description,
       type: CardType.link,
       authorName: handle,
-      authorUrl: '',
+      authorUrl: authorAvatar,
       providerName: '',
       providerUrl: '',
       html: '',
