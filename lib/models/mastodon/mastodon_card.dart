@@ -107,6 +107,24 @@ class MastodonCard {
         clickableUrl = 'https://$base/@$handle/${dbRecord.id}';
         print('[DEBUG embedViewRecordToCard] handle=$handle clickableUrl=$clickableUrl');
 
+        // Extract links from facets if no embeds
+        String? linkUrl;
+        final facets = post.value['facets'] as List?;
+        if (facets != null && facets.isNotEmpty) {
+          for (final facet in facets) {
+            final features = facet['features'] as List?;
+            if (features != null) {
+              for (final feature in features) {
+                if (feature['\$type'] == 'app.bsky.richtext.facet#link') {
+                  linkUrl = feature['uri'] as String?;
+                  break;
+                }
+              }
+              if (linkUrl != null) break;
+            }
+          }
+        }
+
         // Extract thumbnail from the quoted post's embeds if available.
         final embeds = post.embeds;
         if (embeds != null && embeds.isNotEmpty) {
@@ -164,6 +182,13 @@ class MastodonCard {
             },
             unknown: (_) {},
           );
+        }
+        
+        // If link found in facets but no media, use it for the card
+        if (linkUrl != null && quoteImage == 'https://$base/1px.png') {
+          print('[DEBUG embedViewRecordToCard] Found link in facets: $linkUrl');
+          // Store link to be processed later
+          description = '$description\n[LINK:$linkUrl]';
         }
       },
       embedRecordViewNotFound: (_) {},
