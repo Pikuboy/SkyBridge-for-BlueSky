@@ -205,10 +205,10 @@ class MastodonPost {
       // Extract media from the quoted post's embeds if available.
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
-      void extractQuotedImages(List<dynamic>? embeds) {
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
-          (quotedEmbed as UPostViewEmbed).whenOrNull(
+          quotedEmbed.whenOrNull(
             embedImagesView: (imagesView) {
               for (final image in imagesView.images) {
                 quotedMediaAttachments.add(
@@ -471,10 +471,10 @@ class MastodonPost {
       // Extract media from the quoted post's embeds if available.
       final quotedMediaAttachments = <Map<String, dynamic>>[];
 
-      void extractQuotedImages(List<dynamic>? embeds) {
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
         if (embeds == null || embeds.isEmpty) return;
         for (final quotedEmbed in embeds) {
-          (quotedEmbed as UPostViewEmbed).whenOrNull(
+          quotedEmbed.whenOrNull(
             embedImagesView: (imagesView) {
               for (final image in imagesView.images) {
                 quotedMediaAttachments.add(
