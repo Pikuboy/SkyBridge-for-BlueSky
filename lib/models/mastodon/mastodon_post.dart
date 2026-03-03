@@ -233,28 +233,17 @@ class MastodonPost {
         }
       }
 
-      void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+      Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
-              final thumb = data.external.thumb;
-              quotedCard = {
-                'url': data.external.uri,
-                'title': data.external.title,
-                'description': data.external.description,
-                'type': 'link',
-                'author_name': '',
-                'author_url': '',
-                'provider_name': '',
-                'provider_url': '',
-                'html': '',
-                'width': thumb != null ? 864 : 0,
-                'height': thumb != null ? 432 : 0,
-                'image': thumb,
-                'embed_url': thumb ?? '',
-                'blurhash': null,
-              };
+              final cardObj = await MastodonCard.fromEmbed(
+                UPostViewEmbed.embedExternalView(data: data)
+              );
+              if (cardObj != null) {
+                quotedCard = cardObj.toJson();
+              }
               return;
             case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
               // Vidéos non supportées
@@ -264,13 +253,14 @@ class MastodonPost {
         }
       }
 
+
       if (embed != null) {
         switch (embed) {
           case UPostViewEmbedEmbedRecordView(:final data):
             switch (data.record) {
               case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
                 extractQuotedImages(data.embeds);
-                extractQuotedCard(data.embeds);
+                await extractQuotedCard(data.embeds);
               default:
                 break;
             }
@@ -278,7 +268,7 @@ class MastodonPost {
             switch (data.record.record) {
               case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
                 extractQuotedImages(data.embeds);
-                extractQuotedCard(data.embeds);
+                await extractQuotedCard(data.embeds);
               default:
                 break;
             }
@@ -535,28 +525,17 @@ class MastodonPost {
         }
       }
 
-      void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+      Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
-              final thumb = data.external.thumb;
-              quotedCard = {
-                'url': data.external.uri,
-                'title': data.external.title,
-                'description': data.external.description,
-                'type': 'link',
-                'author_name': '',
-                'author_url': '',
-                'provider_name': '',
-                'provider_url': '',
-                'html': '',
-                'width': thumb != null ? 864 : 0,
-                'height': thumb != null ? 432 : 0,
-                'image': thumb,
-                'embed_url': thumb ?? '',
-                'blurhash': null,
-              };
+              final cardObj = await MastodonCard.fromEmbed(
+                UPostViewEmbed.embedExternalView(data: data)
+              );
+              if (cardObj != null) {
+                quotedCard = cardObj.toJson();
+              }
               return;
             case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
               // Vidéos non supportées
@@ -566,13 +545,14 @@ class MastodonPost {
         }
       }
 
+
       if (embed != null) {
         switch (embed) {
           case UPostViewEmbedEmbedRecordView(:final data):
             switch (data.record) {
               case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
                 extractQuotedImages(data.embeds);
-                extractQuotedCard(data.embeds);
+                await extractQuotedCard(data.embeds);
               default:
                 break;
             }
@@ -580,7 +560,7 @@ class MastodonPost {
             switch (data.record.record) {
               case UEmbedRecordViewRecordEmbedRecordViewRecord(:final data):
                 extractQuotedImages(data.embeds);
-                extractQuotedCard(data.embeds);
+                await extractQuotedCard(data.embeds);
               default:
                 break;
             }
