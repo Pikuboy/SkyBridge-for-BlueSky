@@ -289,7 +289,6 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
-          print('[DEBUG quotedMedia] attachments count=${quotedMediaAttachments.length}');
           'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
@@ -558,7 +557,6 @@ class MastodonPost {
             'emojis': [],
             'fields': [],
           },
-          print('[DEBUG quotedMedia] attachments count=${quotedMediaAttachments.length}');
           'media_attachments': quotedMediaAttachments,
           'mentions': [],
           'tags': [],
