@@ -445,6 +445,85 @@ class MastodonPost {
     // Build a native Mastodon quote object if this is a quote post.
     Map<String, dynamic>? quote;
     if (card != null && card.url.contains(baseUrl)) {
+      final quotedMediaAttachments = <Map<String, dynamic>>[];
+      Map<String, dynamic>? quotedCard;
+
+      void extractQuotedImages(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedImagesView(:final data):
+              for (final image in data.images) {
+                quotedMediaAttachments.add(
+                  MastodonMediaAttachment.fromEmbed(image).toJson(),
+                );
+              }
+            case UEmbedRecordViewRecordEmbedsEmbedRecordWithMediaView(:final data):
+              switch (data.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  for (final image in data.images) {
+                    quotedMediaAttachments.add(
+                      MastodonMediaAttachment.fromEmbed(image).toJson(),
+                    );
+                  }
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
+        }
+      }
+
+      void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
+        if (embeds == null || embeds.isEmpty) return;
+        for (final quotedEmbed in embeds) {
+          switch (quotedEmbed) {
+            case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
+              final thumb = data.external.thumb;
+              quotedCard = {
+                'url': data.external.uri,
+                'title': data.external.title,
+                'description': data.external.description,
+                'type': 'link',
+                'author_name': '',
+                'author_url': '',
+                'provider_name': '',
+                'provider_url': '',
+                'html': '',
+                'width': thumb != null ? 864 : 0,
+                'height': thumb != null ? 432 : 0,
+                'image': thumb,
+                'embed_url': thumb ?? '',
+                'blurhash': null,
+              };
+            default:
+              break;
+          }
+        }
+      }
+
+      if (embed != null) {
+        embed.whenOrNull(
+          embedRecordView: (recordView) {
+            recordView.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                extractQuotedImages(quotedPost.embeds);
+                extractQuotedCard(quotedPost.embeds);
+              },
+            );
+          },
+          embedRecordWithMediaView: (recordWithMedia) {
+            recordWithMedia.record.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                extractQuotedImages(quotedPost.embeds);
+                extractQuotedCard(quotedPost.embeds);
+              },
+            );
+          },
+        );
+      }
+
       quote = {
         'state': 'accepted',
         'quoted_status': {
