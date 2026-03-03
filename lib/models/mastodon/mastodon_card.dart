@@ -1,4 +1,5 @@
 import 'package:bluesky/app_bsky_embed_record.dart';
+import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
@@ -128,28 +129,29 @@ class MastodonCard {
             },
             embedRecordView: (_) {},
             embedRecordWithMediaView: (rwm) {
-              final media = rwm.media;
-              if (media.isEmbedImagesView) {
-                final images = media.embedImagesView?.images;
-                if (images != null && images.isNotEmpty) {
-                  quoteImage = images.first.thumb;
-                  imageWidth = 864;
-                  imageHeight = 432;
-                }
-              } else if (media.isEmbedExternalView) {
-                final thumb = media.embedExternalView?.external.thumb;
-                if (thumb != null) {
-                  quoteImage = thumb;
-                  imageWidth = 864;
-                  imageHeight = 432;
-                }
-              } else if (media.isEmbedVideoView) {
-                final thumb = media.embedVideoView?.thumbnail;
-                if (thumb != null) {
-                  quoteImage = thumb;
-                  imageWidth = 864;
-                  imageHeight = 432;
-                }
+              switch (rwm.media) {
+                case UEmbedRecordWithMediaViewMediaEmbedImagesView(:final data):
+                  if (data.images.isNotEmpty) {
+                    quoteImage = data.images.first.thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                case UEmbedRecordWithMediaViewMediaEmbedExternalView(:final data):
+                  final thumb = data.external.thumb;
+                  if (thumb != null) {
+                    quoteImage = thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                case UEmbedRecordWithMediaViewMediaEmbedVideoView(:final data):
+                  final thumb = data.thumbnail;
+                  if (thumb != null) {
+                    quoteImage = thumb;
+                    imageWidth = 864;
+                    imageHeight = 432;
+                  }
+                default:
+                  break;
               }
             },
             embedVideoView: (videoView) {

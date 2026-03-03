@@ -1,6 +1,7 @@
 import 'package:atproto/core.dart' as atp;
 import 'package:atproto/core.dart';
 import 'package:bluesky/app_bsky_embed_images.dart';
+import 'package:bluesky/app_bsky_embed_record.dart';
 import 'package:bluesky/app_bsky_embed_recordwithmedia.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
 import 'package:bluesky/src/services/codegen/app/bsky/feed/post/main.dart' show FeedPostRecord;
@@ -208,52 +209,18 @@ class MastodonPost {
       if (embed != null) {
         embed.whenOrNull(
           embedRecordView: (recordView) {
-            // Use the getter to access embedRecordViewRecord if it exists
-            final quotedPost = recordView.record.embedRecordViewRecord;
-            if (quotedPost != null) {
-              final quotedEmbeds = quotedPost.embeds;
-              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                for (final quotedEmbed in quotedEmbeds) {
-                  quotedEmbed.whenOrNull(
-                    embedImagesView: (imagesView) {
-                      for (final image in imagesView.images) {
-                        final attachment = MastodonMediaAttachment.fromEmbed(image);
-                        quotedMediaAttachments.add(attachment.toJson());
-                      }
-                    },
-                  );
-                }
-              }
-            }
-          },
-          embedRecordWithMediaView: (recordWithMedia) {
-            // Extract media from the media part using whenOrNull
-            recordWithMedia.media.whenOrNull(
-              embedImagesView: (imagesView) {
-                for (final image in imagesView.images) {
-                  final attachment = MastodonMediaAttachment.fromEmbed(image);
-                  quotedMediaAttachments.add(attachment.toJson());
-                }
+            recordView.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                extractQuotedImages(quotedPost.embeds);
               },
             );
-            
-            // Also check the record part for embeds using the getter
-            final quotedPost = recordWithMedia.record.record.embedRecordViewRecord;
-            if (quotedPost != null) {
-              final quotedEmbeds = quotedPost.embeds;
-              if (quotedEmbeds != null && quotedEmbeds.isNotEmpty) {
-                for (final quotedEmbed in quotedEmbeds) {
-                  quotedEmbed.whenOrNull(
-                    embedImagesView: (imagesView) {
-                      for (final image in imagesView.images) {
-                        final attachment = MastodonMediaAttachment.fromEmbed(image);
-                        quotedMediaAttachments.add(attachment.toJson());
-                      }
-                    },
-                  );
-                }
-              }
-            }
+          },
+          embedRecordWithMediaView: (recordWithMedia) {
+            recordWithMedia.record.record.whenOrNull(
+              embedRecordViewRecord: (quotedPost) {
+                extractQuotedImages(quotedPost.embeds);
+              },
+            );
           },
         );
       }
