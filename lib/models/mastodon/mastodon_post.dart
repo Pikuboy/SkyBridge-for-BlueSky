@@ -234,7 +234,7 @@ class MastodonPost {
       }
 
       void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        if (embeds == null || embeds.isEmpty) return;
+        if (embeds == null || embeds.isEmpty || quotedCard != null) return;
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
@@ -255,6 +255,9 @@ class MastodonPost {
                 'embed_url': thumb ?? '',
                 'blurhash': null,
               };
+              return;
+            case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
+              // Vidéos non supportées
             default:
               break;
           }
@@ -533,7 +536,7 @@ class MastodonPost {
       }
 
       void extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) {
-        if (embeds == null || embeds.isEmpty) return;
+        if (embeds == null || embeds.isEmpty || quotedCard != null) return;
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
@@ -554,6 +557,9 @@ class MastodonPost {
                 'embed_url': thumb ?? '',
                 'blurhash': null,
               };
+              return;
+            case UEmbedRecordViewRecordEmbedsEmbedVideoView(:final data):
+              // Vidéos non supportées
             default:
               break;
           }
