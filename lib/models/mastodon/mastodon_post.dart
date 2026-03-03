@@ -235,7 +235,6 @@ class MastodonPost {
 
       Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
-        print('[DEBUG extractQuotedCard] called with ${embeds?.length} embeds');
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
@@ -278,52 +277,60 @@ class MastodonPost {
         }
       }
       
-      // Build a minimal quoted_status for the quote field.
-      quote = {
-        'state': 'accepted',
-        'quoted_status': {
-          'id': card.url.split('/').last,
-          'created_at': post.indexedAt.toUtc().toIso8601String(),
-          'sensitive': false,
-          'spoiler_text': '',
-          'visibility': 'public',
-          'uri': card.url,
-          'url': card.url,
-          'replies_count': 0,
-          'reblogs_count': 0,
-          'favourites_count': 0,
-          'content': '<p>${card.description}</p>',
-          'reblog': null,
-          'account': {
+      // Choose between card (old system) or quoted_status (new system)
+      if (quotedMediaAttachments.isEmpty) {
+        // No media in quoted post → use old card system (works for links)
+        // Keep the card, don't create quote object
+        print('[DEBUG] Quote has no media, using card system');
+      } else {
+        // Has media → use new quoted_status system
+        print('[DEBUG] Quote has media, using quoted_status system');
+        quote = {
+          'state': 'accepted',
+          'quoted_status': {
             'id': card.url.split('/').last,
-            'username': card.authorName,
-            'acct': card.authorName,
-            'display_name': card.authorName,
-            'locked': false,
-            'bot': false,
-            'created_at': '2020-01-01T00:00:00.000Z',
-            'note': '',
-            'url': 'https://$baseUrl/@${card.authorName}',
-            'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
-            'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
-            'header': 'https://$baseUrl/1px.png',
-            'header_static': 'https://$baseUrl/1px.png',
-            'followers_count': 0,
-            'following_count': 0,
-            'statuses_count': 0,
+            'created_at': post.indexedAt.toUtc().toIso8601String(),
+            'sensitive': false,
+            'spoiler_text': '',
+            'visibility': 'public',
+            'uri': card.url,
+            'url': card.url,
+            'replies_count': 0,
+            'reblogs_count': 0,
+            'favourites_count': 0,
+            'content': '<p>${card.description}</p>',
+            'reblog': null,
+            'account': {
+              'id': card.url.split('/').last,
+              'username': card.authorName,
+              'acct': card.authorName,
+              'display_name': card.authorName,
+              'locked': false,
+              'bot': false,
+              'created_at': '2020-01-01T00:00:00.000Z',
+              'note': '',
+              'url': 'https://$baseUrl/@${card.authorName}',
+              'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'header': 'https://$baseUrl/1px.png',
+              'header_static': 'https://$baseUrl/1px.png',
+              'followers_count': 0,
+              'following_count': 0,
+              'statuses_count': 0,
+              'emojis': [],
+              'fields': [],
+            },
+            'media_attachments': quotedMediaAttachments,
+            'mentions': [],
+            'tags': [],
             'emojis': [],
-            'fields': [],
+            'card': quotedCard,
+            'poll': null,
           },
-          'media_attachments': quotedMediaAttachments,
-          'mentions': [],
-          'tags': [],
-          'emojis': [],
-          'card': quotedCard,
-          'poll': null,
-        },
-      };
-      // Don't use card hack for quote posts — use native quote field instead.
-      card = null;
+        };
+        // Don't use card hack for quote posts with media — use native quote field instead.
+        card = null;
+      }
     }
 
     // If there is an external card link not already in content, add it.
@@ -528,7 +535,6 @@ class MastodonPost {
 
       Future<void> extractQuotedCard(List<UEmbedRecordViewRecordEmbeds>? embeds) async {
         if (embeds == null || embeds.isEmpty || quotedCard != null) return;
-        print('[DEBUG extractQuotedCard] called with ${embeds?.length} embeds');
         for (final quotedEmbed in embeds) {
           switch (quotedEmbed) {
             case UEmbedRecordViewRecordEmbedsEmbedExternalView(:final data):
@@ -571,50 +577,60 @@ class MastodonPost {
         }
       }
 
-      quote = {
-        'state': 'accepted',
-        'quoted_status': {
-          'id': card.url.split('/').last,
-          'created_at': post.indexedAt.toUtc().toIso8601String(),
-          'sensitive': false,
-          'spoiler_text': '',
-          'visibility': 'public',
-          'uri': card.url,
-          'url': card.url,
-          'replies_count': 0,
-          'reblogs_count': 0,
-          'favourites_count': 0,
-          'content': '<p>${card.description}</p>',
-          'reblog': null,
-          'account': {
+      // Choose between card (old system) or quoted_status (new system)
+      if (quotedMediaAttachments.isEmpty) {
+        // No media in quoted post → use old card system (works for links)
+        // Keep the card, don't create quote object
+        print('[DEBUG] Quote has no media, using card system');
+      } else {
+        // Has media → use new quoted_status system
+        print('[DEBUG] Quote has media, using quoted_status system');
+        quote = {
+          'state': 'accepted',
+          'quoted_status': {
             'id': card.url.split('/').last,
-            'username': card.authorName,
-            'acct': card.authorName,
-            'display_name': card.authorName,
-            'locked': false,
-            'bot': false,
-            'created_at': '2020-01-01T00:00:00.000Z',
-            'note': '',
-            'url': 'https://$baseUrl/@${card.authorName}',
-            'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
-            'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
-            'header': 'https://$baseUrl/1px.png',
-            'header_static': 'https://$baseUrl/1px.png',
-            'followers_count': 0,
-            'following_count': 0,
-            'statuses_count': 0,
+            'created_at': post.indexedAt.toUtc().toIso8601String(),
+            'sensitive': false,
+            'spoiler_text': '',
+            'visibility': 'public',
+            'uri': card.url,
+            'url': card.url,
+            'replies_count': 0,
+            'reblogs_count': 0,
+            'favourites_count': 0,
+            'content': '<p>${card.description}</p>',
+            'reblog': null,
+            'account': {
+              'id': card.url.split('/').last,
+              'username': card.authorName,
+              'acct': card.authorName,
+              'display_name': card.authorName,
+              'locked': false,
+              'bot': false,
+              'created_at': '2020-01-01T00:00:00.000Z',
+              'note': '',
+              'url': 'https://$baseUrl/@${card.authorName}',
+              'avatar': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'avatar_static': card.authorUrl.isNotEmpty ? card.authorUrl : 'https://$baseUrl/1px.png',
+              'header': 'https://$baseUrl/1px.png',
+              'header_static': 'https://$baseUrl/1px.png',
+              'followers_count': 0,
+              'following_count': 0,
+              'statuses_count': 0,
+              'emojis': [],
+              'fields': [],
+            },
+            'media_attachments': quotedMediaAttachments,
+            'mentions': [],
+            'tags': [],
             'emojis': [],
-            'fields': [],
+            'card': quotedCard,
+            'poll': null,
           },
-          'media_attachments': quotedMediaAttachments,
-          'mentions': [],
-          'tags': [],
-          'emojis': [],
-          'card': quotedCard,
-          'poll': null,
-        },
-      };
-      card = null;
+        };
+        // Don't use card hack for quote posts with media — use native quote field instead.
+        card = null;
+      }
     }
 
     // If there is an external card link not already in content, add it.
