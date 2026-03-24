@@ -277,14 +277,18 @@ class MastodonPost {
         }
       }
       
-      // Choose between card (old system) or quoted_status (new system)
-      if (quotedMediaAttachments.isEmpty) {
-        // No media in quoted post → use old card system (works for links)
+      // Choose between card (old system) or quoted_status (new system).
+      // Use the native quote system if:
+      //   - the quoted post has media, OR
+      //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
+      //     even when the quoted post has no media (fixes image+quote with text-only quote).
+      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+        // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
-        print('[DEBUG] Quote has no media, using card system');
+        print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
       } else {
-        // Has media → use new quoted_status system
-        print('[DEBUG] Quote has media, using quoted_status system');
+        // Has media in quoted post OR main post is media+quote → use new quoted_status system
+        print('[DEBUG] Using quoted_status system (quotedMedia=${quotedMediaAttachments.length}, isRecordWithMedia=$isRecordWithMedia)');
         quote = {
           'state': 'accepted',
           'quoted_status': {
@@ -328,7 +332,7 @@ class MastodonPost {
             'poll': null,
           },
         };
-        // Don't use card hack for quote posts with media — use native quote field instead.
+        // Don't use card hack for quote posts — use native quote field instead.
         card = null;
       }
     }
@@ -577,14 +581,18 @@ class MastodonPost {
         }
       }
 
-      // Choose between card (old system) or quoted_status (new system)
-      if (quotedMediaAttachments.isEmpty) {
-        // No media in quoted post → use old card system (works for links)
+      // Choose between card (old system) or quoted_status (new system).
+      // Use the native quote system if:
+      //   - the quoted post has media, OR
+      //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
+      //     even when the quoted post has no media (fixes image+quote with text-only quote).
+      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+        // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
-        print('[DEBUG] Quote has no media, using card system');
+        print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
       } else {
-        // Has media → use new quoted_status system
-        print('[DEBUG] Quote has media, using quoted_status system');
+        // Has media in quoted post OR main post is media+quote → use new quoted_status system
+        print('[DEBUG] Using quoted_status system (quotedMedia=${quotedMediaAttachments.length}, isRecordWithMedia=$isRecordWithMedia)');
         quote = {
           'state': 'accepted',
           'quoted_status': {
