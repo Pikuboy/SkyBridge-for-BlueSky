@@ -71,6 +71,19 @@ Future<Response> onRequest(RequestContext context) async {
         },
       );
 
+      // Get current feed URIs to track which ones are still active
+      final currentFeedUris = result.map((feed) => feed.uri.toString()).toSet();
+
+      // Delete feeds that are no longer in the user's preferences
+      final allDbFeeds = await db.feedRecord.findMany();
+      for (final dbFeed in allDbFeeds) {
+        if (dbFeed.uri != null && !currentFeedUris.contains(dbFeed.uri)) {
+          await db.feedRecord.delete(
+            where: FeedRecordWhereUniqueInput(id: dbFeed.id),
+          );
+        }
+      }
+
       // Convert the feed generator views to [MastodonList]'s
       final userLists = await databaseTransaction(() async {
         final listFutures = result.map(
@@ -80,6 +93,9 @@ Future<Response> onRequest(RequestContext context) async {
       }) as List<MastodonList>;
       
       lists.addAll(userLists);
+    } else {
+      // No feeds in preferences, delete all feeds from database
+      await db.feedRecord.deleteMany(where: const FeedRecordWhereInput());
     }
 
     return threadedJsonResponse(
