@@ -6,6 +6,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_list.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Create a new list.
@@ -21,43 +22,78 @@ Future<Response> onRequest(RequestContext context) async {
 
     var lists = <MastodonList>[];
 
-    // Get saved feeds from the user's preferences.
+    // Add "Following" timeline (maps to Mastodon's Local timeline)
+    lists.add(MastodonList(
+      id: 'following',
+      title: 'Following',
+      repliesPolicy: RepliesPolicy.list,
+    ));
+
+    // Get saved/pinned feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
+    
+    List<at.AtUri> pinnedFeeds = [];
+    List<at.AtUri> savedFeeds = [];
+    
     for (final preference in response.data.preferences) {
-      // Check if this preference has savedUris property (SavedFeeds type)
       try {
         final data = preference.data;
-        // Use reflection/dynamic access to check for savedUris
-        if (data.runtimeType.toString().contains('SavedFeeds')) {
-          // Access savedUris dynamically
-          final feedUris = (data as dynamic).savedUris as List;
-          if (feedUris.isEmpty) continue;
+        final typeName = data.runtimeType.toString();
+        
+        // Get pinned feeds
+        if (typeName.contains('SavedFeedsPref')) {
+          final pinned = (data as dynamic).pinned as List?;
+          if (pinned != null && pinned.isNotEmpty) {
+            pinnedFeeds = pinned.cast<at.AtUri>();
+          }
           
-          // Get the feed generator views for each saved feed, giving us info
-          // like the name of the feed and the accompanying IDs.
-          final result = await chunkResults(
-            items: feedUris.cast<at.AtUri>(),
-            callback: (chunk) async {
-              final response = await bluesky.feed.getFeedGenerators(
-                feeds: chunk,
-              );
-              return response.data.feeds;
-            },
-          );
-
-          // Convert the feed generator views to [MastodonList]'s, storing
-          // any info in the database we might need to access later.
-          lists = await databaseTransaction(() async {
-            final listFutures = result.map(
-              MastodonList.fromFeedGenerator,
-            ).cast<Future<MastodonList>>();
-            return Future.wait(listFutures);
-          }) as List<MastodonList>;
+          final saved = (data as dynamic).saved as List?;
+          if (saved != null && saved.isNotEmpty) {
+            savedFeeds = saved.cast<at.AtUri>();
+          }
         }
       } catch (e) {
-        // Skip preferences that don't match
         continue;
       }
+    }
+
+    // Combine pinned and saved feeds, prioritizing pinned
+    final allFeeds = <at.AtUri>{...pinnedFeeds, ...savedFeeds}.toList();
+    
+    // Get current feed URIs to track which ones should be kept
+    final currentFeedUris = allFeeds.map((uri) => uri.toString()).toSet();
+    
+    // Delete feeds that are no longer in the user's preferences
+    final allDbFeeds = await db.feedRecord.findMany();
+    for (final dbFeed in allDbFeeds) {
+      if (dbFeed.uri != null && !currentFeedUris.contains(dbFeed.uri)) {
+        await db.feedRecord.delete(
+          where: FeedRecordWhereUniqueInput(id: dbFeed.id),
+        );
+      }
+    }
+    
+    if (allFeeds.isNotEmpty) {
+      // Get the feed generator views for each feed
+      final result = await chunkResults(
+        items: allFeeds,
+        callback: (chunk) async {
+          final response = await bluesky.feed.getFeedGenerators(
+            feeds: chunk,
+          );
+          return response.data.feeds;
+        },
+      );
+
+      // Convert the feed generator views to [MastodonList]'s
+      final userLists = await databaseTransaction(() async {
+        final listFutures = result.map(
+          MastodonList.fromFeedGenerator,
+        ).cast<Future<MastodonList>>();
+        return Future.wait(listFutures);
+      }) as List<MastodonList>;
+      
+      lists.addAll(userLists);
     }
 
     return threadedJsonResponse(
