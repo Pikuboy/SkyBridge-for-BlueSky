@@ -21,6 +21,20 @@ Future<Response> onRequest(RequestContext context) async {
 
     var lists = <MastodonList>[];
 
+    // Add special built-in feeds that map to Mastodon's Local and Federated timelines
+    lists.addAll([
+      MastodonList(
+        id: 'local',
+        title: 'Local',
+        repliesPolicy: RepliesPolicy.list,
+      ),
+      MastodonList(
+        id: 'federated',
+        title: 'Federated',
+        repliesPolicy: RepliesPolicy.list,
+      ),
+    ]);
+
     // Get saved feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
     for (final preference in response.data.preferences) {
@@ -47,12 +61,14 @@ Future<Response> onRequest(RequestContext context) async {
 
           // Convert the feed generator views to [MastodonList]'s, storing
           // any info in the database we might need to access later.
-          lists = await databaseTransaction(() async {
+          final userLists = await databaseTransaction(() async {
             final listFutures = result.map(
               MastodonList.fromFeedGenerator,
             ).cast<Future<MastodonList>>();
             return Future.wait(listFutures);
           }) as List<MastodonList>;
+          
+          lists.addAll(userLists);
         }
       } catch (e) {
         // Skip preferences that don't match

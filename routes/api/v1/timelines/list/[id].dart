@@ -19,11 +19,6 @@ Future<Response> onRequest(RequestContext context, String id) async {
     return Response(statusCode: HttpStatus.methodNotAllowed);
   }
 
-  // If the id is not a number we return 404 for now.
-  if (int.tryParse(id) == null) {
-    return Response(statusCode: HttpStatus.notFound);
-  }
-
   // Get the next cursor from the request parameters.
   final params = context.request.uri.queryParameters;
   final encodedParams = TimelineParams.fromJson(params);
@@ -35,23 +30,66 @@ Future<Response> onRequest(RequestContext context, String id) async {
   final bluesky = await blueskyFromContext(context);
   if (bluesky == null) return authError();
 
-  // Get the media attachment from the database.
-  final idNumber = BigInt.parse(id);
-  final record = await db.feedRecord.findUnique(
-    where: FeedRecordWhereUniqueInput(id: idNumber),
-  );
-  if (record == null) return Response(statusCode: HttpStatus.notFound);
+  List<MastodonPost> posts;
+  String? cursor;
 
-  final feed = await bluesky.feed.getFeed(
-    feed: at.AtUri.parse(record.uri!),
-  );
+  // Handle special timeline IDs
+  if (id == 'local') {
+    // Map to Bluesky's "Following" feed (home timeline)
+    final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
+    final feed = await bluesky.feed.getTimeline(
+      limit: encodedParams.limit.clamp(1, 40),
+      cursor: paginationCursor,
+    );
+    cursor = feed.data.cursor;
+    posts = await databaseTransaction(() async {
+      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+      return Future.wait(futures);
+    });
+  } else if (id == 'federated') {
+    // Map to Bluesky's "What's Hot" popular feed
+    const whatsHotUri =
+        'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
+    final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
+    
+    final feed = await bluesky.feed.getFeed(
+      feed: at.AtUri.parse(whatsHotUri),
+      limit: encodedParams.limit.clamp(1, 40),
+      cursor: paginationCursor,
+    );
+    cursor = feed.data.cursor;
+    posts = await databaseTransaction(() async {
+      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
+      return Future.wait(futures);
+    });
+  } else {
+    // Handle numeric IDs for custom feeds
+    if (int.tryParse(id) == null) {
+      return Response(statusCode: HttpStatus.notFound);
+    }
 
-  // Take all the posts and convert them to Mastodon ones
-  // Await all the futures, getting any necessary data from the database.
-  final posts = await databaseTransaction(() async {
-    final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
-    return Future.wait(futures);
-  });
+    // Get the media attachment from the database.
+    final idNumber = BigInt.parse(id);
+    final record = await db.feedRecord.findUnique(
+      where: FeedRecordWhereUniqueInput(id: idNumber),
+    );
+    if (record == null) return Response(statusCode: HttpStatus.notFound);
+
+    final feed = await bluesky.feed.getFeed(
+      feed: at.AtUri.parse(record.uri!),
+      cursor: nextCursor,
+      limit: encodedParams.limit.clamp(1, 40),
+    );
+
+    cursor = feed.data.cursor;
+    
+    // Take all the posts and convert them to Mastodon ones
+    // Await all the futures, getting any necessary data from the database.
+    posts = await databaseTransaction(() async {
+      final futures = feed.data.feed.map<Future<MastodonPost>>(MastodonPost.fromFeedView).toList();
+      return Future.wait(futures);
+    });
+  }
 
   // Get the parent posts for each post.
   final processedPosts = await processParentPosts(bluesky, posts);
@@ -61,7 +99,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
     headers = generatePaginationHeaders(
       items: processedPosts,
       requestUri: context.request.uri,
-      nextCursor: nextCursor ?? '',
+      nextCursor: cursor ?? '',
       getId: (post) => BigInt.parse(post.id),
     );
   }
