@@ -21,90 +21,65 @@ Future<Response> onRequest(RequestContext context) async {
 
     var lists = <MastodonList>[];
 
-    // Add special built-in feeds that map to Mastodon's Local and Federated timelines
-    // Fetch the feed generators to get the actual display names from Bluesky
-    try {
-      const followingUri = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/following';
-      const discoverUri = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
-      
-      final feedsResponse = await bluesky.feed.getFeedGenerators(
-        feeds: [
-          at.AtUri.parse(followingUri),
-          at.AtUri.parse(discoverUri),
-        ],
-      );
-      
-      // Map feeds to their IDs
-      final feedMap = {
-        followingUri: 'local',
-        discoverUri: 'federated',
-      };
-      
-      for (final feed in feedsResponse.data.feeds) {
-        final feedId = feedMap[feed.uri.toString()];
-        if (feedId != null) {
-          lists.add(MastodonList(
-            id: feedId,
-            title: feed.displayName,
-            repliesPolicy: RepliesPolicy.list,
-          ));
-        }
-      }
-    } catch (e) {
-      // Fallback to hardcoded names if API call fails
-      lists.addAll([
-        MastodonList(
-          id: 'local',
-          title: 'Following',
-          repliesPolicy: RepliesPolicy.list,
-        ),
-        MastodonList(
-          id: 'federated',
-          title: 'Discover',
-          repliesPolicy: RepliesPolicy.list,
-        ),
-      ]);
-    }
+    // Add "Following" timeline (maps to Mastodon's Local timeline)
+    lists.add(MastodonList(
+      id: 'following',
+      title: 'Following',
+      repliesPolicy: RepliesPolicy.list,
+    ));
 
-    // Get saved feeds from the user's preferences.
+    // Get saved/pinned feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
+    
+    List<at.AtUri> pinnedFeeds = [];
+    List<at.AtUri> savedFeeds = [];
+    
     for (final preference in response.data.preferences) {
-      // Check if this preference has savedUris property (SavedFeeds type)
       try {
         final data = preference.data;
-        // Use reflection/dynamic access to check for savedUris
-        if (data.runtimeType.toString().contains('SavedFeeds')) {
-          // Access savedUris dynamically
-          final feedUris = (data as dynamic).savedUris as List;
-          if (feedUris.isEmpty) continue;
+        final typeName = data.runtimeType.toString();
+        
+        // Get pinned feeds
+        if (typeName.contains('SavedFeedsPref')) {
+          final pinned = (data as dynamic).pinned as List?;
+          if (pinned != null && pinned.isNotEmpty) {
+            pinnedFeeds = pinned.cast<at.AtUri>();
+          }
           
-          // Get the feed generator views for each saved feed, giving us info
-          // like the name of the feed and the accompanying IDs.
-          final result = await chunkResults(
-            items: feedUris.cast<at.AtUri>(),
-            callback: (chunk) async {
-              final response = await bluesky.feed.getFeedGenerators(
-                feeds: chunk,
-              );
-              return response.data.feeds;
-            },
-          );
-
-          // Convert the feed generator views to [MastodonList]'s, storing
-          // any info in the database we might need to access later.
-          final userLists = await databaseTransaction(() async {
-            final listFutures = result.map(
-              MastodonList.fromFeedGenerator,
-            ).cast<Future<MastodonList>>();
-            return Future.wait(listFutures);
-          }) as List<MastodonList>;
-          
-          lists.addAll(userLists);
+          final saved = (data as dynamic).saved as List?;
+          if (saved != null && saved.isNotEmpty) {
+            savedFeeds = saved.cast<at.AtUri>();
+          }
         }
       } catch (e) {
-        // Skip preferences that don't match
         continue;
       }
+    }
+
+    // Combine pinned and saved feeds, prioritizing pinned
+    final allFeeds = <at.AtUri>{...pinnedFeeds, ...savedFeeds}.toList();
+    
+    if (allFeeds.isNotEmpty) {
+      // Get the feed generator views for each feed
+      final result = await chunkResults(
+        items: allFeeds,
+        callback: (chunk) async {
+          final response = await bluesky.feed.getFeedGenerators(
+            feeds: chunk,
+          );
+          return response.data.feeds;
+        },
+      );
+
+      // Convert the feed generator views to [MastodonList]'s
+      final userLists = await databaseTransaction(() async {
+        final listFutures = result.map(
+          MastodonList.fromFeedGenerator,
+        ).cast<Future<MastodonList>>();
+        return Future.wait(listFutures);
+      }) as List<MastodonList>;
+      
+      lists.addAll(userLists);
     }
 
     return threadedJsonResponse(

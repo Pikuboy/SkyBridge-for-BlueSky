@@ -34,26 +34,10 @@ Future<Response> onRequest(RequestContext context, String id) async {
   String? cursor;
 
   // Handle special timeline IDs
-  if (id == 'local') {
+  if (id == 'following') {
     // Map to Bluesky's "Following" feed (home timeline)
     final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
     final feed = await bluesky.feed.getTimeline(
-      limit: encodedParams.limit.clamp(1, 40),
-      cursor: paginationCursor,
-    );
-    cursor = feed.data.cursor;
-    posts = await databaseTransaction(() async {
-      final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList();
-      return Future.wait(futures);
-    });
-  } else if (id == 'federated') {
-    // Map to Bluesky's "What's Hot" popular feed
-    const whatsHotUri =
-        'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
-    final paginationCursor = encodedParams.cursor ?? encodedParams.maxId;
-    
-    final feed = await bluesky.feed.getFeed(
-      feed: at.AtUri.parse(whatsHotUri),
       limit: encodedParams.limit.clamp(1, 40),
       cursor: paginationCursor,
     );
