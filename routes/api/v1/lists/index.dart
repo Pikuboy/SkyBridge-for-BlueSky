@@ -22,18 +22,49 @@ Future<Response> onRequest(RequestContext context) async {
     var lists = <MastodonList>[];
 
     // Add special built-in feeds that map to Mastodon's Local and Federated timelines
-    lists.addAll([
-      MastodonList(
-        id: 'local',
-        title: 'Local',
-        repliesPolicy: RepliesPolicy.list,
-      ),
-      MastodonList(
-        id: 'federated',
-        title: 'Federated',
-        repliesPolicy: RepliesPolicy.list,
-      ),
-    ]);
+    // Fetch the feed generators to get the actual display names from Bluesky
+    try {
+      const followingUri = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/following';
+      const discoverUri = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
+      
+      final feedsResponse = await bluesky.feed.getFeedGenerators(
+        feeds: [
+          at.AtUri.parse(followingUri),
+          at.AtUri.parse(discoverUri),
+        ],
+      );
+      
+      // Map feeds to their IDs
+      final feedMap = {
+        followingUri: 'local',
+        discoverUri: 'federated',
+      };
+      
+      for (final feed in feedsResponse.data.feeds) {
+        final feedId = feedMap[feed.uri.toString()];
+        if (feedId != null) {
+          lists.add(MastodonList(
+            id: feedId,
+            title: feed.displayName,
+            repliesPolicy: RepliesPolicy.list,
+          ));
+        }
+      }
+    } catch (e) {
+      // Fallback to hardcoded names if API call fails
+      lists.addAll([
+        MastodonList(
+          id: 'local',
+          title: 'Following',
+          repliesPolicy: RepliesPolicy.list,
+        ),
+        MastodonList(
+          id: 'federated',
+          title: 'Discover',
+          repliesPolicy: RepliesPolicy.list,
+        ),
+      ]);
+    }
 
     // Get saved feeds from the user's preferences.
     final response = await bluesky.actor.getPreferences();
