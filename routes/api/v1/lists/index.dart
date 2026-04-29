@@ -6,6 +6,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:sky_bridge/auth.dart';
 import 'package:sky_bridge/database.dart';
 import 'package:sky_bridge/models/mastodon/mastodon_list.dart';
+import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/util.dart';
 
 /// Create a new list.
