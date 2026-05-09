@@ -60,19 +60,6 @@ Future<Response> onRequest(RequestContext context) async {
     // Combine pinned and saved feeds, prioritizing pinned
     final allFeeds = <at.AtUri>{...pinnedFeeds, ...savedFeeds}.toList();
     
-    // Get current feed URIs to track which ones should be kept
-    final currentFeedUris = allFeeds.map((uri) => uri.toString()).toSet();
-    
-    // Delete feeds that are no longer in the user's preferences
-    final allDbFeeds = await db.feedRecord.findMany();
-    for (final dbFeed in allDbFeeds) {
-      if (dbFeed.uri != null && !currentFeedUris.contains(dbFeed.uri)) {
-        await db.feedRecord.delete(
-          where: FeedRecordWhereUniqueInput(id: dbFeed.id),
-        );
-      }
-    }
-    
     if (allFeeds.isNotEmpty) {
       // Get the feed generator views for each feed
       final result = await chunkResults(
@@ -85,6 +72,19 @@ Future<Response> onRequest(RequestContext context) async {
         },
       );
 
+      // Get current feed CIDs to track which ones should be kept
+      final currentFeedCids = result.map((feed) => feed.cid).toSet();
+      
+      // Delete feeds that are no longer in the user's preferences
+      final allDbFeeds = await db.feedRecord.findMany();
+      for (final dbFeed in allDbFeeds) {
+        if (dbFeed.cid != null && !currentFeedCids.contains(dbFeed.cid)) {
+          await db.feedRecord.delete(
+            where: FeedRecordWhereUniqueInput(id: dbFeed.id),
+          );
+        }
+      }
+
       // Convert the feed generator views to [MastodonList]'s
       final userLists = await databaseTransaction(() async {
         final listFutures = result.map(
@@ -94,6 +94,9 @@ Future<Response> onRequest(RequestContext context) async {
       }) as List<MastodonList>;
       
       lists.addAll(userLists);
+    } else {
+      // No feeds in preferences, delete all feeds from database
+      await db.feedRecord.deleteMany(where: const FeedRecordWhereInput());
     }
 
     return threadedJsonResponse(
