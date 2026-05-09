@@ -40,19 +40,24 @@ Future<Response> onRequest(RequestContext context) async {
         final data = preference.data;
         final typeName = data.runtimeType.toString();
         
+        print('[DEBUG] Preference type: $typeName');
+        
         // Get pinned feeds
         if (typeName.contains('SavedFeedsPref')) {
           final pinned = (data as dynamic).pinned as List?;
           if (pinned != null && pinned.isNotEmpty) {
             pinnedFeeds = pinned.cast<at.AtUri>();
+            print('[DEBUG] Pinned feeds: ${pinnedFeeds.map((f) => f.toString()).toList()}');
           }
           
           final saved = (data as dynamic).saved as List?;
           if (saved != null && saved.isNotEmpty) {
             savedFeeds = saved.cast<at.AtUri>();
+            print('[DEBUG] Saved feeds: ${savedFeeds.map((f) => f.toString()).toList()}');
           }
         }
       } catch (e) {
+        print('[DEBUG] Error processing preference: $e');
         continue;
       }
     }
