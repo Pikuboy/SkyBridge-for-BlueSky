@@ -60,6 +60,13 @@ Future<Response> onRequest(RequestContext context) async {
     // Combine pinned and saved feeds, prioritizing pinned
     final allFeeds = <at.AtUri>{...pinnedFeeds, ...savedFeeds}.toList();
     
+    print('[DEBUG] Pinned feeds count: ${pinnedFeeds.length}');
+    print('[DEBUG] Saved feeds count: ${savedFeeds.length}');
+    print('[DEBUG] Total feeds from Bluesky: ${allFeeds.length}');
+    for (final feed in allFeeds) {
+      print('[DEBUG] Feed URI: ${feed.toString()}');
+    }
+    
     if (allFeeds.isNotEmpty) {
       // Get the feed generator views for each feed
       final result = await chunkResults(
@@ -75,10 +82,16 @@ Future<Response> onRequest(RequestContext context) async {
       // Get current feed CIDs to track which ones should be kept
       final currentFeedCids = result.map((feed) => feed.cid).toSet();
       
+      print('[DEBUG] Current feed CIDs: $currentFeedCids');
+      
       // Delete feeds that are no longer in the user's preferences
       final allDbFeeds = await db.feedRecord.findMany();
+      print('[DEBUG] Feeds in database: ${allDbFeeds.length}');
+      
       for (final dbFeed in allDbFeeds) {
+        print('[DEBUG] DB Feed CID: ${dbFeed.cid}, should keep: ${currentFeedCids.contains(dbFeed.cid)}');
         if (dbFeed.cid != null && !currentFeedCids.contains(dbFeed.cid)) {
+          print('[DEBUG] Deleting feed with CID: ${dbFeed.cid}');
           await db.feedRecord.delete(
             where: FeedRecordWhereUniqueInput(id: dbFeed.id),
           );
@@ -95,6 +108,7 @@ Future<Response> onRequest(RequestContext context) async {
       
       lists.addAll(userLists);
     } else {
+      print('[DEBUG] No feeds in preferences, deleting all from database');
       // No feeds in preferences, delete all feeds from database
       await db.feedRecord.deleteMany(where: const FeedRecordWhereInput());
     }
