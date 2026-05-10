@@ -1,11 +1,12 @@
 This is a fork from https://github.com/videah/skybridge, the origial dev. I completed a portion of the functionnality using Claude.ai because I don't speak Dart.
 
-Video is now supported in Ivory, but only embedded in the post, full screen is not working. It seems Ivory full screen player is not supporting HLS video, it needs mp4 files which is not provided by Bluesky so it will never work.
+— Video is now supported in Ivory, ~~but only embedded in the post, full screen is not working. It seems Ivory full screen player is not supporting HLS video, it needs mp4 files which is not provided by Bluesky so it will never work.~~ and it seems the latest version fixed the issue with full screen playback.
 
-You can now use the search tab too. 
-Support for third party PDS (tested with eurosky.social)
+— You can now use the search tab too.
+— Support for third party PDS (tested with eurosky.social)
+— Feeds are supported and available in the list tab. If you add or delete a feed from Bluesky, the change should be reflected in Ivory (in some case, after a restart of the app).
 
-You can also filter replies, keywords and repost using the filters.json file.
+— You can also filter replies, keywords and repost using the filters.json file.
 You just have to put it at the same location than the db (/app/database)
 You fill it like in the sample file. Link to get the DID is included in the filters.json file.
 After each edit, you need to restart the docker image, it only reads it at start.
