@@ -15,7 +15,8 @@ OAuthAccessToken _$OAuthAccessTokenFromJson(Map<String, dynamic> json) =>
       preferences: json['preferences'] == null
           ? const SkybridgePreferences()
           : SkybridgePreferences.fromJson(
-              json['preferences'] as Map<String, dynamic>),
+              json['preferences'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$OAuthAccessTokenToJson(OAuthAccessToken instance) =>

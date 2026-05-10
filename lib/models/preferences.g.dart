@@ -7,13 +7,11 @@ part of 'preferences.dart';
 // **************************************************************************
 
 SkybridgePreferences _$SkybridgePreferencesFromJson(
-        Map<String, dynamic> json) =>
-    SkybridgePreferences(
-      showRepliesInHome: json['showRepliesInHome'] as bool? ?? false,
-    );
+  Map<String, dynamic> json,
+) => SkybridgePreferences(
+  showRepliesInHome: json['showRepliesInHome'] as bool? ?? false,
+);
 
 Map<String, dynamic> _$SkybridgePreferencesToJson(
-        SkybridgePreferences instance) =>
-    <String, dynamic>{
-      'showRepliesInHome': instance.showRepliesInHome,
-    };
+  SkybridgePreferences instance,
+) => <String, dynamic>{'showRepliesInHome': instance.showRepliesInHome};

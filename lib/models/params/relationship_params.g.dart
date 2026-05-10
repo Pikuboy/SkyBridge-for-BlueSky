@@ -7,11 +7,7 @@ part of 'relationship_params.dart';
 // **************************************************************************
 
 RelationshipParams _$RelationshipParamsFromJson(Map<String, dynamic> json) =>
-    RelationshipParams(
-      ids: parseQueryArray(json['id[]'] as Object),
-    );
+    RelationshipParams(ids: parseQueryArray(json['id[]'] as Object));
 
 Map<String, dynamic> _$RelationshipParamsToJson(RelationshipParams instance) =>
-    <String, dynamic>{
-      'id[]': instance.ids,
-    };
+    <String, dynamic>{'id[]': instance.ids};
