@@ -12,6 +12,7 @@ import 'package:sky_bridge/models/mastodon/mastodon_account.dart';
 import 'package:sky_bridge/src/generated/prisma/client.dart';
 import 'package:sky_bridge/src/generated/prisma/prisma.dart';
 import 'package:sky_bridge/src/generated/prisma/model.dart';
+import 'package:bluesky/bluesky.dart' as bsky;
 
 /// Global Isar database instance. Initialized in main.dart on startup.
 /// Used to store 64-bit integer IDs for posts and accounts.
