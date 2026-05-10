@@ -7,12 +7,8 @@ part of 'lookup_account_params.dart';
 // **************************************************************************
 
 LookupAccountParams _$LookupAccountParamsFromJson(Map<String, dynamic> json) =>
-    LookupAccountParams(
-      acct: json['acct'] as String,
-    );
+    LookupAccountParams(acct: json['acct'] as String);
 
 Map<String, dynamic> _$LookupAccountParamsToJson(
-        LookupAccountParams instance) =>
-    <String, dynamic>{
-      'acct': instance.acct,
-    };
+  LookupAccountParams instance,
+) => <String, dynamic>{'acct': instance.acct};

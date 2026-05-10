@@ -15,10 +15,10 @@ MastodonApplication _$MastodonApplicationFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$MastodonApplicationToJson(
-        MastodonApplication instance) =>
-    <String, dynamic>{
-      'client_name': instance.clientName,
-      'redirect_uris': instance.redirectUris,
-      'scopes': instance.scopes,
-      'website': instance.website,
-    };
+  MastodonApplication instance,
+) => <String, dynamic>{
+  'client_name': instance.clientName,
+  'redirect_uris': instance.redirectUris,
+  'scopes': instance.scopes,
+  'website': instance.website,
+};

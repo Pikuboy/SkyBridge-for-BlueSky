@@ -40,60 +40,141 @@ Future<Response> onRequest(RequestContext context) async {
         final data = preference.data;
         final typeName = data.runtimeType.toString();
         
-        // Get pinned feeds
-        if (typeName.contains('SavedFeedsPref')) {
-          final pinned = (data as dynamic).pinned as List?;
-          if (pinned != null && pinned.isNotEmpty) {
-            pinnedFeeds = pinned.cast<at.AtUri>();
+        // Get pinned feeds from V2 (the current version used by Bluesky app)
+        if (typeName.contains('SavedFeedsPrefV2')) {
+          final items = (data as dynamic).items as List?;
+          
+          if (items != null && items.isNotEmpty) {
+            for (final item in items) {
+              try {
+                final isPinned = (item as dynamic).pinned as bool? ?? false;
+                if (!isPinned) continue;
+                
+                final type = (item as dynamic).type.toString();
+                final value = (item as dynamic).value;
+                
+                // Handle timeline type (e.g., "following")
+                if (type.contains('timeline')) {
+                  // Skip timeline feeds, we handle "following" separately
+                  continue;
+                }
+                
+                // Handle feed and list types
+                if (type.contains('feed') || type.contains('list')) {
+                  if (value is String) {
+                    pinnedFeeds.add(at.AtUri.parse(value));
+                  } else if (value is at.AtUri) {
+                    pinnedFeeds.add(value);
+                  }
+                }
+              } catch (e) {
+                print('[DEBUG] Error processing item: $e');
+                continue;
+              }
+            }
           }
           
-          final saved = (data as dynamic).saved as List?;
-          if (saved != null && saved.isNotEmpty) {
-            savedFeeds = saved.cast<at.AtUri>();
-          }
+          break; // Stop after processing V2
         }
       } catch (e) {
+        print('[DEBUG] Error processing preference: $e');
         continue;
       }
     }
+    
+    // Use pinnedFeeds for both pinned and saved (V2 only uses pinned)
+    savedFeeds = pinnedFeeds;
 
     // Combine pinned and saved feeds, prioritizing pinned
     final allFeeds = <at.AtUri>{...pinnedFeeds, ...savedFeeds}.toList();
     
-    // Get current feed URIs to track which ones should be kept
-    final currentFeedUris = allFeeds.map((uri) => uri.toString()).toSet();
+    // Separate feeds from lists
+    final feedUris = <at.AtUri>[];
+    final listUris = <at.AtUri>[];
     
-    // Delete feeds that are no longer in the user's preferences
-    final allDbFeeds = await db.feedRecord.findMany();
-    for (final dbFeed in allDbFeeds) {
-      if (dbFeed.uri != null && !currentFeedUris.contains(dbFeed.uri)) {
-        await db.feedRecord.delete(
-          where: FeedRecordWhereUniqueInput(id: dbFeed.id),
-        );
+    for (final uri in allFeeds) {
+      if (uri.toString().contains('app.bsky.graph.list')) {
+        listUris.add(uri);
+      } else if (uri.toString().contains('app.bsky.feed.generator')) {
+        feedUris.add(uri);
       }
     }
     
-    if (allFeeds.isNotEmpty) {
-      // Get the feed generator views for each feed
-      final result = await chunkResults(
-        items: allFeeds,
-        callback: (chunk) async {
-          final response = await bluesky.feed.getFeedGenerators(
-            feeds: chunk,
-          );
-          return response.data.feeds;
-        },
-      );
+    print('[DEBUG] Feed generators count: ${feedUris.length}');
+    print('[DEBUG] Lists count: ${listUris.length}');
+    
+    if (feedUris.isNotEmpty || listUris.isNotEmpty) {
+      List<dynamic> allItems = [];
+      
+      // Get feed generators
+      if (feedUris.isNotEmpty) {
+        final feedResult = await chunkResults(
+          items: feedUris,
+          callback: (chunk) async {
+            final response = await bluesky.feed.getFeedGenerators(
+              feeds: chunk,
+            );
+            return response.data.feeds;
+          },
+        );
+        allItems.addAll(feedResult);
+      }
+      
+      // Get lists
+      if (listUris.isNotEmpty) {
+        for (final listUri in listUris) {
+          try {
+            final listResponse = await bluesky.graph.getList(
+              list: listUri,
+            );
+            allItems.add(listResponse.data.list);
+          } catch (e) {
+            print('[DEBUG] Error fetching list $listUri: $e');
+          }
+        }
+      }
 
-      // Convert the feed generator views to [MastodonList]'s
+      // Get current feed/list CIDs to track which ones should be kept
+      final currentCids = allItems.map((item) => (item as dynamic).cid).toSet();
+      
+      print('[DEBUG] Current CIDs: $currentCids');
+      
+      // Delete feeds that are no longer in the user's preferences
+      final allDbFeeds = await db.feedRecord.findMany();
+      print('[DEBUG] Feeds in database: ${allDbFeeds.length}');
+      
+      for (final dbFeed in allDbFeeds) {
+        print('[DEBUG] DB Feed CID: ${dbFeed.cid}, should keep: ${currentCids.contains(dbFeed.cid)}');
+        if (dbFeed.cid != null && !currentCids.contains(dbFeed.cid)) {
+          print('[DEBUG] Deleting feed with CID: ${dbFeed.cid}');
+          await db.feedRecord.delete(
+            where: FeedRecordWhereUniqueInput(id: dbFeed.id),
+          );
+        }
+      }
+
+      // Convert items to MastodonList
       final userLists = await databaseTransaction(() async {
-        final listFutures = result.map(
-          MastodonList.fromFeedGenerator,
-        ).cast<Future<MastodonList>>();
+        final listFutures = <Future<MastodonList>>[];
+        
+        for (final item in allItems) {
+          // Check if it's a feed generator or a list
+          final itemType = (item as dynamic).runtimeType.toString();
+          if (itemType.contains('GeneratorView')) {
+            listFutures.add(MastodonList.fromFeedGenerator(item));
+          } else if (itemType.contains('ListView')) {
+            listFutures.add(MastodonList.fromListView(item));
+          }
+        }
+        
         return Future.wait(listFutures);
       }) as List<MastodonList>;
       
       lists.addAll(userLists);
+    } else {
+      print('[DEBUG] No feeds in preferences, deleting all from database');
+      // No feeds in preferences, delete all feeds from database
+      await db.feedRecord.deleteMany(where: const FeedRecordWhereInput());
     }
 
     return threadedJsonResponse(

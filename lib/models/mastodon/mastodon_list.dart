@@ -1,4 +1,5 @@
 import 'package:bluesky/app_bsky_feed_defs.dart';
+import 'package:bluesky/app_bsky_graph_defs.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sky_bridge/database.dart';
 
@@ -28,6 +29,17 @@ class MastodonList {
     return MastodonList(
       id: (await feedToDatabase(gen)).id.toString(),
       title: gen.displayName,
+      repliesPolicy: RepliesPolicy.list,
+    );
+  }
+
+  /// Converts a Bluesky list to a [MastodonList].
+  static Future<MastodonList> fromListView(
+    ListView listView,
+  ) async {
+    return MastodonList(
+      id: (await listToDatabase(listView)).id.toString(),
+      title: listView.name,
       repliesPolicy: RepliesPolicy.list,
     );
   }
