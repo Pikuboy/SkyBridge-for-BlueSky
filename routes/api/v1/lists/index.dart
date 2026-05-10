@@ -42,22 +42,30 @@ Future<Response> onRequest(RequestContext context) async {
         
         print('[DEBUG] Preference type: $typeName');
         
-        // Get pinned feeds from V2 (the current version used by Bluesky app)
+        // Log SavedFeedsPrefV2 content
         if (typeName.contains('SavedFeedsPrefV2')) {
+          print('[DEBUG] SavedFeedsPrefV2 raw data: $data');
           final pinned = (data as dynamic).pinned as List?;
+          final saved = (data as dynamic).saved as List?;
+          print('[DEBUG] V2 pinned: $pinned');
+          print('[DEBUG] V2 saved: $saved');
+          
           if (pinned != null && pinned.isNotEmpty) {
             pinnedFeeds = pinned.cast<at.AtUri>();
             print('[DEBUG] Pinned feeds: ${pinnedFeeds.map((f) => f.toString()).toList()}');
           }
           
-          final saved = (data as dynamic).saved as List?;
           if (saved != null && saved.isNotEmpty) {
             savedFeeds = saved.cast<at.AtUri>();
             print('[DEBUG] Saved feeds: ${savedFeeds.map((f) => f.toString()).toList()}');
           }
           
-          // Stop after finding V2 preferences
-          break;
+          // Don't break yet, let's see all preferences
+        }
+        
+        // Also log SavedFeedsPref (V1) for comparison
+        if (typeName.contains('SavedFeedsPref') && !typeName.contains('V2')) {
+          print('[DEBUG] SavedFeedsPref (V1) raw data: $data');
         }
       } catch (e) {
         print('[DEBUG] Error processing preference: $e');
