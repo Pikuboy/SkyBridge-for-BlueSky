@@ -5,6 +5,7 @@ import 'package:atproto/core.dart' as atp;
 import 'package:bluesky/app_bsky_actor_defs.dart';
 import 'package:bluesky/app_bsky_embed_record.dart';
 import 'package:bluesky/app_bsky_feed_defs.dart';
+import 'package:bluesky/app_bsky_graph_defs.dart';
 import 'package:bluesky/app_bsky_notification_listnotifications.dart';
 import 'package:crypto/crypto.dart';
 import 'package:orm/orm.dart';
@@ -330,6 +331,33 @@ Future<FeedRecord> feedToDatabase(GeneratorView feed) async {
       cid: feed.cid,
       uri: feed.uri.toString(),
       authorDid: feed.did != null ? PrismaUnion.$1(feed.did!) : PrismaUnion.$2(PrismaNull()),
+    );
+    return await db.feedRecord.create(data: PrismaUnion.$1(data));
+  } else {
+    return existing;
+  }
+}
+
+/// Stores a Bluesky list in the database, reusing FeedRecord table.
+Future<FeedRecord> listToDatabase(ListView listView) async {
+  final existing = await db.feedRecord.findFirst(
+    where: FeedRecordWhereInput(
+      cid: PrismaUnion.$1(StringFilter(equals: PrismaUnion.$1(listView.cid))),
+    ),
+  );
+  if (existing == null) {
+    final id = await generateUniqueSnowflake(
+      date: listView.indexedAt ?? DateTime.now(),
+      recordType: RecordType.feed,
+      checkCallback: (id) => db.feedRecord.findUnique(
+        where: FeedRecordWhereUniqueInput(id: id),
+      ),
+    );
+    final data = FeedRecordCreateInput(
+      id: id,
+      cid: listView.cid,
+      uri: listView.uri.toString(),
+      authorDid: listView.creator.did != null ? PrismaUnion.$1(listView.creator.did) : PrismaUnion.$2(PrismaNull()),
     );
     return await db.feedRecord.create(data: PrismaUnion.$1(data));
   } else {
