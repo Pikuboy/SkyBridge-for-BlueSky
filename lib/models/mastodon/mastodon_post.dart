@@ -990,18 +990,17 @@ List<MastodonMediaAttachment> _parseGalleryViewItems(
 
     attachments.add(
       MastodonMediaAttachment(
-        id: fullsize.hashCode.abs().toString(),
-        type: 'image',
+        id: (fullsize ?? thumbnail!).hashCode.abs().toString(),
+        type: MediaType.image,
         url: fullsize ?? thumbnail!,
         previewUrl: thumbnail ?? fullsize!,
-        remoteUrl: null,
-        description: alt,
-        blurhash: null,
+        remoteUrl: fullsize,
+        description: alt.isEmpty ? null : alt,
+        blurhash: '0',
         meta: (width != null && height != null)
-            ? {
-                'original': {'width': width, 'height': height},
-                'small':    {'width': width, 'height': height},
-              }
+            ? MediaAttachmentMetadata(
+                original: Metadata(width: width, height: height),
+              )
             : null,
       ),
     );
