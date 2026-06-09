@@ -11,6 +11,8 @@ You just have to put it at the same location than the db (/app/database)
 You fill it like in the sample file. Link to get the DID is included in the filters.json file.
 After each edit, you need to restart the docker image, it only reads it at start.
 
+— Includes the new gallery presentation with 5 or more medias.
+
 Support is still incomplete and I don't intend to do more. This repo will become private once Phoenix is released.
 
 I managed to make it run on my Synology NAS but it seems to work only with Ivory (tested with Mastodon official app and Icecube but doesn't work; maybe an issue with the way I installed it).
