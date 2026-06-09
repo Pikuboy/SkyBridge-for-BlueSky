@@ -169,6 +169,13 @@ class MastodonPost {
       }
     }
 
+    // Handle app.bsky.embed.gallery (new embed type, not yet in Dart SDK).
+    // We read it directly from the raw JSON of the post record and embed.
+    if (mediaAttachments.isEmpty) {
+      final galleryAttachments = _extractGalleryAttachments(post.record, post.embed);
+      mediaAttachments.addAll(galleryAttachments);
+    }
+
     if (isRepost) {
       // Clear out the content, since this is a repost.
       content = '';
@@ -476,6 +483,13 @@ class MastodonPost {
           if (attachment != null) mediaAttachments.add(attachment);
         }
       }
+    }
+
+    // Handle app.bsky.embed.gallery (new embed type, not yet in Dart SDK).
+    // We read it directly from the raw JSON of the post record and embed.
+    if (mediaAttachments.isEmpty) {
+      final galleryAttachments = _extractGalleryAttachments(post.record, post.embed);
+      mediaAttachments.addAll(galleryAttachments);
     }
 
     // Process facets such as mentions and links.
@@ -887,6 +901,126 @@ class MastodonPost {
   /// internally for [processParentPosts].
   @JsonKey(includeFromJson: false, includeToJson: false)
   final atp.AtUri? replyPostUri;
+}
+
+/// Extracts media attachments from an `app.bsky.embed.gallery` embed.
+///
+/// This embed type was introduced by Bluesky in June 2026 to support posts
+/// with 5–10 images. It is not yet part of the Dart ATProto SDK, so we parse
+/// the raw JSON directly from the post record and the view embed.
+///
+/// The view embed (`post.embed`) carries the CDN URLs we need:
+/// ```json
+/// {
+///   "$type": "app.bsky.embed.gallery#view",
+///   "items": [
+///     {
+///       "$type": "app.bsky.embed.gallery#viewImage",
+///       "thumbnail": "https://cdn.bsky.app/img/feed_thumbnail/...",
+///       "fullsize":  "https://cdn.bsky.app/img/feed_fullsize/...",
+///       "alt": "...",
+///       "aspectRatio": { "width": 1000, "height": 1000 }
+///     },
+///     ...
+///   ]
+/// }
+/// ```
+List<MastodonMediaAttachment> _extractGalleryAttachments(
+  dynamic record,
+  dynamic embedView,
+) {
+  try {
+    // First try to read from the view embed (has CDN URLs).
+    if (embedView != null) {
+      final embedMap = embedView is Map<String, dynamic>
+          ? embedView
+          : _tryToJson(embedView);
+
+      if (embedMap != null) {
+        final type = embedMap['\$type'] as String?;
+        if (type == 'app.bsky.embed.gallery#view') {
+          return _parseGalleryViewItems(embedMap);
+        }
+      }
+    }
+
+    // Fallback: parse from the raw record embed (no CDN URLs, but has blob refs).
+    if (record is Map<String, dynamic>) {
+      final recordEmbed = record['embed'] as Map<String, dynamic>?;
+      if (recordEmbed != null) {
+        final type = recordEmbed['\$type'] as String?;
+        if (type == 'app.bsky.embed.gallery') {
+          // No CDN URL available here; skip (the view embed is always preferred).
+          print('[Gallery] Record embed found but no view embed — skipping');
+        }
+      }
+    }
+  } catch (e) {
+    print('[Gallery] Error extracting gallery attachments: $e');
+  }
+  return [];
+}
+
+/// Parses items from an `app.bsky.embed.gallery#view` map.
+List<MastodonMediaAttachment> _parseGalleryViewItems(
+  Map<String, dynamic> embedMap,
+) {
+  final attachments = <MastodonMediaAttachment>[];
+  final items = embedMap['items'];
+  if (items is! List) return attachments;
+
+  for (final item in items) {
+    if (item is! Map<String, dynamic>) continue;
+    final itemType = item['\$type'] as String?;
+    if (itemType != 'app.bsky.embed.gallery#viewImage') continue;
+
+    final fullsize  = item['fullsize']  as String?;
+    final thumbnail = item['thumbnail'] as String?;
+    final alt       = item['alt']       as String? ?? '';
+
+    if (fullsize == null && thumbnail == null) continue;
+
+    int? width;
+    int? height;
+    final aspectRatio = item['aspectRatio'];
+    if (aspectRatio is Map<String, dynamic>) {
+      width  = (aspectRatio['width']  as num?)?.toInt();
+      height = (aspectRatio['height'] as num?)?.toInt();
+    }
+
+    attachments.add(
+      MastodonMediaAttachment(
+        id: fullsize.hashCode.abs().toString(),
+        type: 'image',
+        url: fullsize ?? thumbnail!,
+        previewUrl: thumbnail ?? fullsize!,
+        remoteUrl: null,
+        description: alt,
+        blurhash: null,
+        meta: (width != null && height != null)
+            ? {
+                'original': {'width': width, 'height': height},
+                'small':    {'width': width, 'height': height},
+              }
+            : null,
+      ),
+    );
+  }
+
+  print('[Gallery] Extracted ${attachments.length} image(s) from gallery embed');
+  return attachments;
+}
+
+/// Attempts to call `.toJson()` on an object and return the result as a map.
+/// Returns null if the object has no such method or if it fails.
+Map<String, dynamic>? _tryToJson(dynamic obj) {
+  try {
+    // ignore: avoid_dynamic_calls
+    final result = (obj as dynamic).toJson() as Map<String, dynamic>;
+    return result;
+  } catch (_) {
+    return null;
+  }
 }
 
 /// The visibility of a post.
