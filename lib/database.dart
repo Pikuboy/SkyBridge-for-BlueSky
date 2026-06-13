@@ -254,9 +254,9 @@ Future<UserRecord> actorProfileToDatabase(ProfileViewDetailed actor) async {
         followsCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.followsCount)),
         followersCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.followersCount)),
         postsCount: PrismaUnion.$2(IntFieldUpdateOperationsInput(set: actor.postsCount)),
-        description: PrismaUnion.$2(StringFieldUpdateOperationsInput(
-          set: actor.description ?? '',
-        )),
+       description: PrismaUnion.$2(StringFieldUpdateOperationsInput(
+  set: await processProfileDescription(actor.description ?? ''),
+)),
       )),
     );
     return existing;
