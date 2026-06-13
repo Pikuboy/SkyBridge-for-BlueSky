@@ -43,6 +43,7 @@ import '../routes/api/v1/accounts/[id]/index.dart' as api_v1_accounts_$id_index;
 import '../routes/api/v1/accounts/[id]/following.dart' as api_v1_accounts_$id_following;
 import '../routes/api/v1/accounts/[id]/followers.dart' as api_v1_accounts_$id_followers;
 import '../routes/api/v1/accounts/[id]/follow.dart' as api_v1_accounts_$id_follow;
+import '../routes/api/v1/accounts/[id]/featured_tags.dart' as api_v1_accounts_$id_featured_tags;
 import '../routes/[userId]/[postId].dart' as $user_id_$post_id;
 import '../routes/well_known/nodeinfo.dart' as well_known_nodeinfo;
 import '../routes/api/v1/video_proxy/index.dart' as api_v1_video_proxy_index;
@@ -105,7 +106,7 @@ Handler build$userIdHandler(String userId,) {
 Handler buildApiV1Accounts$idHandler(String id,) {
   final pipeline = const Pipeline();
   final router = Router()
-    ..all('/unfollow', (context) => api_v1_accounts_$id_unfollow.onRequest(context,id,))..all('/statuses', (context) => api_v1_accounts_$id_statuses.onRequest(context,id,))..all('/', (context) => api_v1_accounts_$id_index.onRequest(context,id,))..all('/following', (context) => api_v1_accounts_$id_following.onRequest(context,id,))..all('/followers', (context) => api_v1_accounts_$id_followers.onRequest(context,id,))..all('/follow', (context) => api_v1_accounts_$id_follow.onRequest(context,id,));
+    ..all('/unfollow', (context) => api_v1_accounts_$id_unfollow.onRequest(context,id,))..all('/statuses', (context) => api_v1_accounts_$id_statuses.onRequest(context,id,))..all('/', (context) => api_v1_accounts_$id_index.onRequest(context,id,))..all('/following', (context) => api_v1_accounts_$id_following.onRequest(context,id,))..all('/followers', (context) => api_v1_accounts_$id_followers.onRequest(context,id,))..all('/follow', (context) => api_v1_accounts_$id_follow.onRequest(context,id,))..all('/featured_tags', (context) => api_v1_accounts_$id_featured_tags.onRequest(context,id,));
   return pipeline.addHandler(router);
 }
 
