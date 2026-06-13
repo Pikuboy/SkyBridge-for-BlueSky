@@ -26,7 +26,11 @@ Future<Response> onRequest(RequestContext context) async {
   // account. Ivory expects this for editing profile information.
   account
     ..source = AccountSource(
-      note: profile.data.description ?? '',
+      // Use the processed description so the plain-text note matches
+      // what's shown elsewhere (links/handles resolved, HTML-escaped
+      // characters handled), preventing Ivory's profile editor from
+      // briefly showing the raw text and then discarding/reverting it.
+      note: await processProfileDescription(profile.data.description ?? ''),
       fields: [],
       privacy: PostVisibility.public,
       sensitive: false,
