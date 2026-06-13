@@ -31,6 +31,15 @@ Future<Response> onRequest(RequestContext context, String id) async {
     () => MastodonAccount.fromActorProfile(profile.data),
   );
 
+  // DEBUG: log the raw description and the processed note so we can
+  // confirm whether the bio is actually populated in the response.
+  print(
+    '[DEBUG accounts/$id] '
+    'raw_description="${profile.data.description}" '
+    'note="${account.note}" '
+    'note_length=${account.note.length}',
+  );
+
   return threadedJsonResponse(
     body: account,
   );
