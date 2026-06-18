@@ -1,20 +1,21 @@
-This is a fork from https://github.com/videah/skybridge, the origial dev. I completed a portion of the functionnality using Claude.ai because I don't speak Dart.
+# New SkyBridge
 
-— Video is now supported in Ivory, ~~but only embedded in the post, full screen is not working. It seems Ivory full screen player is not supporting HLS video, it needs mp4 files which is not provided by Bluesky so it will never work.~~ and it seems the latest version fixed the issue with full screen playback.
+This is a fork from https://github.com/videah/skybridge, the origial dev. I completed a portion of the functionnality using Claude.ai because I don't speak Dart and updated most of the depedencies to have access to latest functionnality. 
 
+I'm planning to keep this repo available and will update it until Phoenix by Tapbot is available.
+
+## New functionality 
 — You can now use the search tab too.
 — Support for third party PDS (tested with eurosky.social)
 — Feeds are supported and available in the list tab. If you add or delete a feed from Bluesky, the change should be reflected in Ivory (in some case, after a restart of the app).
+— Includes the new gallery presentation with 5 or more medias.
 
 — You can also filter replies, keywords and repost using the filters.json file.
 You just have to put it at the same location than the db (/app/database)
 You fill it like in the sample file. Link to get the DID is included in the filters.json file.
 After each edit, you need to restart the docker image, it only reads it at start.
 
-— Includes the new gallery presentation with 5 or more medias.
-
-Support is still incomplete and I don't intend to do more. This repo will become private once Phoenix is released.
-
+## Self Hosting with docker
 I managed to make it run on my Synology NAS but it seems to work only with Ivory (tested with Mastodon official app and Icecube but doesn't work; maybe an issue with the way I installed it).
 The docker_compose template reflect the one I used to configure it on my NAS.
 
