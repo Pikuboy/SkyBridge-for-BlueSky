@@ -472,18 +472,24 @@ class MastodonPost {
           mediaAttachments.add(attachment);
         }
       } else if (embed.data is EmbedRecordWithMediaView) {
-        final embedded = embed.data as EmbedRecordWithMediaView;
+  final embedded = embed.data as EmbedRecordWithMediaView;
 
-        // When there are other types of embeds, we need to grab the
-        // images with EmbedViewRecordWithMedia.
-        embedded.media.whenOrNull(
-          embedImagesView: (media) {
-            for (final image in media.images) {
-              final attachment = MastodonMediaAttachment.fromEmbed(image);
-              mediaAttachments.add(attachment);
-            }
-          },
-        );
+  embedded.media.whenOrNull(
+    embedImagesView: (media) {
+      for (final image in media.images) {
+        final attachment = MastodonMediaAttachment.fromEmbed(image);
+        mediaAttachments.add(attachment);
+      }
+    },
+    embedExternalView: (externalEmbed) {  // ← ajouter ça
+      print('[GIF] embedExternalView detected in EmbedRecordWithMediaView');
+      final gifAttachment = _gifAttachmentFromExternal(externalEmbed);
+      if (gifAttachment != null) {
+        print('[GIF] gifAttachment added (quote+gif): ${gifAttachment.url}');
+        mediaAttachments.add(gifAttachment);
+      }
+    },
+  );
       } else {
         // Handle video embeds (app.bsky.embed.video#view) and any other
         // embed types via the .when() union accessor.
