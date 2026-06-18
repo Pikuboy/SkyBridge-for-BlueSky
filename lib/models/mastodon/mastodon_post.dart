@@ -987,19 +987,29 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
 // Extraire l'URL MP4 depuis le query param (format Klipy/Tenor)
     // ex: https://static.klipy.com/.../GR40H6n7.gif?hh=304&ww=380&mp4=7lISFKaxghTZkXvZL
     // → https://static.klipy.com/.../7lISFKaxghTZkXvZL.mp4
-    String gifUrl = uri;
-    try {
-      final parsed = Uri.parse(uri);
-      final mp4Param = parsed.queryParameters['mp4'];
-      if (mp4Param != null && mp4Param.isNotEmpty) {
-        // Reconstruire l'URL : même host + même dossier + nom du mp4
-        final pathDir = parsed.path.substring(0, parsed.path.lastIndexOf('/') + 1);
-        gifUrl = '${parsed.scheme}://${parsed.host}$pathDir$mp4Param.mp4';
-        print('[GIF] Extracted MP4 url: $gifUrl');
-      }
-    } catch (e) {
-      print('[GIF] Could not extract MP4 url: $e');
-    }
+   String gifUrl = uri;
+try {
+  final parsed = Uri.parse(uri);
+  final mp4Param = parsed.queryParameters['mp4'];
+  if (mp4Param != null && mp4Param.isNotEmpty) {
+    // Klipy/Tenor : paramètre mp4= dans l'URL
+    final pathDir = parsed.path.substring(0, parsed.path.lastIndexOf('/') + 1);
+    gifUrl = '${parsed.scheme}://${parsed.host}$pathDir$mp4Param.mp4';
+    print('[GIF] Extracted MP4 url (mp4 param): $gifUrl');
+  } else if (uri.contains('giphy.com/gifs/')) {
+    // Giphy : construire depuis l'ID
+    final giphyId = parsed.pathSegments.last;
+    final realId = giphyId.contains('-') ? giphyId.split('-').last : giphyId;
+    gifUrl = 'https://media.giphy.com/media/$realId/giphy.mp4';
+    print('[GIF] Giphy MP4 url: $gifUrl');
+  } else if (uri.endsWith('.gif')) {
+    // Fallback générique : remplacer .gif par .mp4
+    gifUrl = uri.replaceAll('.gif', '.mp4');
+    print('[GIF] Generic GIF→MP4 url: $gifUrl');
+  }
+} catch (e) {
+  print('[GIF] Could not extract MP4 url: $e');
+}
 
     print('[GIF] Creating gifv attachment for url=$gifUrl');
 final ww = int.tryParse(Uri.parse(uri).queryParameters['ww'] ?? '') ?? 380;
