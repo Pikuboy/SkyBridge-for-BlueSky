@@ -1006,7 +1006,7 @@ final ww = int.tryParse(Uri.parse(uri).queryParameters['ww'] ?? '') ?? 380;
 final hh = int.tryParse(Uri.parse(uri).queryParameters['hh'] ?? '') ?? 304;
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
-      type: MediaType.video,
+      type: MediaType.gifv,
       url: gifUrl,        // MP4 pour Ivory
       previewUrl: thumb,
       remoteUrl: uri,     // URL originale en référence
