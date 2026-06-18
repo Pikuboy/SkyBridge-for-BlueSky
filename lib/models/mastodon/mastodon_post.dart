@@ -309,7 +309,7 @@ class MastodonPost {
       //   - the quoted post has media, OR
       //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
       //     even when the quoted post has no media (fixes image+quote with text-only quote).
-      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && mediaAttachments.isEmpty) {
         // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
         print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
@@ -638,7 +638,7 @@ class MastodonPost {
       //   - the quoted post has media, OR
       //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
       //     even when the quoted post has no media (fixes image+quote with text-only quote).
-      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && mediaAttachments.isEmpty) {
         // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
         print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
