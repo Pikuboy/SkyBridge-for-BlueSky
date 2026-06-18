@@ -38,7 +38,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/pikuboy/skybridge-for-bluesky:latest
-            ghcr.io/pikuboy/skybridge-for-bluesky:${{ inputs.version }}-amd64
+            ghcr.io/pikuboy/skybridge-for-bluesky:${{ inputs.version }}
 
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max
