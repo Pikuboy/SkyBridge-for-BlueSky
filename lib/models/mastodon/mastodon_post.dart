@@ -166,8 +166,22 @@ class MastodonPost {
           );
           if (attachment != null) mediaAttachments.add(attachment);
         }
+
+        // Détecter les GIFs externes (Tenor/Klipy)
+        dynamic externalEmbedData;
+        embed.whenOrNull(
+          embedExternalView: (externalEmbed) {
+            externalEmbedData = externalEmbed;
+          },
+        );
+        if (externalEmbedData != null) {
+          final gifAttachment = _gifAttachmentFromExternal(externalEmbedData);
+          if (gifAttachment != null) mediaAttachments.add(gifAttachment);
+        }
       }
     }
+
+    // Handle app.bsky.embed.gallery
 
     // Handle app.bsky.embed.gallery (new embed type, not yet in Dart SDK).
     // We read it directly from the raw JSON of the post record and embed.
@@ -482,12 +496,24 @@ class MastodonPost {
           );
           if (attachment != null) mediaAttachments.add(attachment);
         }
+
+        // Détecter les GIFs externes (Tenor/Klipy)
+        dynamic externalEmbedData;
+        embed.whenOrNull(
+          embedExternalView: (externalEmbed) {
+            externalEmbedData = externalEmbed;
+          },
+        );
+        if (externalEmbedData != null) {
+          final gifAttachment = _gifAttachmentFromExternal(externalEmbedData);
+          if (gifAttachment != null) mediaAttachments.add(gifAttachment);
+        }
       }
     }
 
-    // Handle app.bsky.embed.gallery (new embed type, not yet in Dart SDK).
-    // We read it directly from the raw JSON of the post record and embed.
-    if (mediaAttachments.isEmpty) {
+      // Handle app.bsky.embed.gallery (new embed type, not yet in Dart SDK).
+      // We read it directly from the raw JSON of the post record and embed.
+      if (mediaAttachments.isEmpty) {
       final galleryAttachments = _extractGalleryAttachments(post.record, post.embed);
       mediaAttachments.addAll(galleryAttachments);
     }
@@ -903,6 +929,46 @@ class MastodonPost {
   final atp.AtUri? replyPostUri;
 }
 
+/// Convertit un embed externe GIF (Tenor/Klipy/Giphy) en media_attachment gifv.
+/// Retourne null si l'URL ne ressemble pas à un GIF animé.
+MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
+  try {
+    final json = (externalEmbed as dynamic).toJson() as Map<String, dynamic>;
+    final external = json['external'] as Map<String, dynamic>?;
+    if (external == null) return null;
+
+    final uri = external['uri'] as String? ?? '';
+    final thumb = external['thumb'] as String? ?? '';
+    final title = external['title'] as String? ?? '';
+    final description = external['description'] as String? ?? '';
+
+    final gifHosts = [
+      'tenor.com', 'media.tenor.com',
+      'klipy.com', 'static.klipy.com',
+      'giphy.com', 'media.giphy.com',
+      'media0.giphy.com', 'media1.giphy.com',
+      'media2.giphy.com', 'media3.giphy.com',
+      'media4.giphy.com',
+    ];
+    final isGifHost = gifHosts.any((host) => uri.contains(host));
+    final hasGifParam = uri.contains('.gif') || uri.contains('mp4=') || uri.contains('webm=');
+    if (!isGifHost && !hasGifParam) return null;
+
+    return MastodonMediaAttachment(
+      id: uri.hashCode.abs().toString(),
+      type: MediaType.gifv,
+      url: uri,
+      previewUrl: thumb,
+      remoteUrl: uri,
+      description: description.isNotEmpty ? description : (title.isNotEmpty ? title : null),
+      blurhash: '0',
+      meta: null,
+    );
+  } catch (e) {
+    print('[GIF] Error extracting external GIF embed: $e');
+    return null;
+  }
+}
 /// Extracts media attachments from an `app.bsky.embed.gallery` embed.
 ///
 /// This embed type was introduced by Bluesky in June 2026 to support posts
