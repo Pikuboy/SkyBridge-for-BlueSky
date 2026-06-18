@@ -994,8 +994,8 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
     }
 
     print('[GIF] Creating gifv attachment for url=$gifUrl');
-    final ww = int.tryParse(parsed.queryParameters['ww'] ?? '') ?? 380;
-    final hh = int.tryParse(parsed.queryParameters['hh'] ?? '') ?? 304;
+final ww = int.tryParse(Uri.parse(uri).queryParameters['ww'] ?? '') ?? 380;
+final hh = int.tryParse(Uri.parse(uri).queryParameters['hh'] ?? '') ?? 304;
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
       type: MediaType.gifv,
