@@ -1,4 +1,4 @@
-name: Build and Push Docker Image amd64 and arm64
+name: Build and Push Docker Image both
 
 on:
   workflow_dispatch:
