@@ -5,12 +5,11 @@ This is a fork from https://github.com/videah/skybridge, the origial dev. I comp
 I'm planning to keep this repo available and will update it until Phoenix by Tapbot is available.
 
 ## New functionality 
-— You can now use the search tab too.
-— Support for third party PDS (tested with eurosky.social)
-— Feeds are supported and available in the list tab. If you add or delete a feed from Bluesky, the change should be reflected in Ivory (in some case, after a restart of the app).
-— Includes the new gallery presentation with 5 or more medias.
-
-— You can also filter replies, keywords and repost using the filters.json file.
+- You can now use the search tab too.
+- Support for third party PDS (tested with eurosky.social)
+- Feeds are supported and available in the list tab. If you add or delete a feed from Bluesky, the change should be reflected in Ivory (in some case, after a restart of the app).
+- Includes the new gallery presentation with 5 or more medias.
+- You can also filter replies, keywords and repost using the filters.json file.
 You just have to put it at the same location than the db (/app/database)
 You fill it like in the sample file. Link to get the DID is included in the filters.json file.
 After each edit, you need to restart the docker image, it only reads it at start.
