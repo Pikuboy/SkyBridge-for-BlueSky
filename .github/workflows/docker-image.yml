@@ -1,4 +1,4 @@
-name: Build Docker Image amd64
+name: Build Docker Image and Deploy
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64
+          platforms: linux/amd64, linux/arm64
 
           push: true
           tags: |
