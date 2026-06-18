@@ -17,7 +17,7 @@ services:
       # Should a bridge password be required to authenticate?
       - SKYBRIDGE_REQUIRE_AUTH_PASSWORD=true
       # Should a nice index page be shown on the root URL?
-      - SKYBRIDGE_SHOW_INDEX=false
+      - SKYBRIDGE_SHOW_INDEX=true
       # Allow backfilling/scrolling on timelines? (can cause issues on instances under heavy load)
       - SKYBRIDGE_ALLOW_BACKFILL=true
     ports:
