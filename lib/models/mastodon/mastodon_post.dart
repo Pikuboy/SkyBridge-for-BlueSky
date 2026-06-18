@@ -141,13 +141,21 @@ class MastodonPost {
         // When there are other types of embeds, we need to grab the
         // images with EmbedViewRecordWithMedia.
         embedded.media.whenOrNull(
-          embedImagesView: (media) {
-            for (final image in media.images) {
-              final attachment = MastodonMediaAttachment.fromEmbed(image);
-              mediaAttachments.add(attachment);
-            }
-          },
-        );
+  embedImagesView: (media) {
+    for (final image in media.images) {
+      final attachment = MastodonMediaAttachment.fromEmbed(image);
+      mediaAttachments.add(attachment);
+    }
+  },
+  embedExternalView: (externalEmbed) {
+    print('[GIF] embedExternalView detected in EmbedRecordWithMediaView');
+    final gifAttachment = _gifAttachmentFromExternal(externalEmbed);
+    if (gifAttachment != null) {
+      print('[GIF] gifAttachment added (quote+gif): ${gifAttachment.url}');
+      mediaAttachments.add(gifAttachment);
+    }
+  },
+);
       } else {
         // Handle video embeds (app.bsky.embed.video#view) and any other
         // embed types via the .when() union accessor.
@@ -309,7 +317,8 @@ class MastodonPost {
       //   - the quoted post has media, OR
       //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
       //     even when the quoted post has no media (fixes image+quote with text-only quote).
-      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+      final hasGifv = mediaAttachments.any((a) => a.type == MediaType.gifv);
+if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.isEmpty || hasGifv)) {
         // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
         print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
@@ -472,18 +481,24 @@ class MastodonPost {
           mediaAttachments.add(attachment);
         }
       } else if (embed.data is EmbedRecordWithMediaView) {
-        final embedded = embed.data as EmbedRecordWithMediaView;
+  final embedded = embed.data as EmbedRecordWithMediaView;
 
-        // When there are other types of embeds, we need to grab the
-        // images with EmbedViewRecordWithMedia.
-        embedded.media.whenOrNull(
-          embedImagesView: (media) {
-            for (final image in media.images) {
-              final attachment = MastodonMediaAttachment.fromEmbed(image);
-              mediaAttachments.add(attachment);
-            }
-          },
-        );
+  embedded.media.whenOrNull(
+    embedImagesView: (media) {
+      for (final image in media.images) {
+        final attachment = MastodonMediaAttachment.fromEmbed(image);
+        mediaAttachments.add(attachment);
+      }
+    },
+    embedExternalView: (externalEmbed) {  // ← ajouter ça
+      print('[GIF] embedExternalView detected in EmbedRecordWithMediaView');
+      final gifAttachment = _gifAttachmentFromExternal(externalEmbed);
+      if (gifAttachment != null) {
+        print('[GIF] gifAttachment added (quote+gif): ${gifAttachment.url}');
+        mediaAttachments.add(gifAttachment);
+      }
+    },
+  );
       } else {
         // Handle video embeds (app.bsky.embed.video#view) and any other
         // embed types via the .when() union accessor.
@@ -638,7 +653,8 @@ class MastodonPost {
       //   - the quoted post has media, OR
       //   - the main post itself is a media+quote embed (EmbedRecordWithMediaView),
       //     even when the quoted post has no media (fixes image+quote with text-only quote).
-      if (quotedMediaAttachments.isEmpty && !isRecordWithMedia) {
+      final hasGifv = mediaAttachments.any((a) => a.type == MediaType.gifv);
+if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.isEmpty || hasGifv)) {
         // No media anywhere relevant → use old card system (works for plain links)
         // Keep the card, don't create quote object
         print('[DEBUG] Quote has no media and post is not record-with-media, using card system');
@@ -979,21 +995,33 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
 // Extraire l'URL MP4 depuis le query param (format Klipy/Tenor)
     // ex: https://static.klipy.com/.../GR40H6n7.gif?hh=304&ww=380&mp4=7lISFKaxghTZkXvZL
     // → https://static.klipy.com/.../7lISFKaxghTZkXvZL.mp4
-    String gifUrl = uri;
-    try {
-      final parsed = Uri.parse(uri);
-      final mp4Param = parsed.queryParameters['mp4'];
-      if (mp4Param != null && mp4Param.isNotEmpty) {
-        // Reconstruire l'URL : même host + même dossier + nom du mp4
-        final pathDir = parsed.path.substring(0, parsed.path.lastIndexOf('/') + 1);
-        gifUrl = '${parsed.scheme}://${parsed.host}$pathDir$mp4Param.mp4';
-        print('[GIF] Extracted MP4 url: $gifUrl');
-      }
-    } catch (e) {
-      print('[GIF] Could not extract MP4 url: $e');
-    }
+   String gifUrl = uri;
+try {
+  final parsed = Uri.parse(uri);
+  final mp4Param = parsed.queryParameters['mp4'];
+  if (mp4Param != null && mp4Param.isNotEmpty) {
+    // Klipy/Tenor : paramètre mp4= dans l'URL
+    final pathDir = parsed.path.substring(0, parsed.path.lastIndexOf('/') + 1);
+    gifUrl = '${parsed.scheme}://${parsed.host}$pathDir$mp4Param.mp4';
+    print('[GIF] Extracted MP4 url (mp4 param): $gifUrl');
+  } else if (uri.contains('giphy.com/gifs/')) {
+    // Giphy : construire depuis l'ID
+    final giphyId = parsed.pathSegments.last;
+    final realId = giphyId.contains('-') ? giphyId.split('-').last : giphyId;
+    gifUrl = 'https://media.giphy.com/media/$realId/giphy.mp4';
+    print('[GIF] Giphy MP4 url: $gifUrl');
+  } else if (uri.endsWith('.gif')) {
+    // Fallback générique : remplacer .gif par .mp4
+    gifUrl = uri.replaceAll('.gif', '.mp4');
+    print('[GIF] Generic GIF→MP4 url: $gifUrl');
+  }
+} catch (e) {
+  print('[GIF] Could not extract MP4 url: $e');
+}
 
     print('[GIF] Creating gifv attachment for url=$gifUrl');
+final ww = int.tryParse(Uri.parse(uri).queryParameters['ww'] ?? '') ?? 380;
+final hh = int.tryParse(Uri.parse(uri).queryParameters['hh'] ?? '') ?? 304;
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
       type: MediaType.gifv,
@@ -1002,7 +1030,9 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
       remoteUrl: uri,     // URL originale en référence
       description: description.isNotEmpty ? description : (title.isNotEmpty ? title : null),
       blurhash: '0',
-      meta: null,
+      meta: MediaAttachmentMetadata(
+      original: Metadata(width: ww, height: hh),
+),
     );
   } catch (e, stack) {
     print('[GIF] Error extracting external GIF embed: $e');
