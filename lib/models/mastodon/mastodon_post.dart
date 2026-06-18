@@ -994,6 +994,8 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
     }
 
     print('[GIF] Creating gifv attachment for url=$gifUrl');
+    final ww = int.tryParse(parsed.queryParameters['ww'] ?? '') ?? 380;
+    final hh = int.tryParse(parsed.queryParameters['hh'] ?? '') ?? 304;
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
       type: MediaType.gifv,
@@ -1002,7 +1004,9 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
       remoteUrl: uri,     // URL originale en référence
       description: description.isNotEmpty ? description : (title.isNotEmpty ? title : null),
       blurhash: '0',
-      meta: null,
+      meta: MediaAttachmentMetadata(
+      original: Metadata(width: ww, height: hh),
+),
     );
   } catch (e, stack) {
     print('[GIF] Error extracting external GIF embed: $e');
