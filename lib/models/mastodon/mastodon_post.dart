@@ -166,8 +166,7 @@ class MastodonPost {
           );
           if (attachment != null) mediaAttachments.add(attachment);
         }
-
-        // Détecter les GIFs externes (Tenor/Klipy)
+        
       // Détecter les GIFs externes (Tenor/Klipy)
         dynamic externalEmbedData;
         embed.whenOrNull(
@@ -977,14 +976,30 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
       print('[GIF] Not a GIF URL, skipping');
       return null;
     }
+// Extraire l'URL MP4 depuis le query param (format Klipy/Tenor)
+    // ex: https://static.klipy.com/.../GR40H6n7.gif?hh=304&ww=380&mp4=7lISFKaxghTZkXvZL
+    // → https://static.klipy.com/.../7lISFKaxghTZkXvZL.mp4
+    String gifUrl = uri;
+    try {
+      final parsed = Uri.parse(uri);
+      final mp4Param = parsed.queryParameters['mp4'];
+      if (mp4Param != null && mp4Param.isNotEmpty) {
+        // Reconstruire l'URL : même host + même dossier + nom du mp4
+        final pathDir = parsed.path.substring(0, parsed.path.lastIndexOf('/') + 1);
+        gifUrl = '${parsed.scheme}://${parsed.host}$pathDir$mp4Param.mp4';
+        print('[GIF] Extracted MP4 url: $gifUrl');
+      }
+    } catch (e) {
+      print('[GIF] Could not extract MP4 url: $e');
+    }
 
-    print('[GIF] Creating gifv attachment for uri=$uri');
+    print('[GIF] Creating gifv attachment for url=$gifUrl');
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
       type: MediaType.gifv,
-      url: uri,
+      url: gifUrl,        // MP4 pour Ivory
       previewUrl: thumb,
-      remoteUrl: uri,
+      remoteUrl: uri,     // URL originale en référence
       description: description.isNotEmpty ? description : (title.isNotEmpty ? title : null),
       blurhash: '0',
       meta: null,
