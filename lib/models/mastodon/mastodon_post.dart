@@ -168,15 +168,22 @@ class MastodonPost {
         }
 
         // Détecter les GIFs externes (Tenor/Klipy)
+      // Détecter les GIFs externes (Tenor/Klipy)
         dynamic externalEmbedData;
         embed.whenOrNull(
           embedExternalView: (externalEmbed) {
+            print('[GIF] embedExternalView detected in fromFeedView');
             externalEmbedData = externalEmbed;
           },
         );
         if (externalEmbedData != null) {
           final gifAttachment = _gifAttachmentFromExternal(externalEmbedData);
-          if (gifAttachment != null) mediaAttachments.add(gifAttachment);
+          if (gifAttachment != null) {
+            print('[GIF] gifAttachment added: ${gifAttachment.url}');
+            mediaAttachments.add(gifAttachment);
+          }
+        } else {
+          print('[GIF] no externalEmbedData found — embed type: ${embed.runtimeType}');
         }
       }
     }
@@ -501,12 +508,18 @@ class MastodonPost {
         dynamic externalEmbedData;
         embed.whenOrNull(
           embedExternalView: (externalEmbed) {
+            print('[GIF] embedExternalView detected in fromFeedView');
             externalEmbedData = externalEmbed;
           },
         );
         if (externalEmbedData != null) {
           final gifAttachment = _gifAttachmentFromExternal(externalEmbedData);
-          if (gifAttachment != null) mediaAttachments.add(gifAttachment);
+          if (gifAttachment != null) {
+            print('[GIF] gifAttachment added: ${gifAttachment.url}');
+            mediaAttachments.add(gifAttachment);
+          }
+        } else {
+          print('[GIF] no externalEmbedData found — embed type: ${embed.runtimeType}');
         }
       }
     }
@@ -934,13 +947,19 @@ class MastodonPost {
 MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
   try {
     final json = (externalEmbed as dynamic).toJson() as Map<String, dynamic>;
+    print('[GIF] toJson result: $json');
+
     final external = json['external'] as Map<String, dynamic>?;
-    if (external == null) return null;
+    if (external == null) {
+      print('[GIF] No "external" key found in json');
+      return null;
+    }
 
     final uri = external['uri'] as String? ?? '';
     final thumb = external['thumb'] as String? ?? '';
     final title = external['title'] as String? ?? '';
     final description = external['description'] as String? ?? '';
+    print('[GIF] uri=$uri thumb=$thumb title=$title');
 
     final gifHosts = [
       'tenor.com', 'media.tenor.com',
@@ -952,8 +971,14 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
     ];
     final isGifHost = gifHosts.any((host) => uri.contains(host));
     final hasGifParam = uri.contains('.gif') || uri.contains('mp4=') || uri.contains('webm=');
-    if (!isGifHost && !hasGifParam) return null;
+    print('[GIF] isGifHost=$isGifHost hasGifParam=$hasGifParam');
 
+    if (!isGifHost && !hasGifParam) {
+      print('[GIF] Not a GIF URL, skipping');
+      return null;
+    }
+
+    print('[GIF] Creating gifv attachment for uri=$uri');
     return MastodonMediaAttachment(
       id: uri.hashCode.abs().toString(),
       type: MediaType.gifv,
@@ -964,8 +989,9 @@ MastodonMediaAttachment? _gifAttachmentFromExternal(dynamic externalEmbed) {
       blurhash: '0',
       meta: null,
     );
-  } catch (e) {
+  } catch (e, stack) {
     print('[GIF] Error extracting external GIF embed: $e');
+    print('[GIF] Stack: $stack');
     return null;
   }
 }
