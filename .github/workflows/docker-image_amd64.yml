@@ -1,4 +1,4 @@
-name: Build and Push Docker Image amd64 only
+name: Build Docker Image amd64
 
 on:
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/pikuboy/skybridge-for-bluesky:latest
-            ghcr.io/pikuboy/skybridge-for-bluesky:${{ inputs.version }}
+            ghcr.io/pikuboy/skybridge-for-bluesky:${{ inputs.version }}-amd64
 
           cache-from: type=gha   # cache entre les builds pour aller plus vite
           cache-to: type=gha,mode=max
