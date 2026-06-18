@@ -37,7 +37,7 @@ jobs:
 
           push: true
           tags: |
-            ghcr.io/pikuboy/skybridge-for-bluesky:latest
+            ghcr.io/pikuboy/skybridge-for-bluesky:test
             ghcr.io/pikuboy/skybridge-for-bluesky:${{ inputs.version }}-arm64
 
           cache-from: type=gha   # cache entre les builds pour aller plus vite
