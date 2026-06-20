@@ -372,6 +372,10 @@ if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.is
         card = null;
       }
     }
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
+      card = null;
+    }
 
     // If there is an external card link not already in content, add it.
     if (card != null) {
@@ -382,11 +386,6 @@ if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.is
         content +=
         '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
-    }
-
-    // Drop external link cards when media is present.
-    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
-      card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
@@ -709,6 +708,12 @@ if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.is
       }
     }
 
+    // Drop external link cards when media is present.
+    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
+      card = null;
+    }
+
+
     // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
@@ -718,11 +723,6 @@ if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.is
         content +=
             '\n\n<a href="${card.url}" rel="nofollow noopener noreferrer" target="_blank">${card.url}</a>';
       }
-    }
-
-    // Drop external link cards when media is present.
-    if (mediaAttachments.isNotEmpty && card != null && !card.url.contains(baseUrl)) {
-      card = null;
     }
 
     // Map hashtags included in the text to Mastodon tags.
