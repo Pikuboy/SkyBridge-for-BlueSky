@@ -713,6 +713,7 @@ if (quotedMediaAttachments.isEmpty && !isRecordWithMedia && (mediaAttachments.is
       card = null;
     }
 
+
     // If there is an external card link not already in content, add it.
     if (card != null) {
       final cardUrlNormalized = card.url.toLowerCase();
