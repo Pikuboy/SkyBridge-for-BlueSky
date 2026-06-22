@@ -45,6 +45,7 @@ class FeedFilters {
     this.hideRepliesFrom = const [],
     this.hideKeywords = const [],
     this.hideRepostsFrom = const [],
+    this.hideRepliesToOthersFrom = const [],
   });
 
   factory FeedFilters.fromJson(Map<String, dynamic> json) {
@@ -60,6 +61,7 @@ class FeedFilters {
       hideRepliesFrom: parseList('hide_replies_from'),
       hideKeywords: parseList('hide_keywords'),
       hideRepostsFrom: parseList('hide_reposts_from'),
+      hideRepliesToOthersFrom: parseList('hide_replies_to_others_from'),
     );
   }
 
@@ -71,6 +73,9 @@ class FeedFilters {
 
   /// Accounts (handle or DID) whose reposts should be hidden.
   final List<String> hideRepostsFrom;
+
+    /// Accounts (handle or DID) whose replies to others should be hidden.
+  final List<String> hideRepliesToOthersFrom;
 
   /// Returns true if this post should be removed from the feed.
   bool shouldHide(MastodonPost post) {
@@ -89,6 +94,14 @@ class FeedFilters {
     if (post.reblog != null && hideRepostsFrom.isNotEmpty) {
       if (_accountMatches(post.account, hideRepostsFrom)) return true;
     }
+
+    // --- Hide replies to others (but keep self-replies) ---
+    if (post.inReplyToId != null && hideRepliesToOthersFrom.isNotEmpty) {
+     if (_accountMatches(post.account, hideRepliesToOthersFrom)) {
+    final isSelfReply = post.inReplyToAccountId == post.account.id;
+    if (!isSelfReply) return true;
+  }
+}
 
     return false;
   }
