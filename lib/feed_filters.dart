@@ -95,10 +95,14 @@ class FeedFilters {
       if (_accountMatches(post.account, hideRepostsFrom)) return true;
     }
 
-    // --- Hide replies to others (but keep self-replies) ---
-    if (post.inReplyToId != null && hideRepliesToOthersFrom.isNotEmpty) {
-     if (_accountMatches(post.account, hideRepliesToOthersFrom)) {
-    final isSelfReply = post.inReplyToAccountId == post.account.id;
+// --- Hide replies to others (but keep self-replies) ---
+if (post.inReplyToId != null && hideRepliesToOthersFrom.isNotEmpty) {
+  if (_accountMatches(post.account, hideRepliesToOthersFrom)) {
+    // Extraire le DID de l'auteur du post parent depuis replyPostUri
+    // Format: at://did:plc:xxx/app.bsky.feed.post/yyy
+    final parentDid = post.replyPostUri?.toString().split('/').skip(2).first;
+    final accountDid = (post.account.id as String? ?? '').toLowerCase();
+    final isSelfReply = parentDid != null && parentDid.toLowerCase() == accountDid;
     if (!isSelfReply) return true;
   }
 }
