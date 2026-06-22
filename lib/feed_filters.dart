@@ -98,11 +98,10 @@ class FeedFilters {
 // --- Hide replies to others (but keep self-replies) ---
 if (post.inReplyToId != null && hideRepliesToOthersFrom.isNotEmpty) {
   if (_accountMatches(post.account, hideRepliesToOthersFrom)) {
-    // Extraire le DID de l'auteur du post parent depuis replyPostUri
-    // Format: at://did:plc:xxx/app.bsky.feed.post/yyy
     final parentDid = post.replyPostUri?.toString().split('/').skip(2).first;
     final accountDid = (post.account.id as String? ?? '').toLowerCase();
     final isSelfReply = parentDid != null && parentDid.toLowerCase() == accountDid;
+    print('[FeedFilters] reply check: account=$accountDid parentDid=$parentDid isSelfReply=$isSelfReply replyPostUri=${post.replyPostUri}');
     if (!isSelfReply) return true;
   }
 }
