@@ -291,6 +291,16 @@ String stringifyModifiedUri(Uri uri, String originalUri) {
 
 /// Generates pagination headers for a Mastodon feed like a timeline or
 /// notifications.
+///
+/// Ivory (and other Mastodon clients) use two distinct concepts:
+/// - [max_id] / [min_id] : Snowflake IDs used internally by the client to
+///   deduplicate and order posts in its local cache. These MUST be numeric.
+/// - [cursor] : Bluesky's opaque pagination cursor, passed through as-is so
+///   that SkyBridge can forward it to the Bluesky API on the next request.
+///
+/// Mixing the two caused posts to be marked as cached but never displayed:
+/// Ivory received a non-numeric Bluesky cursor as [max_id], couldn't match it
+/// against any Snowflake, and silently discarded the batch.
 Map<String, String> generatePaginationHeaders<T>({
   required List<T> items,
   required Uri requestUri,
@@ -305,26 +315,25 @@ Map<String, String> generatePaginationHeaders<T>({
   final highestID = ids.reduce((a, b) => a > b ? a : b);
   final lowestID = ids.reduce((a, b) => a < b ? a : b);
 
-  // Build pagination links
-  // prev: for newer items (use min_id to get items after the highest ID)
-  // next: for older items (use max_id with the nextCursor from Bluesky)
+  // prev link: newer items — min_id is the highest Snowflake ID we have.
   final prevParams = Map<String, String>.from(requestUri.queryParameters)
     ..['min_id'] = highestID.toString()
     ..remove('max_id')
     ..remove('cursor');
-  
-  // Use the nextCursor from Bluesky as max_id for the next page
-  // This ensures proper pagination with Bluesky's cursor-based system
+
+  // next link: older items.
+  // - max_id is always the lowest Snowflake ID of this page so that Ivory
+  //   can correctly anchor its cache and avoid showing gaps.
+  // - cursor carries the Bluesky opaque cursor so SkyBridge can fetch the
+  //   right next page from the Bluesky API without re-deriving the position.
   final nextParams = Map<String, String>.from(requestUri.queryParameters)
     ..remove('min_id')
-    ..remove('cursor');
-  
-  // Only add max_id if we have a valid nextCursor
+    ..['max_id'] = lowestID.toString();
+
   if (nextCursor.isNotEmpty) {
-    nextParams['max_id'] = nextCursor;
+    nextParams['cursor'] = nextCursor;
   } else {
-    // Fallback to using the lowest ID if no cursor available
-    nextParams['max_id'] = lowestID.toString();
+    nextParams.remove('cursor');
   }
 
   final prevURI = requestUri.replace(queryParameters: prevParams);
