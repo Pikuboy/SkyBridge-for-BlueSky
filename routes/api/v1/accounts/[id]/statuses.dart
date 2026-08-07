@@ -40,55 +40,52 @@ Future<Response> onRequest(RequestContext context, String id) async {
     return Response(statusCode: HttpStatus.notFound);
   }
 
-  // Determine the number of items to fetch (capped at 40).
-  final limit = (options.limit > 0 ? options.limit : 20).clamp(1, 40);
+  // Determine the number of items to actually return to the client
+  // (capped at 40).
+  final targetLimit = (options.limit > 0 ? options.limit : 20).clamp(1, 40);
 
-  // Get the user's posts from Bluesky.
-  final feed = await bluesky.feed.getAuthorFeed(
-    actor: user.did!,
-    limit: limit,
-    cursor: options.cursor,
+  // A post should be kept in the response if it passes every requested
+  // filter. This is evaluated on posts that have already had their parent
+  // post resolved (inReplyToId is populated).
+  bool keepPost(MastodonPost post) {
+    if (options.excludeReblogs && post.reblog != null) return false;
+    if (options.excludeReplies && post.inReplyToId != null) return false;
+    if (options.onlyMedia && post.mediaAttachments.isEmpty) return false;
+    return true;
+  }
+
+  // Over-fetch from Bluesky and filter each batch as we go, so that
+  // excludeReplies / excludeReblogs / onlyMedia don't turn a full page
+  // request into a near-empty response.
+  final result = await fetchFilteredFeed(
+    bluesky: bluesky,
+    fetchPage: (cursor) async {
+      final feed = await bluesky.feed.getAuthorFeed(
+        actor: user.did!,
+        limit: 100,
+        cursor: cursor,
+      );
+
+      final posts = await databaseTransaction(() {
+        final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList().cast<Future<MastodonPost>>();
+        return Future.wait(futures);
+      }) as List<MastodonPost>;
+
+      return (posts: posts, cursor: feed.data.cursor);
+    },
+    keep: keepPost,
+    targetLimit: targetLimit,
+    initialCursor: options.cursor,
   );
 
-  final nextCursor = feed.data.cursor;
-
-  // Convert all the posts to MastodonPost futures and await them.
-  var posts = await databaseTransaction(() {
-    final futures = feed.data.feed.map(MastodonPost.fromFeedView).toList().cast<Future<MastodonPost>>();
-    return Future.wait(futures);
-  }) as List<MastodonPost>;
-
-  // Filter out reposts if requested.
-  if (options.excludeReblogs) {
-    posts.removeWhere((post) => post.reblog != null);
-  }
-
-  // Filter out replies if requested.
-  if (options.excludeReplies) {
-    posts.removeWhere((post) {
-      // A reply has a replyPostUri set before parent processing,
-      // or an inReplyToId set after processing.
-      return post.replyPostUri != null || post.inReplyToId != null;
-    });
-  }
-
-  // Filter to only media posts if requested.
-  if (options.onlyMedia) {
-    posts = posts
-        .where((post) => post.mediaAttachments.isNotEmpty)
-        .toList();
-  }
-
-  // Resolve parent posts for replies (fills in inReplyToId / inReplyToAccountId).
-  final processedPosts = await processParentPosts(bluesky, posts);
+  final processedPosts = result.posts;
 
   var headers = <String, String>{};
-  if (processedPosts.isNotEmpty) {
-    headers = generatePaginationHeaders(
-      items: processedPosts,
+  if (result.scannedIds.isNotEmpty) {
+    headers = generatePaginationHeadersForIds(
+      ids: result.scannedIds,
       requestUri: context.request.uri,
-      nextCursor: nextCursor ?? '',
-      getId: (post) => BigInt.parse(post.id),
+      nextCursor: result.cursor ?? '',
     );
   }
 
