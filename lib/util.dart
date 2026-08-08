@@ -311,7 +311,31 @@ Map<String, String> generatePaginationHeaders<T>({
     return {};
   }
 
-  final ids = items.map(getId).toList();
+  return generatePaginationHeadersForIds(
+    ids: items.map(getId).toList(),
+    requestUri: requestUri,
+    nextCursor: nextCursor,
+  );
+}
+
+/// Same as [generatePaginationHeaders] but takes the boundary Snowflake IDs
+/// directly instead of deriving them from a list of items.
+///
+/// This is used when the response body has been filtered (replies hidden,
+/// filters.json, media-only, etc.) and no longer reflects the full range of
+/// posts that were actually scanned from Bluesky for this page — using the
+/// filtered list's own IDs would anchor `max_id` too high and could cause
+/// SkyBridge to re-scan (and re-filter) the same hidden posts on every
+/// subsequent page.
+Map<String, String> generatePaginationHeadersForIds({
+  required List<BigInt> ids,
+  required Uri requestUri,
+  required String nextCursor,
+}) {
+  if (ids.isEmpty) {
+    return {};
+  }
+
   final highestID = ids.reduce((a, b) => a > b ? a : b);
   final lowestID = ids.reduce((a, b) => a < b ? a : b);
 
@@ -322,8 +346,8 @@ Map<String, String> generatePaginationHeaders<T>({
     ..remove('cursor');
 
   // next link: older items.
-  // - max_id is always the lowest Snowflake ID of this page so that Ivory
-  //   can correctly anchor its cache and avoid showing gaps.
+  // - max_id is always the lowest Snowflake ID scanned for this page so that
+  //   Ivory can correctly anchor its cache and avoid showing gaps.
   // - cursor carries the Bluesky opaque cursor so SkyBridge can fetch the
   //   right next page from the Bluesky API without re-deriving the position.
   final nextParams = Map<String, String>.from(requestUri.queryParameters)
@@ -340,4 +364,82 @@ Map<String, String> generatePaginationHeaders<T>({
   final nextURI = requestUri.replace(queryParameters: nextParams);
 
   return {'Link': '<$nextURI>; rel="next", <$prevURI>; rel="prev"'};
+}
+
+/// The result of [fetchFilteredFeed]: the posts that survived filtering,
+/// the Bluesky cursor to continue from, and the Snowflake IDs of *every*
+/// post scanned during the fetch (kept or not), for accurate pagination
+/// header anchoring.
+class FilteredFeedResult {
+  const FilteredFeedResult({
+    required this.posts,
+    required this.cursor,
+    required this.scannedIds,
+  });
+
+  /// Posts that survived the `keep` predicate passed to [fetchFilteredFeed]
+  /// — this is what gets sent back to the client.
+  final List<MastodonPost> posts;
+
+  /// The Bluesky opaque cursor to continue fetching from on the next page.
+  final String? cursor;
+
+  /// Snowflake IDs of every post scanned in this pass, kept or not.
+  final List<BigInt> scannedIds;
+}
+
+/// Repeatedly fetches pages of posts via [fetchPage] and resolves parent
+/// posts, accumulating only the ones that pass [keep], until at least
+/// [targetLimit] posts survive filtering or a safety limit is hit.
+///
+/// SkyBridge applies Mastodon-side filtering (hidden replies, filters.json,
+/// media-only, excluded reblogs, etc.) *after* fetching a fixed-size batch
+/// from the Bluesky API. Without over-fetching, a single page can come back
+/// almost empty in a Mastodon client like Ivory when a large fraction of the
+/// underlying batch gets filtered out — most commonly because Bluesky
+/// timelines are reply-heavy and replies are hidden by default.
+///
+/// [fetchPage] is called with the cursor to fetch from (null for the first
+/// page) and must return the raw posts for that page plus the next cursor.
+/// [keep] is evaluated on posts that have already had their parent post
+/// resolved (`inReplyToId` / `inReplyToAccountId` are populated), so it is
+/// safe to use those fields (as [FeedFilters.shouldHide] does).
+Future<FilteredFeedResult> fetchFilteredFeed({
+  required bsky.Bluesky bluesky,
+  required Future<({List<MastodonPost> posts, String? cursor})> Function(
+    String? cursor,
+  ) fetchPage,
+  required bool Function(MastodonPost post) keep,
+  required int targetLimit,
+  String? initialCursor,
+  int maxScanned = 400,
+  int minBatchSize = 10,
+}) async {
+  final kept = <MastodonPost>[];
+  final scannedIds = <BigInt>[];
+  String? cursor = initialCursor;
+  var scanned = 0;
+
+  while (true) {
+    final page = await fetchPage(cursor);
+    cursor = page.cursor;
+
+    if (page.posts.isEmpty) break;
+
+    final resolved = await processParentPosts(bluesky, page.posts);
+    scanned += resolved.length;
+    for (final post in resolved) {
+      scannedIds.add(BigInt.parse(post.id));
+      if (keep(post)) kept.add(post);
+    }
+
+    final gotEnough = kept.length >= targetLimit;
+    final batchTooSmall = page.posts.length < minBatchSize;
+    final noMoreCursor = cursor == null || cursor!.isEmpty;
+    final scannedTooMuch = scanned >= maxScanned;
+
+    if (gotEnough || batchTooSmall || noMoreCursor || scannedTooMuch) break;
+  }
+
+  return FilteredFeedResult(posts: kept, cursor: cursor, scannedIds: scannedIds);
 }
